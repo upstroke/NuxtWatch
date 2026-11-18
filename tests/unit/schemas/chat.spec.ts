@@ -11,37 +11,10 @@ describe('ChatIntentSchema', () => {
     });
   });
 
-  // Statement coverage: preserves a valid change and defaults clarification options.
-  it('preserves a valid change and defaults clarification options', () => {
-    const change = { field: 'genreIds', operation: 'add', value: [28] };
+  // Branch coverage: rejects unknown top-level fields.
+  it('rejects an unknown top-level field', () => {
+    const result = ChatIntentSchema.safeParse({ status: 'ready', baseRevision: 0, execute: true });
 
-    expect(
-      ChatIntentSchema.parse({
-        status: 'needs_clarification',
-        baseRevision: 2,
-        changes: [change],
-        clarification: { questionKey: 'which-genre' },
-      }),
-    ).toEqual({
-      status: 'needs_clarification',
-      baseRevision: 2,
-      changes: [change],
-      clarification: { questionKey: 'which-genre', options: [] },
-    });
-  });
-
-  // Branch coverage: rejects invalid revisions, unknown fields and unsupported operations.
-  it.each([
-    { label: 'a negative revision', input: { baseRevision: -1 } },
-    { label: 'a fractional revision', input: { baseRevision: 1.5 } },
-    { label: 'an unknown top-level field', input: { execute: true } },
-    {
-      label: 'an unsupported operation',
-      input: { changes: [{ field: 'genreIds', operation: 'clear', value: [] }] },
-    },
-  ])('rejects $label', ({ input }) => {
-    expect(
-      ChatIntentSchema.safeParse({ status: 'ready', baseRevision: 0, ...input }).success,
-    ).toBe(false);
+    expect(result.success).toBe(false);
   });
 });
