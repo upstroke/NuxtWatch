@@ -22,7 +22,7 @@ The TMDb requests are verified; the end-to-end chat flow is not. Multiple title 
 - [x] Review the parser output schema and instructions, and inventory the internal search route, input schema, and tests. The [Phase 1 inventory](001-title-search-phase-1.md) records what can be reused and what is missing. The earlier LLM response was not located; the live response below is available for the first title test.
 - [x] Agree on the first implementation scope and test plan. Validate the title proposal into the shared search object and send only those criteria as JSON to `POST /api/search/title`. Keep the TMDb Multi Search service and its title-card mapper side by side. See the [agreed layout and verification plan](001-title-search-phase-1.md#agreed-layout-and-contract).
 
-Phase 1 records the design decision. Implementation and verification remain open in Phase 2.
+Phase 1 records the design decision. Phase 2 tracks implementation and verification.
 
 ### Findings — chat schema usage
 
@@ -43,10 +43,14 @@ The manual test used a short title-only prompt and an inline validation schema. 
 
 ## Phase 2 — Implement and verify
 
-- [ ] Verify “Find The Matrix” first. Use the observed model response above as an inline test input. Validate it, populate the search object, and pass that object to the internal API. With a mocked TMDb transport, verify the `/search/multi` request and returned title cards.
-- [ ] Verify that an invalid proposal or one requiring clarification leaves the existing search object unchanged and does not call the internal search API. Ask only when missing or ambiguous information blocks the request as stated; do not silently drop explicit criteria.
+- [x] Verify the title-only path in separate adapter and handler tests. The documented model response produces one `POST /api/search/title` with `{"title":"The Matrix"}` as its body. With mocked TMDb transport, the handler calls `/search/multi` and maps movie and TV hits to title cards, excluding person hits.
+- [x] Verify that invalid proposals and a synthetic clarification-status proposal do not dispatch a search. The adapter returns `not-dispatched` without calling the internal API and does not modify search state. The route separately rejects invalid request bodies before calling TMDb.
 - [ ] Verify “I mean the 1999 movie” next. Apply a second validated proposal and check that it retains the title, adds media type and year, and results in `/search/movie` with `primary_release_year=1999`.
 - [ ] Change `src/lib/parser/instructions.ts` only if the agreed contract or a parser test shows a concrete need.
+
+### Verification status
+
+Tests, coverage, ESLint, and typecheck were reported green through `5455a20` on `feat/001-title-search`. The adapter test mocks `$fetch`; the handler test calls the handler directly with mocked TMDb transport. This verifies the two boundaries separately, not a live end-to-end chat flow. The follow-up turn and UI integration remain open. Ask only when missing or ambiguous information blocks the request as stated; do not silently drop explicit criteria.
 
 ## Open decision
 
