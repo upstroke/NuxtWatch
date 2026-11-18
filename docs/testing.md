@@ -111,7 +111,15 @@ Do not reuse an identifier after removing or replacing a test. Maintain the link
 
 ## Coverage
 
-Coverage is collected with V8 and limited to application code:
+Vitest collects coverage with V8 for application code in `src/lib/**`
+and `server/**`. The thresholds configured in `vitest.config.ts` define
+the coverage requirements. That configuration is the source of truth
+for which metrics are enforced and at what levels.
+
+Coverage thresholds are minimum requirements, not targets for every file.
+Use coverage reports to find meaningful behavior that is not yet tested.
+Do not add redundant cases just to increase a percentage.
+
 
 ```text
 src/lib/**
@@ -121,9 +129,6 @@ server/**
 The global thresholds are:
 
 - Statements: 80%
-- Branches: 80%
-- Functions: 80%
-- Lines: 80%
 
 ## Coverage comments
 
@@ -168,3 +173,12 @@ Do not use Nuxt’s default `@` or `~` aliases for shared application code; they
 - Prefer focused tests over broad end-to-end assertions.
 - Give integration and E2E tests stable identifiers that support traceability. Do not reuse an identifier after removing or replacing a test.
 - Do not expand Playwright E2E coverage for now; Vitest unit and integration tests are the active testing focus.
+- Write tests that fail when a supported behavior changes, not when the
+  implementation is refactored or non-contractual wording is revised.
+  Small changes that preserve the behavior should not require test updates.
+- Avoid assertions on exact text fragments when the wording is not part of
+  the contract. For example, checking for a literal sentence in parser
+  instructions makes the test brittle: a harmless rewording can break it.
+  Prefer checking that the application passes fixed instructions separately
+  from user input. Assert exact wording only when the wording itself is a
+  requirement.
