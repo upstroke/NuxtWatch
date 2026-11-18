@@ -1,0 +1,54 @@
+{
+  "name": "nextwatch",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "license": "MIT",
+  "author": "Gregor Arz",
+  "keywords": [
+    "vue",
+    "nuxt",
+    "tmdb",
+    "vitest",
+    "playwright"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/upstroke/NextWatch"
+  },
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@nuxt/ui": "4.12.0",
+    "h3": "^1.15.0",
+    "nuxt": "4.6.4",
+    "pinia": "4.1.0",
+    "vue": "3.5.44",
+    "vue-router": "4.6.4",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "1.17.0",
+    "@playwright/test": "1.64.1",
+    "@types/node": "^24.0.0",
+    "@vitest/coverage-v8": "5.1.0",
+    "eslint": "10.14.0",
+    "prettier": "3.9.10",
+    "typescript": "5.6.3",
+    "vitest": "5.1.0",
+    "vue-tsc": "3.3.14"
+  }
+}
