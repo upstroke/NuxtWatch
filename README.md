@@ -25,3 +25,6 @@ pnpm typecheck
 ```
 
 See [AGENTS.md](AGENTS.md) for the working agreement and [docs/](docs/) for the imported documentation.
+
+![discover_dark-desktop.png](docs/images/discover_dark-desktop.png)
+![details_dark-deskotp.png](docs/images/details_dark-deskotp.png)
