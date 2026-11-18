@@ -7,7 +7,7 @@ This working document collects findings for NuxtWatch. Start with the API endpoi
 All paths below are GET endpoints relative to `https://api.themoviedb.org/3`.
 
 | Group           | Endpoint                                                                                                  | Documented purpose                                   |
-|-----------------|-----------------------------------------------------------------------------------------------------------|------------------------------------------------------|
+| --------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
 | Search          | [`/search/movie`](https://developer.themoviedb.org/reference/search-movie)                                | Find films by title.                                 |
 | Search          | [`/search/tv`](https://developer.themoviedb.org/reference/search-tv)                                      | Find series by title.                                |
 | Search          | [`/search/multi`](https://developer.themoviedb.org/reference/search-multi)                                | Search films, series and people with one text query. |
@@ -41,7 +41,7 @@ from the presence of a particular word. A follow-up may answer an open
 question or change an existing search rather than start a new one.
 
 | User request                                         | Flow                       | When to run it                                                                                                                                                                |
-|------------------------------------------------------|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ---------------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | "Find The Matrix."                                   | Title search               | A title is enough to search. Media type and year can narrow the result.                                                                                                       |
 | "Show me sci-fi movies from 2015 onwards."           | Filtered discovery         | Run once the explicitly requested filters can be applied.                                                                                                                     |
 | "Show me movies like The Matrix."                    | Similarity search          | Resolve the reference title first. If it is ambiguous, let the user select the intended work. The selected work is the input to similarity search, not the final result.      |
@@ -112,7 +112,7 @@ choose TMDb endpoints.
 ### Decision matrix: what changes in the session?
 
 | Event                                                     | State transition                                                                                                                                                            |
-|-----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Start a new search                                        | Create a new draft without carrying over criteria from the previous search.                                                                                                 |
 | Add "with Tom"                                            | Create a referenced pending person request. Keep unrelated accepted criteria.                                                                                               |
 | Refine Tom or select a candidate                          | Target the specific pending request. Refinement triggers a new lookup; a validated selection accepts the person's ID.                                                       |
@@ -131,7 +131,7 @@ overwrite a newer result.
 ### Search matrix: what may run next?
 
 | Draft or outcome                                      | Next step                                                                                                                                                                  |
-|-------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Title request with enough information                 | Run title search.                                                                                                                                                          |
 | Filtered discovery with an unresolved required person | Resolve the person first. Do not run discovery with that filter silently omitted.                                                                                          |
 | Person lookup is ambiguous or returns no match        | Ask for a selection or a more precise name as appropriate; allow the pending request to be discarded.                                                                      |
@@ -143,7 +143,7 @@ overwrite a newer result.
 ### Endpoint matrix: how is each task executed?
 
 | Task                                          | TMDb calls                                                                               | Required data                                                                    | Status / open question                                                |
-|-----------------------------------------------|------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|-----------------------------------------------------------------------|
+| --------------------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | Find a title                                  | `/search/movie`, `/search/tv`, or `/search/multi`                                        | Title and optional media type or year in; ID, title, year, and media type out.   | Decide which search variants are needed.                              |
 | Resolve a similarity reference                | Reuse title search                                                                       | Reference title in; selected work's ID and media type out.                       | If ambiguous, ask the user to select the reference before continuing. |
 | Find similar titles                           | `/movie/{movie_id}/similar` or `/tv/{series_id}/similar`                                 | Reference ID in; similar titles of the same media type out.                      | Cross-media similarity and streaming combinations are open.           |

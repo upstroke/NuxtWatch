@@ -68,14 +68,14 @@ For the year-filtered request, add `--data-urlencode 'primary_release_year=1999'
 
 ### Observed results
 
-| Request | HTTP | `page` | `total_pages` | `total_results` | Results returned |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Without year | 200 | 1 | 3 | 58 | 20 |
-| With `primary_release_year=1999` | 200 | 1 | 1 | 3 | 3 |
+| Request                          | HTTP | `page` | `total_pages` | `total_results` | Results returned |
+| -------------------------------- | ---: | -----: | ------------: | --------------: | ---------------: |
+| Without year                     |  200 |      1 |             3 |              58 |               20 |
+| With `primary_release_year=1999` |  200 |      1 |             1 |               3 |                3 |
 
-*The Matrix* (1999, ID `603`) ranked first in both responses. Without the year, three sequels ranked second through fourth, and two other entries shared the display title *The Matrix* (IDs `1386216` and `1502836`). Pages 2 and 3 were not inspected.
+_The Matrix_ (1999, ID `603`) ranked first in both responses. Without the year, three sequels ranked second through fourth, and two other entries shared the display title _The Matrix_ (IDs `1386216` and `1502836`). Pages 2 and 3 were not inspected.
 
-The year-filtered response also contained *Making "The Matrix"* (`684431`) and *The Matrix: What Is Bullet-Time?* (`684428`). The year narrows the result list but does not make the match unique. The latter result was not on page 1 of the unfiltered response; its position in the full unfiltered list was not checked.
+The year-filtered response also contained _Making "The Matrix"_ (`684431`) and _The Matrix: What Is Bullet-Time?_ (`684428`). The year narrows the result list but does not make the match unique. The latter result was not on page 1 of the unfiltered response; its position in the full unfiltered list was not checked.
 
 Status: Both API requests verified. No parser, schema, or selection behavior is defined by this example.
 
@@ -102,12 +102,12 @@ For the comparison request without a year, remove only the `first_air_date_year`
 
 ### Observed results
 
-| Request | HTTP | `page` | `total_pages` | `total_results` | Results returned |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Without year | 200 | 1 | 4 | 61 | 20 |
-| With `first_air_date_year=2005` | 200 | 1 | 1 | 1 | 1 |
+| Request                         | HTTP | `page` | `total_pages` | `total_results` | Results returned |
+| ------------------------------- | ---: | -----: | ------------: | --------------: | ---------------: |
+| Without year                    |  200 |      1 |             4 |              61 |               20 |
+| With `first_air_date_year=2005` |  200 |      1 |             1 |               1 |                1 |
 
-Without the year, the US series *The Office* (ID `2316`, first aired `2005-03-24`) ranked first. The UK series with the same display name (ID `2996`, first aired `2001-07-09`) ranked second. Pages 2–4 were not inspected.
+Without the year, the US series _The Office_ (ID `2316`, first aired `2005-03-24`) ranked first. The UK series with the same display name (ID `2996`, first aired `2001-07-09`) ranked second. Pages 2–4 were not inspected.
 
 With the year, only the US series was returned. Unlike the Movie Search example, this particular filtered request returned a single result. This is an observation, not a general rule for automatic selection. All returned entries in both responses had `adult: false`; the request still sets `include_adult=true`.
 
@@ -117,12 +117,12 @@ Status: Both API requests verified. No parser, schema, or selection behavior is 
 
 User request: “Finde The Office von 2005.” No media type was specified. Both requests set `include_adult=true` and omit `language` and `page`.
 
-| Request | HTTP | `page` | `total_pages` | `total_results` |
-| --- | ---: | ---: | ---: | ---: |
-| `/3/search/movie?query=The%20Office&primary_release_year=2005&include_adult=true` | 200 | 1 | 1 | 4 |
-| `/3/search/tv?query=The%20Office&first_air_date_year=2005&include_adult=true` | 200 | 1 | 1 | 1 |
+| Request                                                                           | HTTP | `page` | `total_pages` | `total_results` |
+| --------------------------------------------------------------------------------- | ---: | -----: | ------------: | --------------: |
+| `/3/search/movie?query=The%20Office&primary_release_year=2005&include_adult=true` |  200 |      1 |             1 |               4 |
+| `/3/search/tv?query=The%20Office&first_air_date_year=2005&include_adult=true`     |  200 |      1 |             1 |               1 |
 
-The TV response returned the US series *The Office* (ID `2316`, first aired `2005-03-24`), the only exact display-title match. The four movie results had different display titles; the first (ID `371175`) had `adult: true`.
+The TV response returned the US series _The Office_ (ID `2316`, first aired `2005-03-24`), the only exact display-title match. The four movie results had different display titles; the first (ID `371175`) had `adult: true`.
 
 Keep all four movie results and the TV result eligible for display. Exact display-title matching is not an exclusion criterion, and do not filter returned results by `adult`. This example does not decide whether to combine the lists, how to rank results across endpoints, or whether to select a result automatically.
 

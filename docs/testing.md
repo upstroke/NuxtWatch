@@ -120,7 +120,6 @@ Coverage thresholds are minimum requirements, not targets for every file.
 Use coverage reports to find meaningful behavior that is not yet tested.
 Do not add redundant cases just to increase a percentage.
 
-
 ```text
 src/lib/**
 server/**

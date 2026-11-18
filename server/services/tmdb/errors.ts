@@ -1,9 +1,5 @@
 export type TmdbErrorCode =
-  | 'MISSING_TOKEN'
-  | 'INVALID_BASE_URL'
-  | 'INVALID_QUERY'
-  | 'UPSTREAM_FAILED'
-  | 'INVALID_RESPONSE';
+  'MISSING_TOKEN' | 'INVALID_BASE_URL' | 'INVALID_QUERY' | 'UPSTREAM_FAILED' | 'INVALID_RESPONSE';
 
 const tmdbErrors = new WeakSet<Error>();
 
