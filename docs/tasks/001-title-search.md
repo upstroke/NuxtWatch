@@ -50,7 +50,9 @@ The manual test used a short title-only prompt and an inline validation schema. 
 
 ### Verification status
 
-Tests, coverage, ESLint, and typecheck were reported green through `5455a20` on `feat/001-title-search`. The adapter test mocks `$fetch`; the handler test calls the handler directly with mocked TMDb transport. This verifies the two boundaries separately, not a live end-to-end chat flow. The follow-up turn and UI integration remain open. Ask only when missing or ambiguous information blocks the request as stated; do not silently drop explicit criteria.
+Tests, coverage, ESLint, and typecheck were reported green through `388e872` on `feat/001-title-search`, after aligning the tests with [the testing guide](../testing.md). The adapter unit test in `tests/unit/utils/dispatch-title-search-to-api.spec.ts` mocks `$fetch` and includes coverage-intent comments. The Vitest integration test in `tests/integration/tmdb/title-search.spec.ts` (`TMDB-INT-021`–`TMDB-INT-026`) calls the handler directly with mocked TMDb transport; the superseded unit test was removed.
+
+This verifies the two boundaries separately, not a live end-to-end chat flow. Phase 2 remains open: the follow-up turn and UI integration are not verified. Ask only when missing or ambiguous information blocks the request as stated; do not silently drop explicit criteria.
 
 ## Open decision
 
