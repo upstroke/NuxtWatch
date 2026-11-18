@@ -10,11 +10,10 @@ import { mapTrendingResponse } from './mappers';
  * @param http - The TMDb HTTP client used for upstream requests.
  * @returns The trending service.
  */
-export function createTrendingService(http: TmdbHttpClient) {
+export function createTrendingService(http: Pick<TmdbHttpClient, 'getWeeklyTrending'>) {
   return {
     /**
      * Retrieves, validates and maps the weekly trending media.
-     *
      * @returns The mapped trending media response.
      * @throws A TMDb error with code `INVALID_RESPONSE` when the response
      * cannot be validated or mapped.
