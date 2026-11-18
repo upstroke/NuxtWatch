@@ -19,7 +19,7 @@ The TMDb requests are verified; the end-to-end chat flow is not. Multiple title 
 
 ## Phase 1 — Inspect and agree
 
-- [ ] Locate the previous LLM title test and its JSON response, the parser output schema and instructions, and the relevant internal search route, input schema, and tests. Record the file paths, what can be reused, and what is missing here. If an artifact cannot be located, record that explicitly.
+- [ ] Review the parser output schema and instructions and identify the relevant internal search route, input schema, and tests. Record what can be reused and what is missing. The earlier LLM response was not located; the live response below is available for the first title test.
 - [ ] Agree on the smallest implementation scope and test plan. Define how a validated parser proposal updates the shared search object and what the internal API accepts. The API receives complete search criteria, not raw LLM output or TMDb parameters.
 
 Start here. Do not change the prompt or application code until the scope is agreed.
@@ -30,11 +30,20 @@ The `git grep` check on `origin/feat/001-title-search` covered `app`, `server`, 
 
 `ChatIntentSchema` requires `baseRevision`, while `src/lib/parser/instructions.ts` tells the model not to emit revisions. The schema is therefore not a direct match for the raw model response. Proposed first scope: leave `chat.ts` unchanged, validate a proposal to set a non-empty title, and use it to build the search object (for example, `{ title: 'The Matrix' }`). Reject invalid or unsupported proposals without changing the search state or dispatching a search.
 
-The previous live LLM JSON response has not yet been located. `tests/unit/parser/instructions.spec.ts` checks only the instructions version. If the original response cannot be located, use an explicitly synthetic fixture for the automated test and keep any live model check separate.
+`tests/unit/parser/instructions.spec.ts` checks only the instructions version.
+
+### Findings — live OpenRouter title test
+
+- Input: `Finde The Matrix`
+- SDK: `@openrouter/sdk@1.5.108`; requested model: `openrouter/free`; reported model: `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free`.
+- Observed model response: `{"status":"ready","changes":[{"field":"title","operation":"set","value":"The Matrix"}]}`
+- Result: the response passed the test's strict validation for a single non-empty title change and produced `{"title":"The Matrix"}`.
+
+The manual test used a short title-only prompt and an inline validation schema. It did not use `instructions.ts` or `ChatIntentSchema`, call the internal search API or TMDb, or verify the follow-up turn. The observed response can be used inline in an automated test without a network call or a separate fixture file.
 
 ## Phase 2 — Implement and verify
 
-- [ ] Verify “Find The Matrix” first. Use the existing LLM response as a fixture if available. Validate it, populate the search object, and pass that object to the internal API. With a mocked TMDb transport, verify the `/search/multi` request and returned title cards.
+- [ ] Verify “Find The Matrix” first. Use the observed model response above as an inline test input. Validate it, populate the search object, and pass that object to the internal API. With a mocked TMDb transport, verify the `/search/multi` request and returned title cards.
 - [ ] Verify that an invalid proposal or one requiring clarification leaves the existing search object unchanged and does not call the internal search API. Ask only when missing or ambiguous information blocks the request as stated; do not silently drop explicit criteria.
 - [ ] Verify “I mean the 1999 movie” next. Apply a second validated proposal and check that it retains the title, adds media type and year, and results in `/search/movie` with `primary_release_year=1999`.
 - [ ] Change `src/lib/parser/instructions.ts` only if the agreed contract or a parser test shows a concrete need.
