@@ -1,60 +1,27 @@
-# NextWatch Studio
+# NuxtWatch
 
-NextWatch is a local reference application for natural-language film and TV discovery.
+NuxtWatch is a controlled search application with an LLM acting as a semantic parser. The model translates free-form user input into structured filter changes or indicates that clarification is required. The application validates the output, calculates domain-specific consequences, queries TMDb, and generates feedback from translatable templates.
 
-The LLM acts only as a controlled semantic parser: it proposes validated filter changes. The application owns validation, domain rules, TMDb requests, results, pagination and user feedback.
+## Starting point
 
-## Stack
-
-- Nuxt 4, Vue 3 and TypeScript
-- Nitro server routes
-- Nuxt UI
-- Zod-first contracts
-- Pinia for domain state where required
-- Vitest and Playwright
-- ESLint and Prettier
-- pnpm
+This repository starts from the NextWatch `v0.0.1` Spike source snapshot (`e835d5a7813859ef708c1826963ede62601874a4`), without the original Git history. The description above states the project goal, not what the imported Spike already implements.
 
 ## Getting started
+
+Copy `.env.example` to `.env` and add your own TMDb credentials. TMDb requests must remain server-side.
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-Copy `.env.example` to `.env` and add your own TMDb credentials. TMDb requests must remain server-side.
-
-## Scripts
+## Checks
 
 ```bash
-pnpm dev
-pnpm build
 pnpm test
-pnpm test:e2e
+pnpm test:coverage
 pnpm lint
-pnpm format
 pnpm typecheck
 ```
 
-## Current scope
-
-The foundation includes project configuration, Zod contracts and server-side TMDb support for Trending, Discover Movie and Discover TV. TMDb transport, response validation, mapping and error handling are separated. Errors are created through `createTmdbError`, with a derived error type and a private WeakSet-based guard.
-
-Unit tests and direct handler tests use shared handler mocks and synthetic raw TMDb fixtures. Direct handler tests do not start a Nuxt/Nitro server and are not HTTP integration tests.
-
-The application UI has not yet been built. UI fallback behavior for missing content is being discussed, not implemented. Further UI, Ollama and HTTP integration-test work require separately agreed tasks.
-
-## Contracts and typing
-
-Zod schemas are the source of truth for validated external data contracts and runtime validation. For all typing conventions, including internal functions, shared type locations and type assertions, see [Typing](docs/typing.md).
-
-## Documentation and collaboration
-
-This README is a concise, evolving entry point, not a complete project specification. Update it when the implemented scope or setup changes.
-
-- [Typing](docs/typing.md): authoritative TypeScript and Zod typing conventions.
-- [AI development rules and working agreement](AGENTS.md): shared architecture, contract, testing and approval rules.
-- [Work packages](docs/work/): one file per work package, containing its stable specification and current execution status.
-- [Service boundaries and ADR 001](docs/work/specs/architecture/001-service-boundaries.md): architecture decisions for API and state code.
-
-Keep shared rules in one place and link to them rather than duplicating them. Decide on additional documentation structure or coding-agent-specific configuration when a concrete need arises.
+See [AGENTS.md](AGENTS.md) for the working agreement and [docs/](docs/) for the imported documentation.
