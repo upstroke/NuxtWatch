@@ -12,6 +12,10 @@ export default defineNuxtConfig({
     '@test-mocks': fileURLToPath(new URL('./tests/mocks', import.meta.url)),
   },
   runtimeConfig: {
+    openrouter: {
+      apiKey: '',
+      model: 'inclusionai/ling-3.2-flash:free',
+    },
     tmdb: {
       apiReadAccessToken: '',
       baseUrl: 'https://api.themoviedb.org/3',
