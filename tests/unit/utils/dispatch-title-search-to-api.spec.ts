@@ -18,6 +18,7 @@ afterEach(() => {
 });
 
 describe('dispatchTitleSearchToApi', () => {
+  // Statement coverage: posts the validated criteria and returns the API response.
   it('posts only the validated search criteria and returns the response', async () => {
     const response = {
       page: 1,
@@ -40,6 +41,7 @@ describe('dispatchTitleSearchToApi', () => {
     });
   });
 
+  // Branch coverage: skips the HTTP request for invalid or non-ready proposals.
   it.each([
     {
       label: 'a blank title',
