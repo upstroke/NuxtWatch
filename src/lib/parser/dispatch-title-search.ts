@@ -18,8 +18,7 @@ const TitleProposalSchema = z
 export type TitleSearchCriteria = { title: string };
 
 type TitleSearchDispatchResult<T> =
-  | { status: 'not-dispatched' }
-  | { status: 'dispatched'; criteria: TitleSearchCriteria; result: T };
+  { status: 'not-dispatched' } | { status: 'dispatched'; criteria: TitleSearchCriteria; result: T };
 
 export async function dispatchTitleSearch<T>(
   proposal: unknown,

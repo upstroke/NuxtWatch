@@ -61,7 +61,11 @@ it.each([
   { id: 'TMDB-INT-022', label: 'a missing title', body: {} },
   { id: 'TMDB-INT-023', label: 'a blank title', body: { title: '   ' } },
   { id: 'TMDB-INT-024', label: 'a non-string title', body: { title: 42 } },
-  { id: 'TMDB-INT-025', label: 'extra TMDb parameters', body: { title: 'The Matrix', query: 'other' } },
+  {
+    id: 'TMDB-INT-025',
+    label: 'extra TMDb parameters',
+    body: { title: 'The Matrix', query: 'other' },
+  },
   {
     id: 'TMDB-INT-026',
     label: 'raw model output',

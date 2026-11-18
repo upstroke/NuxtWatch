@@ -4,12 +4,26 @@ import type { TitleSearchCriteria } from './dispatch-title-search';
 const MovieRefinementSchema = z
   .object({
     status: z.literal('ready'),
-    changes: z.array(
-      z.discriminatedUnion('field', [
-        z.object({ field: z.literal('mediaType'), operation: z.literal('set'), value: z.literal('movie') }).strict(),
-        z.object({ field: z.literal('year'), operation: z.literal('set'), value: z.number().int().min(1).max(9999) }).strict(),
-      ]),
-    ).length(2),
+    changes: z
+      .array(
+        z.discriminatedUnion('field', [
+          z
+            .object({
+              field: z.literal('mediaType'),
+              operation: z.literal('set'),
+              value: z.literal('movie'),
+            })
+            .strict(),
+          z
+            .object({
+              field: z.literal('year'),
+              operation: z.literal('set'),
+              value: z.number().int().min(1).max(9999),
+            })
+            .strict(),
+        ]),
+      )
+      .length(2),
   })
   .strict();
 

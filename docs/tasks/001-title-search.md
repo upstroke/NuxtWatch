@@ -10,10 +10,10 @@ Work from the current `main` in NuxtWatch. The cleanup is complete; the NextWatc
 
 ## Reference flow
 
-| User message | Search criteria | Verified TMDb mapping |
-| --- | --- | --- |
-| “Find The Matrix” | Set the title. No media type or year is required. | `/search/multi` with `query=The Matrix`; map only movie and TV hits to title cards. |
-| “I mean the 1999 movie” | Keep the title; add movie as the media type and 1999 as the release year. | `/search/movie` with `query=The Matrix` and `primary_release_year=1999`. |
+| User message            | Search criteria                                                           | Verified TMDb mapping                                                               |
+| ----------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| “Find The Matrix”       | Set the title. No media type or year is required.                         | `/search/multi` with `query=The Matrix`; map only movie and TV hits to title cards. |
+| “I mean the 1999 movie” | Keep the title; add movie as the media type and 1999 as the release year. | `/search/movie` with `query=The Matrix` and `primary_release_year=1999`.            |
 
 The TMDb requests are verified; the end-to-end chat flow is not. Multiple title matches are valid results, not a reason to ask for clarification.
 
