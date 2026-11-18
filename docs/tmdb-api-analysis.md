@@ -101,6 +101,72 @@ Keep unresolved requests and result cards separate from accepted
 criteria. Extend the object one flow at a time rather than modelling
 every possible filter up front.
 
+## Search orchestration
+
+The three matrices document responsibilities, not runtime lookup tables.
+One coordinator applies a validated state transition, plans the next
+step, calls an adapter when needed, and feeds the outcome back into the
+same cycle. The parser proposes changes; it does not commit state or
+choose TMDb endpoints.
+
+### Decision matrix: what changes in the session?
+
+| Event | State transition |
+| --- | --- |
+| Start a new search | Create a new draft without carrying over criteria from the previous search. |
+| Add "with Tom" | Create a referenced pending person request. Keep unrelated accepted criteria. |
+| Refine Tom or select a candidate | Target the specific pending request. Refinement triggers a new lookup; a validated selection accepts the person's ID. |
+| Discard the pending Tom request | Remove only that pending request, not any accepted person. |
+| Remove an accepted person | Target the accepted filter separately. Parser support for this transition remains open in WP 011. |
+| Lookup succeeds with no match or ambiguous candidates | Keep the request pending and record the outcome so the planner can offer the appropriate clarification. |
+| Lookup fails | Keep the request pending and record a retryable or non-retryable failure. A failure is not a no-match result. |
+| Result search succeeds or fails | On success, associate the cards with the executed revision, even if there are zero cards. On failure, keep the previous successful cards and report the failure separately. |
+| Target is ambiguous, event is stale, or change is a no-op | Ask when the target is ambiguous; ignore stale events. Do not rerun the same search solely because of a no-op. |
+
+Execution outcomes are domain events. HTTP status codes, timeouts and
+transport retry policy stay at the adapter boundary. A late lookup must
+not revive a discarded request, and a late search response must not
+overwrite a newer result.
+
+### Search matrix: what may run next?
+
+| Draft or outcome | Next step |
+| --- | --- |
+| Title request with enough information | Run title search. |
+| Filtered discovery with an unresolved required person | Resolve the person first. Do not run discovery with that filter silently omitted. |
+| Person lookup is ambiguous or returns no match | Ask for a selection or a more precise name as appropriate; allow the pending request to be discarded. |
+| Required lookup failed | Keep the result search blocked. Offer retry when appropriate, or let the user discard the pending request. Do not restart the same lookup automatically during replanning. |
+| All required discovery criteria are applicable | Run filtered discovery for the selected media type. |
+| Similarity request | Resolve the reference work first, then search for similar titles. |
+| Open discovery or explicit trending request | Show trends. If streamability is required, check availability in the selected region before showing a title as streamable. |
+
+### Endpoint matrix: how is each task executed?
+
+| Task | TMDb calls | Required data |
+| --- | --- | --- |
+| Resolve a person | `/search/person` | Candidate IDs and display names; pagination metadata to assess completeness. Missing metadata must not be treated as proof of uniqueness. |
+| Find filtered films | `/discover/movie` | Applicable filters in; IDs and card fields out. |
+| Check streaming availability for daily trends | `/trending/all/day`, then the movie or TV watch-provider endpoint for each title checked | Media type and ID from Trending; availability for the selected region. |
+| Load details after a card click | `/movie/{movie_id}` or `/tv/{series_id}` | Media type and ID from the selected card. |
+
+The adapter returns data or a typed failure; it does not mutate the
+session. The inventory lists available endpoints. This matrix records
+which task actually needs each call.
+
+### Search session
+
+Build on the existing `SearchState` rather than introducing a parallel
+search model. Keep the current draft and its accepted criteria, pending
+requests with stable IDs, and the draft revision. Keep the last successful
+execution and its cards tied to the revision it ran for. If a newer draft
+is blocked or fails, those cards may stay visible as previous results.
+
+Derive search readiness from the draft and pending requests; do not store
+a separate `isReady` flag. Bind asynchronous outcomes to the request or
+run they originated from, and validate their targets before applying
+them. Keep storage scope open until we decide whether the state must
+survive reloads or be shared across tabs.
+
 ## Open questions and verification
 
 - Trending and streaming: daily trends checked against regional watch
@@ -113,10 +179,9 @@ every possible filter up front.
   for multiple people plus other filters, before promising either
   combination. Keep the maximal query as a test case, not a requirement
   for the first implementation.
-- Endpoint selection: record each flow's inputs, required response
-  fields and behaviour on no match or ambiguity. Verify uncertain
-  mappings with example responses. An endpoint without an active flow
-  stays in the inventory but is not required for the current scope.
+- Extend the endpoint matrix as each flow is specified. Verify uncertain
+  mappings with example responses. Endpoints without a mapped task remain
+  in the inventory but are not required by the current scope.
 
 ## Observed responses
 
