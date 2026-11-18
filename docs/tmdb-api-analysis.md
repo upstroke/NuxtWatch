@@ -21,12 +21,18 @@ All paths below are GET endpoints relative to `https://api.themoviedb.org/3`.
 | Trending | [`/trending/movie/{time_window}`](https://developer.themoviedb.org/reference/trending-movies) | List trending films. |
 | Trending | [`/trending/tv/{time_window}`](https://developer.themoviedb.org/reference/trending-tv) | List trending series. |
 | Trending | [`/trending/person/{time_window}`](https://developer.themoviedb.org/reference/trending-people) | List trending people. |
+| Details | [`/movie/{movie_id}`](https://developer.themoviedb.org/reference/movie-details) | Get film details by TMDb ID. |
+| Details | [`/tv/{series_id}`](https://developer.themoviedb.org/reference/tv-series-details) | Get series details by TMDb ID. |
+| Watch providers | [`/movie/{movie_id}/watch/providers`](https://developer.themoviedb.org/reference/movie-watch-providers) | Get film availability by country. |
+| Watch providers | [`/tv/{series_id}/watch/providers`](https://developer.themoviedb.org/reference/tv-series-watch-providers) | Get series availability by country. |
 | Catalog | [`/genre/movie/list`](https://developer.themoviedb.org/reference/genre-movie-list) | List film genres. |
 | Catalog | [`/genre/tv/list`](https://developer.themoviedb.org/reference/genre-tv-list) | List series genres. |
 | Credits | [`/person/{person_id}/tv_credits`](https://developer.themoviedb.org/reference/person-tv-credits) | Retrieve a person's TV credits. |
 | External ID | [`/find/{external_id}`](https://developer.themoviedb.org/reference/find-by-id) | Look up TMDb entries using an external identifier. |
 
 Trending uses `day` or `week` as `time_window`. It lists trends for that window rather than matching a text query or a set of Discover filters.
+
+For a detail page opened from a TMDb result, use the result's TMDb ID and media type to choose the details endpoint. `/find` is not needed for this flow. The watch-provider endpoints report availability by country (for example, `results.DE` for Germany) and distinguish options such as subscription (`flatrate`), rental (`rent`), and purchase (`buy`). Attribute the data to JustWatch when displaying it. The returned link points to TMDb, not directly to playback.
 
 ## Observed responses
 
