@@ -11,7 +11,7 @@ test('TMDB-INT-004: GET movie detail returns a sanitized 400 for an invalid ID',
 
   const body = await response.json();
   expect(body.statusCode).toBe(400);
-  expect(body.statusMessage).toBe('Invalid Discover query');
+  expect(body.statusMessage).toBe('Invalid query');
 
   const serialized = JSON.stringify(body);
   expect(serialized).not.toContain('Authorization');
@@ -30,7 +30,7 @@ test('TMDB-INT-005: GET tv detail returns a sanitized 400 for an invalid ID', as
 
   const body = await response.json();
   expect(body.statusCode).toBe(400);
-  expect(body.statusMessage).toBe('Invalid Discover query');
+  expect(body.statusMessage).toBe('Invalid query');
 
   const serialized = JSON.stringify(body);
   expect(serialized).not.toContain('Authorization');
