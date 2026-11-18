@@ -101,7 +101,7 @@ describe('TMDb detail route handlers', () => {
     expect(mocks.fetchMock).not.toHaveBeenCalled();
     expect(result).toEqual({
       statusCode: 400,
-      statusMessage: 'Invalid Discover query',
+      statusMessage: 'Invalid query',
     });
   });
 
@@ -115,7 +115,7 @@ describe('TMDb detail route handlers', () => {
     expect(mocks.fetchMock).not.toHaveBeenCalled();
     expect(result).toEqual({
       statusCode: 400,
-      statusMessage: 'Invalid Discover query',
+      statusMessage: 'Invalid query',
     });
   });
 });

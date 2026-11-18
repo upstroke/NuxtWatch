@@ -28,7 +28,6 @@ describe('TMDb error recognition', () => {
     'MISSING_TOKEN',
     'INVALID_BASE_URL',
     'INVALID_QUERY',
-    'INVALID_FILTER',
     'UPSTREAM_FAILED',
     'INVALID_RESPONSE',
   ] as const)('recognizes a factory-created %s error', (code) => {
@@ -53,19 +52,11 @@ describe('TMDb error recognition', () => {
 });
 
 describe('TMDb error mapping', () => {
-  // Branch coverage: maps an invalid Discover query to a sanitized 400 response
-  it('maps an invalid Discover query to a sanitized 400 response', () => {
+  // Branch coverage: maps an invalid query to a sanitized 400 response
+  it('maps an invalid query to a sanitized 400 response', () => {
     expect(toTmdbHttpError(createTmdbError('INVALID_QUERY'))).toEqual({
       statusCode: 400,
-      statusMessage: 'Invalid Discover query',
-    });
-  });
-
-  // Branch coverage: maps invalid Discover filters to a sanitized 400 response
-  it('maps invalid Discover filters to a sanitized 400 response', () => {
-    expect(toTmdbHttpError(createTmdbError('INVALID_FILTER'))).toEqual({
-      statusCode: 400,
-      statusMessage: 'Invalid Discover filters',
+      statusMessage: 'Invalid query',
     });
   });
 

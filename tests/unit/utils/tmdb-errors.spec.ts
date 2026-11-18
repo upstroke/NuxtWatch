@@ -28,7 +28,7 @@ describe('TMDb H3 error response', () => {
 
     expect(sendTmdbError(event as unknown as Parameters<typeof sendTmdbError>[0], error)).toEqual({
       statusCode: 400,
-      statusMessage: 'Invalid Discover query',
+      statusMessage: 'Invalid query',
     });
     expect(event.node.res.statusCode).toBe(400);
   });
