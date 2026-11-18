@@ -11,6 +11,10 @@ This document is the single source of truth for TypeScript typing conventions in
 
 ## Zod contracts
 
+Use the Zod 4 API for new and updated schemas. The exact version is pinned in
+[`package.json`](../package.json). Prefer `z.iso.date()` for ISO date strings
+over the deprecated `z.string().date()` method.
+
 For every external structure, define exactly one Zod schema in `src/lib/schemas` and derive its TypeScript type from that schema:
 
 ```ts
