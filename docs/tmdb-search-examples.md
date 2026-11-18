@@ -16,7 +16,13 @@ Map `title` to `query`. Always request `include_adult=true` and do not exclude m
 
 ### Observed results
 
-The authenticated default request returned HTTP 200, `page: 1`, `total_pages: 4`, and `total_results: 62`. Page 1 contained 20 results: 18 movies and two TV shows. The first result was The Matrix (1999), ID `603`. No hit on this page had `adult: true`; pages 2–4 of this request were not inspected. The reported total is the upstream count, not a count of cards. A person hit was observed in an earlier Multi Search run with different options.
+The authenticated default request returned HTTP 200, `page: 1`, `total_pages: 4`, and `total_results: 62`. Page 1 contained 20 results: 18 movies and two TV shows. The first result was The Matrix (1999), ID `603`. No hit on this page had `adult: true`. The reported total is the upstream count, not a count of cards. A person hit was observed in an earlier Multi Search run with different options.
+
+#### Comparison request: page 2
+
+Adding only `page=2` to the initial request returned HTTP 200, `page: 2`, `total_pages: 4`, and `total_results: 62`. The response contained 20 movies, no TV shows, and no people. One movie was marked `adult: true`. Pages 3 and 4 were not inspected.
+
+The 20 entries are raw results for page 2, not a count of cards displayed by NuxtWatch. This comparison verifies TMDb pagination, not how NuxtWatch loads or filters subsequent pages.
 
 ### Card contract
 
@@ -99,7 +105,7 @@ For the comparison request without a year, remove only the `first_air_date_year`
 | Request | HTTP | `page` | `total_pages` | `total_results` | Results returned |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Without year | 200 | 1 | 4 | 61 | 20 |
-| With `first_air_date_year=2005` | 200 | 1 | 1 | 1 |
+| With `first_air_date_year=2005` | 200 | 1 | 1 | 1 | 1 |
 
 Without the year, the US series *The Office* (ID `2316`, first aired `2005-03-24`) ranked first. The UK series with the same display name (ID `2996`, first aired `2001-07-09`) ranked second. Pages 2–4 were not inspected.
 
