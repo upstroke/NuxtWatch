@@ -9,6 +9,12 @@ This document is the single source of truth for TypeScript typing conventions in
 - Do not duplicate a type that can be derived from an existing Zod contract.
 - Do not create a Zod schema, interface or type alias for every internal function or implementation detail.
 
+## Type checking
+
+Run `pnpm typecheck` to check TypeScript and Vue single-file components.
+The exact versions of TypeScript and `vue-tsc` are pinned in
+[`package.json`](../package.json).
+
 ## Zod contracts
 
 Use the Zod 4 API for new and updated schemas. The exact version is pinned in
