@@ -24,6 +24,14 @@ The TMDb requests are verified; the end-to-end chat flow is not. Multiple title 
 
 Start here. Do not change the prompt or application code until the scope is agreed.
 
+### Findings — chat schema usage
+
+The `git grep` check on `origin/feat/001-title-search` covered `app`, `server`, `src`, and `tests`. Matches for `ChatIntentSchema`, `ChatIntent`, and `baseRevision` were limited to `src/lib/schemas/chat.ts` and `tests/unit/schemas/chat.spec.ts`. `src/lib/schemas/index.ts` re-exports the chat schema, but no application use was found in the checked paths.
+
+`ChatIntentSchema` requires `baseRevision`, while `src/lib/parser/instructions.ts` tells the model not to emit revisions. The schema is therefore not a direct match for the raw model response. Proposed first scope: leave `chat.ts` unchanged, validate a proposal to set a non-empty title, and use it to build the search object (for example, `{ title: 'The Matrix' }`). Reject invalid or unsupported proposals without changing the search state or dispatching a search.
+
+The previous live LLM JSON response has not yet been located. `tests/unit/parser/instructions.spec.ts` checks only the instructions version. If the original response cannot be located, use an explicitly synthetic fixture for the automated test and keep any live model check separate.
+
 ## Phase 2 — Implement and verify
 
 - [ ] Verify “Find The Matrix” first. Use the existing LLM response as a fixture if available. Validate it, populate the search object, and pass that object to the internal API. With a mocked TMDb transport, verify the `/search/multi` request and returned title cards.
