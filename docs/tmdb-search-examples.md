@@ -72,3 +72,37 @@ For the year-filtered request, add `--data-urlencode 'primary_release_year=1999'
 The year-filtered response also contained *Making "The Matrix"* (`684431`) and *The Matrix: What Is Bullet-Time?* (`684428`). The year narrows the result list but does not make the match unique. The latter result was not on page 1 of the unfiltered response; its position in the full unfiltered list was not checked.
 
 Status: Both API requests verified. No parser, schema, or selection behavior is defined by this example.
+
+## 3. TV title search with a first-air year: The Office (2005)
+
+User request: “Finde die Serie The Office von 2005.” Both requests use the TV Search endpoint, set `include_adult=true`, and omit `language` and `page`. The only difference is `first_air_date_year`.
+
+### TMDb requests
+
+With `NUXT_TMDB_API_READ_ACCESS_TOKEN` set in the shell, run:
+
+```bash
+curl --silent --show-error --get \
+  --url 'https://api.themoviedb.org/3/search/tv' \
+  --data-urlencode 'query=The Office' \
+  --data-urlencode 'first_air_date_year=2005' \
+  --data-urlencode 'include_adult=true' \
+  --header "Authorization: Bearer ${NUXT_TMDB_API_READ_ACCESS_TOKEN:?Set the TMDb read access token}" \
+  --header 'accept: application/json' \
+  --write-out '\nHTTP %{http_code}\n'
+```
+
+For the comparison request without a year, remove only the `first_air_date_year` line.
+
+### Observed results
+
+| Request | HTTP | `page` | `total_pages` | `total_results` | Results returned |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Without year | 200 | 1 | 4 | 61 | 20 |
+| With `first_air_date_year=2005` | 200 | 1 | 1 | 1 |
+
+Without the year, the US series *The Office* (ID `2316`, first aired `2005-03-24`) ranked first. The UK series with the same display name (ID `2996`, first aired `2001-07-09`) ranked second. Pages 2–4 were not inspected.
+
+With the year, only the US series was returned. Unlike the Movie Search example, this particular filtered request returned a single result. This is an observation, not a general rule for automatic selection. All returned entries in both responses had `adult: false`; the request still sets `include_adult=true`.
+
+Status: Both API requests verified. No parser, schema, or selection behavior is defined by this example.
