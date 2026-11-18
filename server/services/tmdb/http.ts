@@ -24,7 +24,7 @@ function assertConfiguration(config: TmdbConfig) {
   }
 }
 
-function assertDiscoverPath(path: string) {
+function assertTmdbPath(path: string) {
   const hasControlCharacter = [...path].some((character) => {
     const code = character.charCodeAt(0);
     return code <= 0x1f || code === 0x7f;
@@ -56,7 +56,7 @@ export function createTmdbHttpClient(config: TmdbConfig, request: TmdbRequest) {
      */
     async get(path: string, query: Record<string, string> = {}): Promise<unknown> {
       assertConfiguration(config);
-      assertDiscoverPath(path);
+      assertTmdbPath(path);
 
       try {
         return await request(`${TMDB_BASE_URL}${path}`, {
@@ -75,7 +75,6 @@ export function createTmdbHttpClient(config: TmdbConfig, request: TmdbRequest) {
 
     /**
      * Retrieves the weekly trending media from TMDb.
-     *
      * @returns The unvalidated raw trending response body.
      */
     async getWeeklyTrending(): Promise<unknown> {

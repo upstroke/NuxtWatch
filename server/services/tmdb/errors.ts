@@ -2,7 +2,6 @@ export type TmdbErrorCode =
   | 'MISSING_TOKEN'
   | 'INVALID_BASE_URL'
   | 'INVALID_QUERY'
-  | 'INVALID_FILTER'
   | 'UPSTREAM_FAILED'
   | 'INVALID_RESPONSE';
 
@@ -33,9 +32,7 @@ export function isTmdbError(error: unknown): error is TmdbError {
 
 /**
  * Maps a TMDb error to a safe HTTP error response.
- *
  * Unknown errors are treated as an upstream request or response failure.
- *
  * @param error - The caught error to classify.
  * @returns The HTTP status code and sanitized status message.
  */
@@ -43,11 +40,7 @@ export function toTmdbHttpError(error: unknown) {
   const code = isTmdbError(error) ? error.code : undefined;
 
   if (code === 'INVALID_QUERY') {
-    return { statusCode: 400, statusMessage: 'Invalid Discover query' };
-  }
-
-  if (code === 'INVALID_FILTER') {
-    return { statusCode: 400, statusMessage: 'Invalid Discover filters' };
+    return { statusCode: 400, statusMessage: 'Invalid query' };
   }
 
   if (code === 'MISSING_TOKEN' || code === 'INVALID_BASE_URL') {
