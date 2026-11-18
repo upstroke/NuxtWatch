@@ -11,7 +11,7 @@ for (const [userText, expected] of cases) {
     const response = await fetch('http://localhost:3000/api/search/title/refine', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, userText }),
+      body: JSON.stringify({ currentFilters: { title, mediaType: 'all' }, userText }),
       signal: AbortSignal.timeout(35000),
     });
     assert.ok(response.ok, `HTTP ${response.status}`);

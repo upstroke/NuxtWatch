@@ -2,7 +2,18 @@ import { z } from 'zod';
 import { PARSER_INSTRUCTIONS } from '@lib/parser/instructions';
 import { refineTitleSearch } from '@lib/parser/refine-title-search';
 
-const BodySchema = z.object({ title: z.string().trim().min(1).max(500), userText: z.string().trim().min(1).max(2000) }).strict();
+const BodySchema = z
+  .object({
+    currentFilters: z
+      .object({
+        title: z.string().trim().min(1).max(500),
+        mediaType: z.enum(['all', 'movie', 'tv']),
+        year: z.number().int().min(1).max(9999).optional(),
+      })
+      .strict(),
+    userText: z.string().trim().min(1).max(2000),
+  })
+  .strict();
 const CompletionSchema = z.object({ choices: z.tuple([z.object({ message: z.object({ content: z.string().min(1) }) })]).rest(z.unknown()) });
 const OpenRouterConfigSchema = z.object({
   apiKey: z.string().trim().min(1),
@@ -21,7 +32,7 @@ export default defineEventHandler(async (event) => {
   }
   const { apiKey, model } = config.data;
 
-  const { title, userText } = body.data;
+  const { currentFilters, userText } = body.data;
   let proposal: unknown;
   try {
     const response = await $fetch<unknown>('https://openrouter.ai/api/v1/chat/completions', {
@@ -39,7 +50,7 @@ export default defineEventHandler(async (event) => {
             role: 'user',
             content: JSON.stringify({
               context: {
-                currentFilters: { mediaType: 'all', title },
+                currentFilters,
                 capabilities: {
                   changes: [
                     { field: 'title', operations: ['set'] },
@@ -60,5 +71,5 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 502, statusMessage: 'Parser provider failed' });
   }
 
-  return refineTitleSearch({ title }, proposal);
+  return refineTitleSearch(currentFilters, proposal);
 });
