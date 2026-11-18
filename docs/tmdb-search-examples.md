@@ -106,3 +106,18 @@ Without the year, the US series *The Office* (ID `2316`, first aired `2005-03-24
 With the year, only the US series was returned. Unlike the Movie Search example, this particular filtered request returned a single result. This is an observation, not a general rule for automatic selection. All returned entries in both responses had `adult: false`; the request still sets `include_adult=true`.
 
 Status: Both API requests verified. No parser, schema, or selection behavior is defined by this example.
+
+## 4. Title and year without a media type: The Office (2005)
+
+User request: “Finde The Office von 2005.” No media type was specified. Both requests set `include_adult=true` and omit `language` and `page`.
+
+| Request | HTTP | `page` | `total_pages` | `total_results` |
+| --- | ---: | ---: | ---: | ---: |
+| `/3/search/movie?query=The%20Office&primary_release_year=2005&include_adult=true` | 200 | 1 | 1 | 4 |
+| `/3/search/tv?query=The%20Office&first_air_date_year=2005&include_adult=true` | 200 | 1 | 1 | 1 |
+
+The TV response returned the US series *The Office* (ID `2316`, first aired `2005-03-24`), the only exact display-title match. The four movie results had different display titles; the first (ID `371175`) had `adult: true`.
+
+Keep all four movie results and the TV result eligible for display. Exact display-title matching is not an exclusion criterion, and do not filter returned results by `adult`. This example does not decide whether to combine the lists, how to rank results across endpoints, or whether to select a result automatically.
+
+Status: Both API requests verified. Parser and schemas are unchanged.
