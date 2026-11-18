@@ -19,16 +19,16 @@ The TMDb requests are verified; the end-to-end chat flow is not. Multiple title 
 
 ## Phase 1 — Inspect and agree
 
-- [ ] Review the parser output schema and instructions and identify the relevant internal search route, input schema, and tests. Record what can be reused and what is missing. The earlier LLM response was not located; the live response below is available for the first title test.
-- [ ] Agree on the smallest implementation scope and test plan. Define how a validated parser proposal updates the shared search object and what the internal API accepts. The API receives complete search criteria, not raw LLM output or TMDb parameters.
+- [x] Review the parser output schema and instructions, and inventory the internal search route, input schema, and tests. The [Phase 1 inventory](001-title-search-phase-1.md) records what can be reused and what is missing. The earlier LLM response was not located; the live response below is available for the first title test.
+- [x] Agree on the first implementation scope and test plan. Validate the title proposal into the shared search object and send only those criteria as JSON to `POST /api/search/title`. Keep the TMDb Multi Search service and its title-card mapper side by side. See the [agreed layout and verification plan](001-title-search-phase-1.md#agreed-layout-and-contract).
 
-Start here. Do not change the prompt or application code until the scope is agreed.
+Phase 1 records the design decision. Implementation and verification remain open in Phase 2.
 
 ### Findings — chat schema usage
 
 The `git grep` check on `origin/feat/001-title-search` covered `app`, `server`, `src`, and `tests`. Matches for `ChatIntentSchema`, `ChatIntent`, and `baseRevision` were limited to `src/lib/schemas/chat.ts` and `tests/unit/schemas/chat.spec.ts`. `src/lib/schemas/index.ts` re-exports the chat schema, but no application use was found in the checked paths.
 
-`ChatIntentSchema` requires `baseRevision`, while `src/lib/parser/instructions.ts` tells the model not to emit revisions. The schema is therefore not a direct match for the raw model response. Proposed first scope: leave `chat.ts` unchanged, validate a proposal to set a non-empty title, and use it to build the search object (for example, `{ title: 'The Matrix' }`). Reject invalid or unsupported proposals without changing the search state or dispatching a search.
+`ChatIntentSchema` requires `baseRevision`, while `src/lib/parser/instructions.ts` tells the model not to emit revisions. The schema is therefore not a direct match for the raw model response. Agreed first scope: leave `chat.ts` unchanged, validate a proposal to set a non-empty title, and use it to build the search object (for example, `{ title: 'The Matrix' }`). Reject invalid or unsupported proposals without changing the search state or dispatching a search.
 
 `tests/unit/parser/instructions.spec.ts` checks only the instructions version.
 
