@@ -30,3 +30,37 @@ it('rejects a refinement without a usable title', () => {
     status: 'unchanged',
   });
 });
+
+// Observed with inclusionai/ling-3.2-flash:free and instructions from b054c81.
+const liveRefinementFixtures = [
+  {
+    userText: 'Ich meine den Film von 1999',
+    proposal: {
+      status: 'ready',
+      changes: [
+        { field: 'mediaType', operation: 'set', value: 'movie' },
+        { field: 'year', operation: 'set', value: 1999 },
+      ],
+    },
+    expected: {
+      status: 'refined',
+      criteria: { title: 'The Matrix', mediaType: 'movie', year: 1999 },
+    },
+  },
+  {
+    userText: 'Ich meine den von 1999',
+    proposal: {
+      status: 'ready',
+      changes: [{ field: 'year', operation: 'set', value: 1999 }],
+    },
+    expected: { status: 'unchanged' },
+  },
+] as const;
+
+it.each(liveRefinementFixtures)(
+  'applies the validator contract to the observed proposal for "$userText"',
+  ({ proposal, expected }) => {
+    expect(refineTitleSearch(current, proposal)).toEqual(expected);
+    expect(current).toEqual({ title: 'The Matrix' });
+  },
+);
