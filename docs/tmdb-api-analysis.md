@@ -17,10 +17,16 @@ All paths below are GET endpoints relative to `https://api.themoviedb.org/3`.
 | Search | [`/search/collection`](https://developer.themoviedb.org/reference/search-collection) | Find film collections by name. |
 | Discover | [`/discover/movie`](https://developer.themoviedb.org/reference/discover-movie) | Find films by filters. |
 | Discover | [`/discover/tv`](https://developer.themoviedb.org/reference/discover-tv) | Find series by filters. |
+| Trending | [`/trending/all/{time_window}`](https://developer.themoviedb.org/reference/trending-all) | List trending films, series and people together. |
+| Trending | [`/trending/movie/{time_window}`](https://developer.themoviedb.org/reference/trending-movies) | List trending films. |
+| Trending | [`/trending/tv/{time_window}`](https://developer.themoviedb.org/reference/trending-tv) | List trending series. |
+| Trending | [`/trending/person/{time_window}`](https://developer.themoviedb.org/reference/trending-people) | List trending people. |
 | Catalog | [`/genre/movie/list`](https://developer.themoviedb.org/reference/genre-movie-list) | List film genres. |
 | Catalog | [`/genre/tv/list`](https://developer.themoviedb.org/reference/genre-tv-list) | List series genres. |
 | Credits | [`/person/{person_id}/tv_credits`](https://developer.themoviedb.org/reference/person-tv-credits) | Retrieve a person's TV credits. |
 | External ID | [`/find/{external_id}`](https://developer.themoviedb.org/reference/find-by-id) | Look up TMDb entries using an external identifier. |
+
+Trending uses `day` or `week` as `time_window`. It lists trends for that window rather than matching a text query or a set of Discover filters.
 
 ## Observed responses
 
@@ -28,4 +34,4 @@ No observations recorded yet. For each test, record the endpoint and parameters,
 
 ## Decisions for NuxtWatch
 
-Open: which endpoints to use, which response fields to retain, and when to combine requests or filter results in the application.
+Open: which endpoints to use, which response fields to retain, when to combine requests or filter results in the application, and whether to use Trending when no search criteria are set.
