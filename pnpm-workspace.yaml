@@ -1,3 +1,4 @@
 allowBuilds:
+  '@openrouter/sdk@1.5.108': false
   esbuild: true
   vue-demi: false
