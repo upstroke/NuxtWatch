@@ -6,7 +6,7 @@ export const SearchResultCardSchema = z.object({
   mediaType: z.enum(['movie', 'tv']),
   title: z.string().trim().min(1),
   backdropPath: z.string().min(1).nullable(),
-  date: z.string().date().nullable(),
+  date: z.iso.date().nullable(),
   genreIds: z.array(z.number().int().positive()),
   rating: z.number().min(0).max(10).nullable(),
 });
