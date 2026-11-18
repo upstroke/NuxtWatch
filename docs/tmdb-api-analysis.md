@@ -7,7 +7,7 @@ This working document collects findings for NuxtWatch. Start with the API endpoi
 All paths below are GET endpoints relative to `https://api.themoviedb.org/3`.
 
 | Group           | Endpoint                                                                                                  | Documented purpose                                   |
-| --------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+|-----------------|-----------------------------------------------------------------------------------------------------------|------------------------------------------------------|
 | Search          | [`/search/movie`](https://developer.themoviedb.org/reference/search-movie)                                | Find films by title.                                 |
 | Search          | [`/search/tv`](https://developer.themoviedb.org/reference/search-tv)                                      | Find series by title.                                |
 | Search          | [`/search/multi`](https://developer.themoviedb.org/reference/search-multi)                                | Search films, series and people with one text query. |
@@ -41,7 +41,7 @@ from the presence of a particular word. A follow-up may answer an open
 question or change an existing search rather than start a new one.
 
 | User request                                         | Flow                       | When to run it                                                                                                                                                                |
-| ---------------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|------------------------------------------------------|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | "Find The Matrix."                                   | Title search               | A title is enough to search. Media type and year can narrow the result.                                                                                                       |
 | "Show me sci-fi movies from 2015 onwards."           | Filtered discovery         | Run once the explicitly requested filters can be applied.                                                                                                                     |
 | "Show me movies like The Matrix."                    | Similarity search          | Resolve the reference title first. If it is ambiguous, let the user select the intended work. The selected work is the input to similarity search, not the final result.      |
@@ -112,7 +112,7 @@ choose TMDb endpoints.
 ### Decision matrix: what changes in the session?
 
 | Event                                                     | State transition                                                                                                                                                            |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|-----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Start a new search                                        | Create a new draft without carrying over criteria from the previous search.                                                                                                 |
 | Add "with Tom"                                            | Create a referenced pending person request. Keep unrelated accepted criteria.                                                                                               |
 | Refine Tom or select a candidate                          | Target the specific pending request. Refinement triggers a new lookup; a validated selection accepts the person's ID.                                                       |
@@ -131,7 +131,7 @@ overwrite a newer result.
 ### Search matrix: what may run next?
 
 | Draft or outcome                                      | Next step                                                                                                                                                                  |
-| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|-------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Title request with enough information                 | Run title search.                                                                                                                                                          |
 | Filtered discovery with an unresolved required person | Resolve the person first. Do not run discovery with that filter silently omitted.                                                                                          |
 | Person lookup is ambiguous or returns no match        | Ask for a selection or a more precise name as appropriate; allow the pending request to be discarded.                                                                      |
@@ -142,12 +142,23 @@ overwrite a newer result.
 
 ### Endpoint matrix: how is each task executed?
 
-| Task                                          | TMDb calls                                                                               | Required data                                                                                                                             |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Resolve a person                              | `/search/person`                                                                         | Candidate IDs and display names; pagination metadata to assess completeness. Missing metadata must not be treated as proof of uniqueness. |
-| Find filtered films                           | `/discover/movie`                                                                        | Applicable filters in; IDs and card fields out.                                                                                           |
-| Check streaming availability for daily trends | `/trending/all/day`, then the movie or TV watch-provider endpoint for each title checked | Media type and ID from Trending; availability for the selected region.                                                                    |
-| Load details after a card click               | `/movie/{movie_id}` or `/tv/{series_id}`                                                 | Media type and ID from the selected card.                                                                                                 |
+| Task                                          | TMDb calls                                                                               | Required data                                                                    | Status / open question                                                |
+|-----------------------------------------------|------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|-----------------------------------------------------------------------|
+| Find a title                                  | `/search/movie`, `/search/tv`, or `/search/multi`                                        | Title and optional media type or year in; ID, title, year, and media type out.   | Decide which search variants are needed.                              |
+| Resolve a similarity reference                | Reuse title search                                                                       | Reference title in; selected work's ID and media type out.                       | If ambiguous, ask the user to select the reference before continuing. |
+| Find similar titles                           | `/movie/{movie_id}/similar` or `/tv/{series_id}/similar`                                 | Reference ID in; similar titles of the same media type out.                      | Cross-media similarity and streaming combinations are open.           |
+| Resolve a person                              | `/search/person`                                                                         | Candidate IDs and display names; pagination metadata to assess completeness.     | Missing metadata must not be treated as proof of uniqueness.          |
+| Resolve a keyword                             | `/search/keyword`                                                                        | Keyword text in; candidate IDs, names, and pagination metadata out.              | Missing pagination metadata is not proof of uniqueness.               |
+| Resolve a genre                               | `/genre/movie/list` or `/genre/tv/list`                                                  | Media type in; genre IDs and names out.                                          | Check whether the existing catalog is sufficient.                     |
+| Find filtered films                           | `/discover/movie`                                                                        | Applicable filters in; IDs and card fields out.                                  | Verify filter combinations as each flow is specified.                 |
+| Find filtered TV series                       | `/discover/tv`                                                                           | Applicable TV filters in; IDs and card fields out.                               | Verify person-based combinations separately.                          |
+| Find a person's TV credits                    | `/person/{person_id}/tv_credits`                                                         | Person ID in; series IDs out.                                                    | Verify how to combine multiple people and other filters.              |
+| Show daily trends                             | `/trending/all/day`                                                                      | Film and TV card fields and media type; skip people.                             | Use media-specific trending calls only if a separate flow needs them. |
+| Check streaming availability for daily trends | `/trending/all/day`, then the movie or TV watch-provider endpoint for each title checked | Media type and ID from Trending; availability for the selected region.           | Check availability before presenting a trending title as streamable.  |
+| Find popular and streamable titles            | `/discover/movie` and/or `/discover/tv`                                                  | Streaming region, availability filters, and popularity sort in; card fields out. | Label as popular and streamable, not as daily trends.                 |
+| Load details after a card click               | `/movie/{movie_id}` or `/tv/{series_id}`                                                 | Media type and ID from the selected card.                                        | Use the TMDb ID directly; no `/find` call is needed.                  |
+| Show providers on a detail page               | `/movie/{movie_id}/watch/providers` or `/tv/{series_id}/watch/providers`                 | Selected title's ID and media type in; offers for the selected region out.       | Separate from checking availability across a trending list.           |
+| Find recent regional theatrical releases      | `/discover/movie`                                                                        | Country and release window in; movie card fields out.                            | Candidate flow; does not establish local showtimes.                   |
 
 The adapter returns data or a typed failure; it does not mutate the
 session. The inventory lists available endpoints. This matrix records
