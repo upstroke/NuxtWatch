@@ -32,6 +32,7 @@ export default defineEventHandler(async (event) => {
       timeout: 30000,
       body: {
         model,
+        reasoning: { enabled: false },
         messages: [
           { role: 'system', content: PARSER_INSTRUCTIONS },
           {
