@@ -35,6 +35,7 @@ export default defineEventHandler(async (event) => {
 
   const { currentFilters, userText } = body.data;
   let proposal: unknown;
+  let phase: 'fetch' | 'response-schema' | 'model-json' = 'fetch';
   try {
     const response = await $fetch<unknown>('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -50,6 +51,7 @@ export default defineEventHandler(async (event) => {
         ],
       },
     });
+    phase = 'response-schema';
     const { content, reasoning } = CompletionSchema.parse(response).choices[0].message;
     if (process.env.TITLE_REFINE_DEBUG_REASONING === '1') {
       const preview = typeof reasoning === 'string'
@@ -57,8 +59,22 @@ export default defineEventHandler(async (event) => {
         : '';
       console.info('[title-refine] Reasoning', preview || '(not returned)');
     }
+    phase = 'model-json';
     proposal = JSON.parse(content);
-  } catch {
+  } catch (error: unknown) {
+    const upstreamStatus =
+      phase === 'fetch' &&
+      typeof error === 'object' &&
+      error !== null &&
+      'statusCode' in error &&
+      typeof error.statusCode === 'number'
+        ? error.statusCode
+        : undefined;
+
+    console.warn('[title-refine] Parser provider failed', {
+      phase,
+      ...(upstreamStatus === undefined ? {} : { upstreamStatus }),
+    });
     throw createError({ statusCode: 502, statusMessage: 'Parser provider failed' });
   }
 
