@@ -19,6 +19,7 @@ NuxtWatch is a controlled search application. The LLM proposes structured filter
 
 ## Application style and comments
 
+- Prefer straightforward JavaScript and TypeScript that make the behavior easy to follow. Use clear names and explicit control flow. Add abstractions or design patterns only when they solve a concrete problem and make the code easier to understand or change.
 - Use ES modules, plain functions, and composition for application code. Do not introduce application classes, inheritance, or custom prototype hierarchies.
 - Follow Nuxt, Vue, and the chosen UI library's conventions at their integration points. Use their APIs and required structures as intended, including framework- or library-provided classes where appropriate. Do not add wrappers merely to avoid those APIs.
 - Pass dependencies explicitly. Use factory functions and closures when a component needs instance-specific configuration or private state. Expose only the operations callers need. Add adapters for concrete boundary needs and use memoization only when justified; document its scope, key, lifetime, and failure behavior.
