@@ -1,3 +1,8 @@
+/**
+ * Calls the configured language model with separate system instructions
+ * and user content. Returns text without interpreting search criteria
+ * or validating search proposals.
+ */
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { generateText } from 'ai';
 
