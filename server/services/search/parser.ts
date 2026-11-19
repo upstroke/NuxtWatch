@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import { PARSER_INSTRUCTIONS } from '@lib/parser/instructions';
 import { generateLlmText } from './llm';
+import type { LlmConfig } from './llm';
 
 const title = z.string().trim().min(1).max(500);
 const mediaType = z.enum(['all', 'movie', 'tv']);
@@ -32,9 +33,11 @@ const proposal = z.discriminatedUnion('status', [
 type SearchDraft = { title?: string; mediaType: z.infer<typeof mediaType>; year?: number };
 type SearchProposal = z.infer<typeof proposal>;
 
+export type ParserInput = { currentFilters: SearchDraft; userText: string };
+
 export async function parseSearchProposal(
-  config: Parameters<typeof generateLlmText>[0],
-  input: { currentFilters: SearchDraft; userText: string },
+  config: LlmConfig,
+  input: ParserInput,
   generate: typeof generateLlmText = generateLlmText,
 ): Promise<SearchProposal> {
   const text = await generate(config, {

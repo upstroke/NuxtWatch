@@ -2,11 +2,10 @@
  * Applies validated search proposals and decides whether a title search is
  * ready or needs clarification. Does not call TMDb or execute searches.
  */
+import type { LlmConfig } from './llm';
 import { parseSearchProposal } from './parser';
+import type { ParserInput } from './parser';
 
-type ParserParameters = Parameters<typeof parseSearchProposal>;
-type ParserConfig = ParserParameters[0];
-type ParserInput = ParserParameters[1];
 type SearchCriteria = ParserInput['currentFilters'];
 
 type SearchDecision =
@@ -30,7 +29,7 @@ export function decideSearch(criteria: SearchCriteria): SearchDecision {
 
 /** Applies accepted edits to a copy of the draft and evaluates it without executing a search. */
 export async function submitSearch(
-  config: ParserConfig,
+  config: LlmConfig,
   input: ParserInput,
   parse: typeof parseSearchProposal = parseSearchProposal,
 ) {

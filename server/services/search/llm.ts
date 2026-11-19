@@ -6,7 +6,7 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { generateText } from 'ai';
 
-type LlmConfig = {
+export type LlmConfig = {
     provider: string;
     baseUrl: string;
     model: string;
