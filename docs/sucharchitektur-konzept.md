@@ -19,9 +19,9 @@ Der freie Suchschlitz verwendet `POST /api/search`. Die Route validiert die expl
 
 | Aktion | Verhalten |
 | --- | --- |
-| `submit` | Nimmt Suchtext und aktuelle Kriterien entgegen. Der erste Klick auf „Jetzt suchen“ startet ohne Klärungsbedarf direkt, wenn der Stand ausführbar ist. Sonst folgt eine konkrete Rückfrage oder ein begründeter Hinweis. |
+| `submit` | Nimmt Suchtext und aktuelle Kriterien entgegen. Ohne Klärungsbedarf startet die ausführbare Suche direkt auf den ausdrücklichen Auftrag hin. Sonst folgt eine konkrete Rückfrage oder ein begründeter Hinweis. |
 | `clarify` | Übernimmt eine geprüfte Antwort oder verarbeitet eine Präzisierung. Nach erfolgreicher Übernahme liefert die Anwendung den bestätigten Kriterienstand und meldet die nächste nötige Frage, Ausführbarkeit oder den Grund der Nichtausführbarkeit. Startet keine Treffersuche. |
-| `execute` | Startet die Suche ausschließlich nach einem ausdrücklichen Klick auf „Suche starten“ in der Kriterienübersicht. Der Server prüft erneut den gebundenen, vollständig geklärten Kriterienstand. `execute` übernimmt keine Antwort. |
+| `execute` | Startet die Suche nach einer ausdrücklichen Freigabe. Der Server prüft erneut den gebundenen, vollständig geklärten Kriterienstand. `execute` übernimmt keine Antwort. |
 
 `submit` und `execute` nutzen dieselbe interne Ausführungsfunktion. Die Suchsession mit bestätigten Kriterien, offene Klärungen und laufende Requests sind getrennt; keine globale `pending`-Phase. Der Server hält kurzlebigen Auftragszustand, keine dauerhaft gespeicherte Suchsession. Wiederherstellung nach Reload ist nicht zugesichert.
 
@@ -29,16 +29,13 @@ Der freie Suchschlitz verwendet `POST /api/search`. Die Route validiert die expl
 - `revision` bindet Antworten und Ausführung an den aktuellen Kriterienstand. Jede übernommene Klärung erhöht die Revision. `questionId` bindet die Antwort an die konkrete offene Frage; Optionskennungen werden serverseitig geprüft. Änderungen am Kriterienstand machen alte Antworten unwirksam und erfordern eine erneute Prüfung der Rückfrage.
 - Der Server beansprucht die Ausführung für den geprüften Auftragsstand atomar vor dem TMDb-Aufruf. Wiederholte Starts melden den laufenden Auftrag oder liefern dessen Ergebnis, statt einen weiteren Aufruf zu starten. Die konkrete Speicherwahl bleibt offen; lokaler Speicher allein bietet keine instanzübergreifende oder neustartfeste Garantie.
 
-## Suchsession, Pills und Wizard
+## Kriterienstand und Wizard
 
-Unabhängig geklärte Kriterien erscheinen schon bei offenem Wizard als Pills. Fachlich gekoppelte Änderungen werden gemeinsam geprüft und übernommen oder gar nicht. Eindeutige Änderungen desselben Kriteriums im Suchtext ersetzen die alte Pill beim nächsten Absenden; andere bestätigte Pills bleiben erhalten. Bei „Batman ab 2010“ → „Batman ab 2020“ ersetzt `Ab 2020` die alte Jahres-Pill.
+Unabhängig geklärte Kriterien können bereits während einer offenen Klärung bestätigt werden. Fachlich gekoppelte Änderungen werden gemeinsam geprüft und übernommen oder gar nicht. Eindeutige Änderungen desselben Kriteriums im Suchtext ersetzen beim nächsten Absenden den alten Wert; andere bestätigte Kriterien bleiben erhalten. Bei „Batman ab 2010“ → „Batman ab 2020“ ersetzt `Ab 2020` die alte Jahresuntergrenze.
 
-1. **Frageseite:** Die Anwendung bestimmt die nächste nötige Frage. Jede Frage hat eine Vorauswahl. „Übernehmen“ bestätigt die aktuelle Auswahl, auch bei der letzten oder einzigen Frage. Passt keine Option, kann der Nutzer die Eingabe präzisieren. Weder die Auswahl allein noch „Übernehmen“ startet eine Suche.
-2. **Kriterienübersicht:** Nach jeder erfolgreich beantworteten Frage zeigt eine eigene Seite im Overlay alle bisher bestätigten Kriterien als Pills, einschließlich des neu bestätigten Kriteriums. Neue oder geänderte Pills werden hervorgehoben.
-3. **Aktion in der Übersicht:** Ist noch eine notwendige Frage offen, führt „Weiter zur nächsten Frage“ zur nächsten Frageseite; eine Suche mit Teilkriterien wird nicht angeboten. Ist der gezeigte Stand vollständig geklärt und ausführbar, startet erst „Suche starten“ die Suche. Ist der Stand nicht ausführbar und hilft keine weitere Frage, erklärt die Anwendung den Grund.
-4. Solange eine notwendige Frage offen ist, kann der Nutzer den Wizard weder auf einer Frageseite noch in der Zwischenübersicht abbrechen oder schließen. Wird der gebundene Auftrag dennoch ungültig, etwa beim Verlassen der Suchansicht, darf eine verspätete Antwort keine Pill hinzufügen, keine neueren Kriterien überschreiben und das Overlay nicht wieder öffnen.
+Die UI importiert keine Servermatrix und sendet keine rohe Modellantwort als Nutzerentscheidung. Laufstatus ist flüchtig und verändert weder Kriterien noch Chatverlauf. Technische Fehler übernehmen keine unverifizierten Änderungen. Wird der gebundene Auftrag ungültig, darf eine verspätete Antwort keine neueren Kriterien überschreiben oder das Overlay erneut öffnen.
 
-Die UI zeigt lokalisierte Fragen, Optionen, Hinweise und Fehlercodes; sie importiert keine Servermatrix und sendet keine rohe Modellantwort als Nutzerentscheidung. Laufstatus ist flüchtig und verändert weder Kriterien noch Chatverlauf. Technische Fehler übernehmen keine unverifizierten Änderungen.
+Der verbindliche UI-Ablauf einschließlich Frageseiten, Pill-Übersichten, Schaltflächen und Rückkehr zur Eingabe steht in der [Wizard-Spezifikation](clarificaton-wizzard-flow.md).
 
 ## Verträge und Struktur
 
@@ -58,7 +55,7 @@ Discovery ist eine strukturierte Filtersuche und kein Fallback zur Titelsuche. F
 | A2 | Titelverträge und Referenzfälle festhalten | Direkte TV-Suche und Film-Verfeinerung unterscheidbar; ungültige oder gekoppelte Vorschläge nicht teilweise übernommen |
 | A3 | Gemeinsamen Ablauf, Matrix und Titelfachlogik einführen | Vollständige Kriterienprüfung; technische Auswahl in der Anwendung; eine gemeinsame Ausführungsfunktion |
 | A4 | Gemeinsame Route und Auftragsbindung einführen | Direkter Start und gebundener Wizard-Start; unbekannte Aktionen, alte Antworten und Doppelstarts abgefangen; Migration abgesichert |
-| A5 | Wizard mit Beispieldaten prüfen | Ein- und mehrstufige Klärung, Vorauswahl und alternative Auswahl, Übernehmen bei jeder Frage, Kriterienübersicht nach jeder Antwort, Weiter bei offener Frage und separater Start erst bei ausführbarem Stand; kein Abbruch bei offener Frage, unabhängige Pills und Ersetzung; mindestens zwei Sprachbeispiele |
+| A5 | Wizard mit Beispieldaten prüfen | Abnahme gemäß [Wizard-Spezifikation](clarificaton-wizzard-flow.md), mindestens zwei Sprachbeispiele |
 | A6 | Promptumfang und UI-Status prüfen | Kontextbezogene Anweisungen, Ende des Laufstatus bei Ergebnis oder Fehler, keine vorgetäuschten Schritte |
 | A7 | Keyword als weiteren Architekturfall prüfen | Gemeinsame und eigene Fachregeln, Bedarf für eine eigene Route und verfügbare Paginierungsmetadaten geklärt |
 
