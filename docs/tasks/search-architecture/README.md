@@ -5,7 +5,7 @@ Diese README ist der Einstieg für die Weiterarbeit, auch ohne Chatverlauf. Das 
 ## Stand: Bestandsaufnahme (A1) und begonnene Umsetzung
 
 - `llm.ts`, `parser.ts` und `coordinator.ts` sind vorhanden. `submitSearch` verbindet Parser und Koordinator, führt aber noch keine TMDb-Suche aus.
-- Die bisherige Verzeichnisprüfung auf `feat/shared-search-architecture` fand unter `server/api/tmdb/` Einträge für Film, TV und Trending. `POST /api/search` ist weiterhin Zielbild, kein belegter Iststand. Eine Migration von `/api/search/title/refine` ist nur nötig, wenn eine vorhandene Implementierung oder ein Aufrufer nachgewiesen wird.
+- Die Verzeichnisprüfung auf `feat/shared-search-architecture` fand unter `server/api/tmdb/` Einträge für Film, TV und Trending. Für `/api/search/title/refine` wurde weder ein Handler noch ein Aufrufer gefunden; der alte Pfad taucht im geprüften Stand nur in der Dokumentation auf. Für den ersten Titelsuch-Durchstich ist daher keine Migration dieser Route einzuplanen. `POST /api/search` bleibt Zielbild, kein belegter Iststand.
 - A1 bleibt offen, bis Titel- und TMDb-Dienste, Adapter, Zod-Verträge, mögliche Aufrufer und relevante Tests mit Pfad oder Commit zugeordnet sind: wiederverwenden, anpassen oder neu anlegen. Für Tests genügt die Zuordnung Zusicherung → Testebene → vorhandener Test oder Lücke. Restfragen dem nächsten Schritt zuordnen; eine fertige CLI ist für den Abschluss von A1 nicht nötig.
 
 ## Nächster Meilenstein: direkter Titelsuch-Durchstich

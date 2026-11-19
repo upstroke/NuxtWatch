@@ -15,7 +15,7 @@ Beispiel: Bei „Batman ab 2010“ bleibt die Jahresuntergrenze erhalten. Falls 
 
 ## Technischer Einstieg und Auftragsbindung
 
-Der freie Suchschlitz verwendet `POST /api/search`. Die Route validiert die explizite Aktion und delegiert an `flow.ts`; unbekannte Aktionen werden abgelehnt. Streckenspezifische Routen können für bekannte strukturierte Aufrufe bestehen bleiben. Der alte Pfad `/api/search/title/refine` entfällt erst nach Migration oder abgesichertem Übergang. Detail- und Trending-Routen bleiben unverändert.
+Der freie Suchschlitz verwendet `POST /api/search`. Die Route validiert die explizite Aktion und delegiert an `flow.ts`; unbekannte Aktionen werden abgelehnt. Streckenspezifische Routen können für bekannte strukturierte Aufrufe bestehen bleiben. Detail- und Trending-Routen bleiben unverändert.
 
 | Aktion    | Verhalten                                                                                                                                                                                                                                                                     |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -61,23 +61,4 @@ src/
 ```
 
 - `src/lib/schemas/search.ts`: Zod-Verträge für Kriterien, Aktionen, Modellvorschläge und Ergebnisse; TypeScript-Typen ableiten. Kein gemeinsamer Titelzwang und keine vorsorglichen Personen- oder Keyword-Felder im ersten Schnitt. Gemeinsames `mediaTypeSchema` (`all`, `movie`, `tv`); Fachlogik entscheidet über Ausführbarkeit. Änderungsvorschläge wie `{ field: 'mediaType', value: 'movie' }` ersetzen nie das ganze Suchobjekt.
-- `server/api/search/index.post.ts`: gemeinsamer HTTP-Einstieg. `server/services/search/`: `matrix.ts` als Register, `flow.ts` als Koordination, `llm.ts` für Transport und Promptbausteine, `title.ts` für Titelfachregeln. Weitere Fachdateien erst bei unterstützten Fällen; TMDb-Transport und Adapter unter `server/services/tmdb/`.
-- LLM-Freigaben und Ausführbarkeit sind getrennt. Modellantworten erst formal, dann fachlich und hinsichtlich Zielbindung prüfen. Prompts enthalten knappe Grundanweisungen, erlaubte Operationen und relevanten Kontext, nicht standardmäßig Historie, Treffer, Übersetzungen oder fachfremde Regeln. Tokenvergleiche mit demselben Testfallbestand und unveränderten fachlichen Entscheidungen. Die Titelstrecke entscheidet über Multi-, Film- oder TV-Suche.
-
-## Spätere Anwendungsfälle
-
-Discovery ist eine strukturierte Filtersuche und kein Fallback zur Titelsuche. Filter, Mindestangaben und Mapping werden je Medientyp festgelegt. Sortierung ist kein Filter; aus „gut“ folgt ohne Produktregel keine Mindestbewertung. Der Genre-Katalog ist eine fachliche Quelle, kein Session-Bestandteil; Quelle und Namenszuordnung bleiben offen. `/search/keyword` dient zur Kandidatenauflösung; erst eine bestätigte ID geht als `with_keywords` in Discover ein. Keine eigene Frontend-Route für Auflösung erforderlich. Bei Personen und Keywords Paginierungsmetadaten prüfen: Ein angezeigter Einzelkandidat allein belegt keine Eindeutigkeit.
-
-## Aufgaben nach Freigabe
-
-| ID  | Aufgabe                                                                     | Abnahme                                                                                                                            |
-| --- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| A1  | Titelstrecke, Aufrufer, Verträge, Tests und Wizard-Dokument inventarisieren | Ist-/Ziel-Zuordnung, Migrationsliste und Abweichungen dokumentiert                                                                 |
-| A2  | Titelverträge und Referenzfälle festhalten                                  | Direkte TV-Suche und Film-Verfeinerung unterscheidbar; ungültige oder gekoppelte Vorschläge nicht teilweise übernommen             |
-| A3  | Gemeinsamen Ablauf, Matrix und Titelfachlogik einführen                     | Vollständige Kriterienprüfung; technische Auswahl in der Anwendung; eine gemeinsame Ausführungsfunktion                            |
-| A4  | Gemeinsame Route und Auftragsbindung einführen                              | Direkter Start und gebundener Wizard-Start; unbekannte Aktionen, alte Antworten und Doppelstarts abgefangen; Migration abgesichert |
-| A5  | Wizard mit Beispieldaten prüfen                                             | Abnahme gemäß [Wizard-Spezifikation](clarificaton-wizzard-flow.md), mindestens zwei Sprachbeispiele                                |
-| A6  | Promptumfang und UI-Status prüfen                                           | Kontextbezogene Anweisungen, Ende des Laufstatus bei Ergebnis oder Fehler, keine vorgetäuschten Schritte                           |
-| A7  | Keyword als weiteren Architekturfall prüfen                                 | Gemeinsame und eigene Fachregeln, Bedarf für eine eigene Route und verfügbare Paginierungsmetadaten geklärt                        |
-
-A1–A4 bilden den ersten technischen Schnitt; A5–A7 ziehen keine sofortige UI-Umsetzung oder weitere Suchstrecken nach sich. Danach relevante Tests, Coverage, ESLint und Typecheck ausführen. Detaillierte Speicherwahl, Dateiaufteilung und optionale Statusstreams bleiben Umsetzungsdetails.
+- `server/api/search/index.post.ts`: gemeinsamer HTTP-Einstieg.
