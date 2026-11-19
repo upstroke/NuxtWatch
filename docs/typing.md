@@ -25,6 +25,7 @@ export type TmdbRuntimeConfig = z.infer<typeof TmdbRuntimeConfigSchema>;
 
 ## Internal functions and assertions
 
+- Prefer the simplest type that makes the behavior clear or prevents a concrete mistake. Keep meaningful distinctions, such as a search being ready or needing clarification. Use a plain array for clarification options unless fixed length, order, or read-only access is part of the contract.
 - Do not create a schema, interface, or type alias for every internal function. Let TypeScript infer types where context is sufficient. Prefer inferred return types unless an explicit public contract or clearer annotation is needed. Reuse or derive a type where possible; define a local shape inline when used only locally.
 - Never use `as` to suppress a type error or replace validation. Use a type predicate only after a real runtime check, and an assertion only when TypeScript cannot infer information already established by such a check.
 
