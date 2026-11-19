@@ -2,15 +2,15 @@
 
 Diese Übersicht hält fest, wo welche Entscheidung hingehört. Die Titelsuche ist der erste Durchstich, nicht die Vorlage für getrennte Parser pro Suchstrecke. Siehe [Arbeitsstand](README.md), [Architekturkonzept](../../sucharchitektur-konzept.md) und [CLI-Abnahme](cli-abnahme.md).
 
-| Status                     | Pfad                                                         | Zuständigkeit                                                                                                                                                                                    |
-| -------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Vorhanden                  | `src/lib/parser/instructions.ts`                             | Versionierte Systemanweisungen. Nutzerdaten bleiben getrennt.                                                                                                                                    |
-| Vorhanden                  | `server/services/search/llm.ts`                              | Modellaufruf mit separater Systemanweisung und Nutzernachricht; keine Suchlogik.                                                                                                                 |
-| Geplant: erster Durchstich | `server/services/search/parser.ts`                           | Gemeinsamer Einstieg `parseSearchProposal`. Erzeugt und validiert streckenoffene Vorschläge. Der erste Vertrag erlaubt Titel, Medientyp und Jahr; daraus folgt kein eigener Titelparser.         |
-| Geplant: erster Durchstich | `server/services/search/` (Dateiname der Koordination offen) | Übernimmt zulässige Änderungen, prüft Suchwege und Voraussetzungen, bindet Rückfragen an den konkreten Auftrag und entscheidet, ob gesucht, nachgefragt oder ein fehlender Suchweg erklärt wird. |
-| Geplant: erster Durchstich | `server/api/search.post.ts`                                  | Gemeinsamer HTTP-Einstieg für `submit`, `clarify` und `execute`; keine eigene Suchweglogik. Die CLI ist der erste Client, ihr Dateipfad bleibt offen.                                            |
-| Vorhanden / zu ergänzen    | `server/services/tmdb/`                                      | Vorhandenen Transport in `http.ts` nutzen; Titelaufrufe und Treffer-Mapping ergänzen. Der Adapter setzt den gewählten Suchweg technisch um; er entscheidet nicht, was der Nutzer gemeint hat.    |
-| Vorhanden                  | `src/lib/schemas/ui/search-result-card.ts`                   | Normalisierte Karten für Film- und Serientreffer; kein Modellvorschlags- oder HTTP-Eingabevertrag.                                                                                               |
+| Status | Pfad | Zuständigkeit |
+| --- | --- | --- |
+| Vorhanden | `src/lib/parser/instructions.ts` | Versionierte Systemanweisungen. Nutzerdaten bleiben getrennt. |
+| Vorhanden | `server/services/search/llm.ts` | Modellaufruf mit separater Systemanweisung und Nutzernachricht; keine Suchlogik. |
+| Vorhanden | `server/services/search/parser.ts` | Gemeinsamer Einstieg `parseSearchProposal`. Erzeugt und validiert streckenoffene Vorschläge. Der erste Vertrag erlaubt Titel, Medientyp und Jahr; daraus folgt kein eigener Titelparser. |
+| Vorhanden / zu ergänzen | `server/services/search/coordinator.ts` | `submitSearch` übernimmt validierte Änderungen. `decideSearch` entscheidet für die Titelsuche, ob sie ausführbar ist, eine Klärung braucht oder nicht unterstützt wird. Die Bindung von Rückfragen an den konkreten Auftrag ist noch offen. Der Koordinator führt keine TMDb-Aufrufe aus. |
+| Geplant: erster Durchstich | `server/api/search.post.ts` | Gemeinsamer HTTP-Einstieg für `submit`, `clarify` und `execute`; keine eigene Suchweglogik. Die CLI ist der erste Client, ihr Dateipfad bleibt offen. |
+| Vorhanden / zu ergänzen | `server/services/tmdb/` | Vorhandenen Transport in `http.ts` nutzen; Titelaufrufe und Treffer-Mapping ergänzen. Der Adapter setzt den gewählten Suchweg technisch um; er entscheidet nicht, was der Nutzer gemeint hat. |
+| Vorhanden | `src/lib/schemas/ui/search-result-card.ts` | Normalisierte Karten für Film- und Serientreffer; kein Modellvorschlags- oder HTTP-Eingabevertrag. |
 
 ## Grenzen für die Weiterarbeit
 
