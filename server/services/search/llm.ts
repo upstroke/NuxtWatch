@@ -7,9 +7,14 @@ type LlmConfig = {
     model: string;
 };
 
+type LlmInput = {
+    system: string;
+    userContent: string;
+};
+
 export async function generateLlmText(
     config: LlmConfig,
-    prompt: string,
+    { system, userContent }: LlmInput,
 ): Promise<string> {
     const providerName = config.provider.trim();
     const baseUrl = config.baseUrl.trim();
@@ -29,7 +34,8 @@ export async function generateLlmText(
 
     const { text } = await generateText({
         model: provider.chatModel(modelId),
-        prompt,
+        system,
+        messages: [{ role: 'user', content: userContent }],
         maxOutputTokens: 256,
         maxRetries: 0,
     });
