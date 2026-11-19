@@ -32,7 +32,9 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.93",
     "@nuxt/ui": "4.12.0",
+    "ai": "^7.0.176",
     "h3": "^1.15.0",
     "nuxt": "4.6.4",
     "pinia": "4.1.0",
