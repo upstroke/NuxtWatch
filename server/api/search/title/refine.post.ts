@@ -14,7 +14,7 @@ const BodySchema = z
   })
   .strict();
 const CompletionSchema = z.object({
-  choices: z.tuple([z.object({ message: z.object({ content: z.string().min(1) }) })]).rest(z.unknown()),
+  choices: z.tuple([z.object({ message: z.object({ content: z.string().min(1), reasoning: z.unknown().optional() }) })]).rest(z.unknown()),
 });
 const OpenRouterConfigSchema = z.object({
   apiKey: z.string().trim().min(1),
@@ -32,6 +32,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 503, statusMessage: 'Parser is not configured' });
   }
   const { apiKey, model } = config.data;
+
   const { currentFilters, userText } = body.data;
   let proposal: unknown;
   try {
@@ -49,7 +50,14 @@ export default defineEventHandler(async (event) => {
         ],
       },
     });
-    proposal = JSON.parse(CompletionSchema.parse(response).choices[0].message.content);
+    const { content, reasoning } = CompletionSchema.parse(response).choices[0].message;
+    if (process.env.TITLE_REFINE_DEBUG_REASONING === '1') {
+      const preview = typeof reasoning === 'string'
+        ? reasoning.split(apiKey).join('[redacted]').replace(/[\p{Cc}\p{Cf}]/gu, ' ').trim().slice(0, 500)
+        : '';
+      console.info('[title-refine] Reasoning', preview || '(not returned)');
+    }
+    proposal = JSON.parse(content);
   } catch {
     throw createError({ statusCode: 502, statusMessage: 'Parser provider failed' });
   }
