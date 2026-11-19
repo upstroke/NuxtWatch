@@ -14,7 +14,7 @@ const BodySchema = z
   })
   .strict();
 const CompletionSchema = z.object({
-  choices: z.tuple([z.object({ message: z.object({ content: z.string().min(1), reasoning: z.unknown().optional() }) })]).rest(z.unknown()),
+  choices: z.tuple([z.object({ message: z.object({ content: z.string().min(1) }) })]).rest(z.unknown()),
 });
 const OpenRouterConfigSchema = z.object({
   apiKey: z.string().trim().min(1),
@@ -52,13 +52,7 @@ export default defineEventHandler(async (event) => {
       },
     });
     phase = 'response-schema';
-    const { content, reasoning } = CompletionSchema.parse(response).choices[0].message;
-    if (process.env.TITLE_REFINE_DEBUG_REASONING === '1') {
-      const preview = typeof reasoning === 'string'
-        ? reasoning.split(apiKey).join('[redacted]').replace(/[\p{Cc}\p{Cf}]/gu, ' ').trim().slice(0, 500)
-        : '';
-      console.info('[title-refine] Reasoning', preview || '(not returned)');
-    }
+    const { content } = CompletionSchema.parse(response).choices[0].message;
     phase = 'model-json';
     proposal = JSON.parse(content);
   } catch (error: unknown) {
