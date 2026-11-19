@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { PARSER_INSTRUCTIONS } from '@lib/parser/instructions';
-import { refineTitleSearch } from '@lib/parser/refine-title-search';
+import { refineTitleSearch, TITLE_REFINEMENT_INSTRUCTIONS } from '@lib/parser/refine-title-search';
 
 const BodySchema = z
   .object({
@@ -14,7 +13,9 @@ const BodySchema = z
     userText: z.string().trim().min(1).max(2000),
   })
   .strict();
-const CompletionSchema = z.object({ choices: z.tuple([z.object({ message: z.object({ content: z.string().min(1) }) })]).rest(z.unknown()) });
+const CompletionSchema = z.object({
+  choices: z.tuple([z.object({ message: z.object({ content: z.string().min(1) }) })]).rest(z.unknown()),
+});
 const OpenRouterConfigSchema = z.object({
   apiKey: z.string().trim().min(1),
   model: z.string().trim().min(1),
@@ -31,7 +32,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 503, statusMessage: 'Parser is not configured' });
   }
   const { apiKey, model } = config.data;
-
   const { currentFilters, userText } = body.data;
   let proposal: unknown;
   try {
@@ -43,26 +43,9 @@ export default defineEventHandler(async (event) => {
       timeout: 30000,
       body: {
         model,
-        reasoning: { enabled: false },
         messages: [
-          { role: 'system', content: PARSER_INSTRUCTIONS },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              context: {
-                currentFilters,
-                capabilities: {
-                  changes: [
-                    { field: 'title', operations: ['set'] },
-                    { field: 'mediaType', operations: ['set'] },
-                    { field: 'year', operations: ['set'] },
-                  ],
-                },
-                pendingTargets: [],
-              },
-              userText,
-            }),
-          },
+          { role: 'system', content: TITLE_REFINEMENT_INSTRUCTIONS },
+          { role: 'user', content: JSON.stringify({ currentFilters, userText }) },
         ],
       },
     });
