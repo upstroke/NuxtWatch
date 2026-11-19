@@ -1,21 +1,25 @@
 /**
- * Shared decision point for all search paths. Applies validated proposals and
- * determines whether criteria are ready or need clarification. Does not call
- * TMDb or execute searches. The first implementation supports title search only.
+ * Applies validated search proposals and decides whether a title search is
+ * ready or needs clarification. Does not call TMDb or execute searches.
  */
 import { parseSearchProposal } from './parser';
 
-type SearchCriteria = Parameters<typeof parseSearchProposal>[1]['currentFilters'];
+type ParserParameters = Parameters<typeof parseSearchProposal>;
+type ParserConfig = ParserParameters[0];
+type ParserInput = ParserParameters[1];
+type SearchCriteria = ParserInput['currentFilters'];
 
 type SearchDecision =
   | { status: 'unsupported'; reason: 'missing_title' }
-  | { status: 'needs_clarification'; field: 'mediaType'; options: readonly ['movie', 'tv'] }
+  | { status: 'needs_clarification'; field: 'mediaType'; options: ('movie' | 'tv')[] }
   | { status: 'ready'; path: 'title'; criteria: SearchCriteria & { title: string } };
 
-/** Evaluates criteria without dropping a year that requires a specific media type. */
+/** Requires a specific media type when a title search includes a year. */
 export function decideSearch(criteria: SearchCriteria): SearchDecision {
   const title = criteria.title?.trim();
-  if (!title) return { status: 'unsupported', reason: 'missing_title' };
+  if (!title) {
+    return { status: 'unsupported', reason: 'missing_title' };
+  }
 
   if (criteria.year !== undefined && criteria.mediaType === 'all') {
     return { status: 'needs_clarification', field: 'mediaType', options: ['movie', 'tv'] };
@@ -24,10 +28,10 @@ export function decideSearch(criteria: SearchCriteria): SearchDecision {
   return { status: 'ready', path: 'title', criteria: { ...criteria, title } };
 }
 
-/** Parses a submission and evaluates the updated draft without executing a search. */
+/** Applies accepted edits to a copy of the draft and evaluates it without executing a search. */
 export async function submitSearch(
-  config: Parameters<typeof parseSearchProposal>[0],
-  input: Parameters<typeof parseSearchProposal>[1],
+  config: ParserConfig,
+  input: ParserInput,
   parse: typeof parseSearchProposal = parseSearchProposal,
 ) {
   const proposal = await parse(config, input);
@@ -46,8 +50,11 @@ export async function submitSearch(
         criteria.mediaType = change.value;
         break;
       case 'year':
-        if (change.value === null) delete criteria.year;
-        else criteria.year = change.value;
+        if (change.value === null) {
+          delete criteria.year;
+        } else {
+          criteria.year = change.value;
+        }
         break;
     }
   }
