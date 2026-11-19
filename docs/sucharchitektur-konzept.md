@@ -1,108 +1,65 @@
 # NuxtWatch – Sucharchitektur und Aufgabenplan
 
-Status: Entwurf zur Freigabe. Dieses Dokument beschreibt ein Zielbild, keinen bestätigten Repository-Iststand. NuxtWatch ist aus dem Release `v0.0.1` von NextWatch entstanden. Die Aufgaben beziehen sich ausschließlich auf NuxtWatch.
+Status: Zielbild, kein bestätigter Repository-Iststand. NuxtWatch ist aus NextWatch v0.0.1 entstanden. Die Aufgaben betreffen nur NuxtWatch.
 
-## Ziel und gemeinsame Grundlage
+## Gemeinsame Grundlage
 
-Die gemeinsame Grundlage ist der Ablauf von der Nutzereingabe bis zur ausführbaren Suche, nicht ein bestimmtes Kriterium wie der Titel. Titel und Discovery sind Beispiele für Suchstrecken. Personen und Keywords können Kriterien einer Strecke sein oder, bei Bedarf, eine eigenständig aufrufbare Suche bilden. Gemeinsame Abläufe werden einmal implementiert. Keine generische Regel-Engine, keine zweite Routing-Matrix, kein neuer globaler Store.
+Die Anwendung führt von freier Eingabe zur ausführbaren Suche. Titel und Discovery sind Beispiele für Suchstrecken; Personen und Keywords können Kriterien oder bei Bedarf eigenständig aufrufbare Suchen sein. Keine generische Regel-Engine, zweite Routing-Matrix oder neuer globaler Store.
 
-| Baustein | Gemeinsame Regel |
+- Das LLM schlägt Lesarten und Kriterienänderungen vor, ändert keinen Zustand, erfindet keine IDs und wählt weder Suchstrecke noch TMDb-Endpunkt.
+- Die Matrix (`matrix.ts`) registriert Suchwege und Fachfunktionen. Sie dupliziert keine Fachregeln. `flow.ts` koordiniert die Prüfung. Jeder infrage kommende Suchweg prüft denselben Kriterienstand je Lesart, unabhängig von der Reihenfolge.
+- Die Fachlogik prüft unterstützte Kriterien und Kombinationen, Mindestangaben und nötige Auflösungen. Sie meldet ausführbar, Klärung nötig oder nicht unterstützt, jeweils mit Grund, wo erforderlich. Ausführbar heißt: Alle bestätigten Kriterien werden in ihrer gemeinten Bedeutung berücksichtigt, Mindestangaben sind erfüllt und notwendige Auflösungen abgeschlossen. Kein bestätigtes Kriterium wird stillschweigend weggelassen. Kandidatenabfragen sind keine Treff ersuche.
+- Bei einem eindeutigen fachlichen Ziel wählt die Anwendung einen ausführbaren technischen Weg und die TMDb-Parameter. Mehrere fachlich gleichwertige Wege sind keine Nutzerfrage. Bei mehreren plausiblen, fachlich unterschiedlichen Zielen entscheidet der Nutzer, was er meint, nicht welchen Endpunkt die Anwendung aufruft. Diese Frage kann vor vollständiger technischer Ausführbarkeit nötig sein. Ohne sinnvolle Klärungsmöglichkeit oder unterstützten Suchweg erklärt die Anwendung den Grund; kein stiller Wechsel des Suchziels.
+
+Beispiel: Bei „Batman ab 2010“ bleibt die Jahresuntergrenze erhalten. Falls „Batman“ Titelbegriff oder Figur meinen kann, klärt der Wizard diese Bedeutung. Dass eine Titelsuche leichter ausführbar wäre, ist kein Grund, sie zu bevorzugen. Die Figurensuche ist hier ein konzeptionelles Beispiel, keine zugesicherte Funktion.
+
+## Technischer Einstieg und Auftragsbindung
+
+Der freie Suchschlitz verwendet `POST /api/search`. Die Route validiert die explizite Aktion und delegiert an `flow.ts`; unbekannte Aktionen werden abgelehnt. Streckenspezifische Routen können für bekannte strukturierte Aufrufe bestehen bleiben. Der alte Pfad `/api/search/title/refine` entfällt erst nach Migration oder abgesichertem Übergang. Detail- und Trending-Routen bleiben unverändert.
+
+| Aktion | Verhalten |
 | --- | --- |
-| Interpretation | Das LLM schlägt eine Suchabsicht oder eine Änderung vor. Es wählt keine TMDB-Endpunkte und erfindet keine IDs. |
-| Fachprüfung und Auflösung | Der Server prüft die Zulässigkeit und löst Begriffe bei Bedarf anhand einer zuständigen Quelle auf. Bei unklarer Zuordnung bleibt die konkrete Änderung offen; bestätigte Kriterien bleiben unverändert. |
-| Ausführbarkeit | Ein formal gültiges Suchobjekt muss noch nicht ausführbar sein. Die Fachlogik prüft die Mindestangaben und ob alle bestätigten Kriterien abbildbar sind. Sie liefert entweder einen konkreten Aufruf mit Parametern oder einen fachlichen Grund, warum noch nicht gesucht werden kann. |
-| Ausführung | Erst `execute` startet die eigentliche Treff ersuche. Kandidatenabfragen zur Auflösung können bei `refine` stattfinden, sind aber keine Ausführung der Nutzersuche. |
-| Suchsession | Bestätigte Kriterien bleiben zwischen Nachrichten erhalten. Eine offene fachliche Klärung und ein laufender Request sind getrennte Zustände, keine globalen Session-Phasen. |
+| `submit` | Nimmt Suchtext und aktuelle Kriterien entgegen. Der erste Klick auf „Jetzt suchen“ startet ohne Klärungsbedarf direkt, wenn der Stand ausführbar ist. Sonst folgt eine konkrete Rückfrage oder ein begründeter Hinweis. |
+| `clarify` | Übernimmt eine geprüfte Antwort oder verarbeitet eine Präzisierung. Liefert die nächste notwendige Frage oder den geprüften Stand. Startet keine Treff ersuche. |
+| `execute` | Ausdrücklicher Suchstart nach Klärung. Bei der letzten oder einzigen Frage kann derselbe Klick die Auswahl bestätigen und die Suche starten. Der Server validiert die gebundene Auswahl und den resultierenden Stand vor der Ausführung. |
 
-Pro Strecke definiert die Fachlogik unterstützte Kriterien, zulässige Kombinationen, Mindestangaben, benötigte Kataloge oder Kandidatenabfragen und die Abbildung auf TMDB. Ein bestätigtes Kriterium wird nicht stillschweigend weggelassen; es gibt keinen automatischen Wechsel auf eine fachlich andere Suche. Die Matrix registriert die Zuständigkeit und dupliziert diese Regeln nicht.
+`submit` und `execute` nutzen dieselbe interne Ausführungsfunktion. Die Suchsession mit bestätigten Kriterien, offene Klärungen und laufende Requests sind getrennt; keine globale `pending`-Phase. Der Server hält kurzlebigen Auftragszustand, keine dauerhaft gespeicherte Suchsession. Wiederherstellung nach Reload ist nicht zugesichert.
 
-## Architekturblöcke
+- `requestId` identifiziert den Auftrag; die UI verwendet sie beim Wiederholen desselben Requests erneut. Eine bewusst neue Suche erhält eine neue ID. Dieselbe ID darf nicht für einen abweichenden Auftrag wiederverwendet werden.
+- `revision` bindet Antworten und Ausführung an den aktuellen Kriterienstand. Jede übernommene Klärung erhöht die Revision. `questionId` bindet die Antwort an die konkrete offene Frage; Optionskennungen werden serverseitig geprüft. Änderungen am Kriterienstand machen alte Antworten unwirksam und erfordern eine erneute Prüfung der Rückfrage.
+- Der Server beansprucht die Ausführung für den geprüften Auftragsstand atomar vor dem TMDb-Aufruf. Wiederholte Starts melden den laufenden Auftrag oder liefern dessen Ergebnis, statt einen weiteren Aufruf zu starten. Die konkrete Speicherwahl bleibt offen; lokaler Speicher allein bietet keine instanzübergreifende oder neustartfeste Garantie.
 
-| Block | Zuständigkeit | Ort im Zielbild |
-| --- | --- | --- |
-| Schemas | Getrennte Zod-Verträge für Kriterien, Aktionsrequests, Modellvorschläge und fachliche Ergebnisse; TypeScript-Typen ableiten | `src/lib/schemas/search.ts` |
-| Endpunkte | Ausführbarkeit, Parametermapping und TMDB-Aufruf | Fachfunktion und TMDB-Adapter, registriert in `matrix.ts` |
-| LLM-Anfragen | Auftrag und relevanten Kontext je Strecke und Aktion auswählen | `matrix.ts`, `llm.ts`, Fachdatei |
-| LLM-Antwortprüfung | Erst Form, dann fachliche Zulässigkeit und Zielbindung prüfen; keine Teilanwendung | `flow.ts`, Schema und Fachdatei |
-| Guardrails | Gemeinsame Anweisungen und kontextabhängige Freigaben; verbindliche Prüfung im Code | `llm.ts` und Fachfunktionen |
-| Frontend | Chat, Laufstatus, Wizard, Filter und Treffer; Texte über i18n | UI-Etappe; keine eigene Fachmatrix |
-| Router-Pfade | Eine interne POST-Route pro eigenständig aufrufbarer Strecke, nicht pro Aktion oder TMDB-Endpunkt | `server/api/search/<strecke>/index.post.ts` |
+## Suchsession, Pills und Wizard
 
-## Ordnerstruktur
+Unabhängig geklärte Kriterien erscheinen schon bei offenem Wizard als Pills. Fachlich gekoppelte Änderungen werden gemeinsam geprüft und übernommen oder gar nicht. Eindeutige Änderungen desselben Kriteriums im Suchtext ersetzen die alte Pill beim nächsten Absenden; andere bestätigte Pills bleiben erhalten. Bei „Batman ab 2010“ → „Batman ab 2020“ ersetzt `Ab 2020` die alte Jahres-Pill.
 
-```text
-server/
-  api/search/title/index.post.ts   # defineSearchPost('title'), erster Umsetzungsschnitt
-  services/search/
-    matrix.ts                     # Laufzeitregister pro Strecke
-    flow.ts                       # HTTP-Einstieg, executeSearch, refineSearch
-    llm.ts                        # Transport und Promptbausteine
-    title.ts                      # Titelfachregeln
-  services/tmdb/                   # vorhandener Transport und Adapter
-src/lib/schemas/search.ts          # gemeinsame Suchverträge
-```
+1. Das Overlay zeigt nur konkrete Klärungsfragen. Die Anwendung bestimmt anhand des aktuellen Stands die nächste Frage. Jede Frage hat eine Vorauswahl, die erst durch den jeweiligen Button bestätigt wird. Eine andere Auswahl ersetzt die Vorauswahl. Passt keine Option, kann der Nutzer die Eingabe präzisieren.
+2. Sind weitere Fragen nötig, bestätigt „Übernehmen“ die aktuelle Auswahl; der Wizard führt zur nächsten Frage. Die Auswahl allein und „Übernehmen“ starten keine Suche.
+3. Ist die letzte oder einzige Frage mit der aktuellen Auswahl klärbar und die Suche damit ausführbar, bestätigt „Suche starten“ die Auswahl und startet nach serverseitiger Prüfung die Suche. Kein zusätzlicher Übernehmen-Klick, kein Review-Screen und kein automatischer Suchstart. Ergibt die Auswahl weitere Klärung, gilt wieder „Übernehmen“.
+4. Solange eine Frage offen ist, kann der Nutzer den Wizard nicht abbrechen oder schließen. Wird der gebundene Auftrag dennoch ungültig, etwa beim Verlassen der Suchansicht, darf eine verspätete Antwort keine Pill hinzufügen, keine neueren Kriterien überschreiben und das Overlay nicht wieder öffnen. Gibt es keine offene Frage mehr und ist kein Suchweg ausführbar, erklärt die Anwendung den Grund.
 
-Weitere Fachdateien entstehen erst mit einem unterstützten Fall. Eine Fachfunktion kann intern genutzt werden, ohne eine eigene Route zu bekommen. Detail- und Trending-Routen bleiben außerhalb dieses Umbaus.
+Die UI zeigt lokalisierte Fragen, Optionen, Hinweise und Fehlercodes; sie importiert keine Servermatrix und sendet keine rohe Modellantwort als Nutzerentscheidung. Laufstatus ist flüchtig und verändert weder Kriterien noch Chatverlauf. Technische Fehler übernehmen keine unverifizierten Änderungen.
 
-## Route, Matrix und Ablauf
+## Verträge und Struktur
 
-Die POST-Route erwartet eine explizite `action`. `defineSearchPost` liest den Body und delegiert. Das zur Aktion passende Requestschema wird einmal angewendet. Die Matrix registriert die Aktionen einer Strecke, führt sie aber nicht selbst aus. Fehlende Aktionen werden zurückgewiesen und nicht aus optionalen Feldern erraten.
+- `src/lib/schemas/search.ts`: Zod-Verträge für Kriterien, Aktionen, Modellvorschläge und Ergebnisse; TypeScript-Typen ableiten. Kein gemeinsamer Titelzwang und keine vorsorglichen Personen- oder Keyword-Felder im ersten Schnitt. Gemeinsames `mediaTypeSchema` (`all`, `movie`, `tv`); Fachlogik entscheidet über Ausführbarkeit. Änderungsvorschläge wie `{ field: 'mediaType', value: 'movie' }` ersetzen nie das ganze Suchobjekt.
+- `server/api/search/index.post.ts`: gemeinsamer HTTP-Einstieg. `server/services/search/`: `matrix.ts` als Register, `flow.ts` als Koordination, `llm.ts` für Transport und Promptbausteine, `title.ts` für Titelfachregeln. Weitere Fachdateien erst bei unterstützten Fällen; TMDb-Transport und Adapter unter `server/services/tmdb/`.
+- LLM-Freigaben und Ausführbarkeit sind getrennt. Modellantworten erst formal, dann fachlich und hinsichtlich Zielbindung prüfen. Prompts enthalten knappe Grundanweisungen, erlaubte Operationen und relevanten Kontext, nicht standardmäßig Historie, Treffer, Übersetzungen oder fachfremde Regeln. Tokenvergleiche mit demselben Testfallbestand und unveränderten fachlichen Entscheidungen. Die Titelstrecke entscheidet über Multi-, Film- oder TV-Suche.
 
-| Aktion | Matrixeintrag | Ergebnis |
-| --- | --- | --- |
-| `execute` | Requestschema und zuständige Fachfunktion für Ausführbarkeitsprüfung und TMDB-Aufruf | Treffer, fachlicher Grund für Nichtausführbarkeit oder technischer Fehler; kein LLM-Aufruf |
-| `refine` | Requestschema, LLM-Anfrageaufbau, Vorschlagsschema und Fachprüfung | Bestätigte Kriterien, Rückfrage oder unverändertes Ergebnis; bei Bedarf Kandidatenauflösung, keine eigentliche Treff ersuche |
+## Spätere Anwendungsfälle
 
-Die Fähigkeit, ein Kriterium auszuführen, ist unabhängig davon, ob das LLM es setzen darf. So kann ein direkt übergebenes Serienjahr suchbar sein, ohne dass der Parser es setzen darf. Die Titelstrecke wählt zwischen Multi-, Film- und TV-Suche. Der alte Pfad `/api/search/title/refine` entfällt erst nach Migration der tatsächlichen Aufrufer oder einer ausdrücklich geplanten Übergangsphase.
-
-## Schemas und Anwendung
-
-- Das Suchobjekt enthält bestätigte Kriterien. Der gemeinsame Vertrag setzt keinen Titel voraus; der erste Umsetzungsschnitt implementiert nur die verifizierten Titelfälle, keine vorsorglichen optionalen Keyword- oder Personenfelder.
-- Ein gemeinsames `mediaTypeSchema` für `all`, `movie`, `tv`; Kriterien und Änderungsvorschlag teilen die Wertedefinition. Die Fachlogik entscheidet, welche Werte je Strecke ausführbar sind.
-- Änderungen haben eine gemeinsame Form, etwa `{ field: 'mediaType', value: 'movie' }`. Das Feld bestimmt den Wertetyp. Erlaubte Operationen können je Strecke und Kontext begrenzt sein.
-- Der Vorschlag ersetzt nie das gesamte Suchobjekt. Die Fachfunktion prüft den gesamten Vorschlag vor der Übernahme. Bei einer gekoppelten Änderung wie „Film von 1999“ werden Typ und Jahr gemeinsam übernommen oder nicht angewendet.
-- LLM-Vorschlag, bestätigte Kriterien, offene Klärung und Suchtreffer bleiben unterscheidbar. Die Oberfläche übernimmt nur bestätigte Kriterien.
-
-## LLM und Tokenbudget
-
-Das Modell interpretiert freie Eingaben, schlägt Änderungen vor oder meldet Klärungsbedarf. Es ändert keinen Zustand. Der Anfrageaufbau kombiniert knappe Grundanweisungen, aktuell erlaubte Operationen und relevanten Kontext. Keine vollständige Historie, Trefferliste, Übersetzungssammlung oder Regeln fremder Strecken standardmäßig mitsenden. Die sichtbaren Fähigkeiten aus fachlichen Freigaben ableiten. Unbekannte Ziele, unzulässige Operationen und ungültige Ausgaben werden im Code abgefangen. Für Vergleiche denselben Testfallbestand verwenden und Eingabetokens sowie unveränderte fachliche Entscheidungen prüfen.
-
-## Suchsession, UI und Wizard
-
-Die Suchansicht hält bestätigte Kriterien zwischen Nachrichten und sendet bei `refine` und `execute` die jeweils benötigten Kriterien mit. Der Server validiert sie erneut. Im ersten Schnitt sind weder ein neuer globaler Store noch serverseitige Session-Persistenz vorgesehen. Wiederherstellung nach Reload ist nicht zugesichert. Eine verspätete Antwort darf neuere Kriterien nicht überschreiben.
-
-Die UI verwendet gemeinsame Bausteine pro Kriterium. Werte können aus gemeinsamen Verträgen kommen; Labels, Bedienung und Übersetzungen bleiben UI-Aufgaben. Die UI importiert keine serverseitige Matrix und leitet aus gültigen Enum-Werten keine Parser-Freigaben ab.
-
-| Anzeige | Verhalten |
-| --- | --- |
-| Laufstatus | Vorübergehend, kein Chatverlaufseintrag und keine Filteränderung. Zuerst lokal beim Warten, später optional echte serverseitige Statusereignisse über dieselbe Route. |
-| Rückfrage | Der Wizard zeigt die übersetzte Frage und nur angebotene Optionen oder Aktionen. Bestätigte Kriterien bleiben bis zur gültigen Antwort unverändert. |
-| Bestätigung oder Hinweis | Nach fachlichem Ergebnis; bestätigt keine nicht übernommene Änderung. |
-| Technischer Fehler | Sicherer lokalisierter Fehlercode; keine internen Details in der UI und keine Übernahme unverifizierter Änderungen. |
-
-Der Wizard ist ausschließlich für konkrete Klärungen zuständig. Als Eingabe genügen ein Nachrichtencode mit Parametern, eine lokale Zielkennung, angebotene Aktionen und bei Bedarf Kandidaten. Eine Auswahl sendet der Wizard mit Ziel- und Optionskennung an den Server, nicht als manipulierte rohe Modellantwort. Der Server prüft Ziel und Option und ergänzt erst dann das bestätigte Suchobjekt. Andere offene Klärungen bleiben offen. Ein Auswahlklick startet weder Modellaufruf noch Suche; ein späteres `execute` verwendet die bestätigten Kriterien. Freie Antworten, Reihenfolge mehrerer Klärungen, Ablage offener Klärungen und der HTTP-Aktionsname bleiben offen. `discard` betrifft ausstehende Anfragen, nicht akzeptierte Einträge.
-
-## Discovery und Auflösung als spätere Anwendungsfälle
-
-Discovery sucht anhand strukturierter Filter und ist kein Fallback für die Titelsuche. Unterstützte Filter, Mindestangaben und Mapping werden je Medientyp festgelegt. Sortierung ist kein Filter: „gut bewertet zuerst“ ist nicht dasselbe wie „mindestens 7 von 10“. Aus „gut“ wird ohne Produktregel keine Mindestbewertung abgeleitet.
-
-Ein Genre-Katalog wäre eine fachliche Quelle, kein Teil der Session und keine Voraussetzung für andere Strecken. Quelle und Namenszuordnung bleiben offen. Für Keywords ist `/search/keyword` die Referenz zur Kandidatensuche; erst eine bestätigte Keyword-ID geht als `with_keywords` in einen Discover-Aufruf ein. Die Auflösung braucht keine eigene Frontend-Route. Bei Personen und Keywords ist zu prüfen, welche Paginierungsmetadaten bis zur Fachlogik gelangen. Ein einzelner angezeigter Kandidat allein belegt keine Eindeutigkeit.
+Discovery ist eine strukturierte Filtersuche und kein Fallback zur Titelsuche. Filter, Mindestangaben und Mapping werden je Medientyp festgelegt. Sortierung ist kein Filter; aus „gut“ folgt ohne Produktregel keine Mindestbewertung. Der Genre-Katalog ist eine fachliche Quelle, kein Session-Bestandteil; Quelle und Namenszuordnung bleiben offen. `/search/keyword` dient zur Kandidatenauflösung; erst eine bestätigte ID geht als `with_keywords` in Discover ein. Keine eigene Frontend-Route für Auflösung erforderlich. Bei Personen und Keywords Paginierungsmetadaten prüfen: Ein angezeigter Einzelkandidat allein belegt keine Eindeutigkeit.
 
 ## Aufgaben nach Freigabe
 
 | ID | Aufgabe | Abnahme |
 | --- | --- | --- |
-| A1 | Titelstrecke und Aufrufer inventarisieren; Contracts, Dateien und Tests erfassen; Wizard-Dokument mit Entwurf abgleichen | Ist-/Ziel-Zuordnung, Migrationsliste und dokumentierte Abweichungen liegen vor |
-| A2 | Titelverträge und Referenzfälle festhalten | Direkte TV-Suche und Film-Verfeinerung sind unterscheidbar getestet; ungültige Vorschläge und Teilanwendung ausgeschlossen |
-| A3 | Gemeinsame Matrix und Ablauf einführen, Titellogik bündeln | Ein Einstieg in der Matrix; bisheriges fachliches Verhalten bleibt erhalten; direkte Suche ohne LLM, Verfeinerung ohne Titelsuche |
-| A4 | Gemeinsame Titelroute migrieren | Beide Aktionen unter derselben URL, unbekannte Aktionen abgelehnt, Aufrufer migriert oder Übergang abgesichert |
-| A5 | Rückfragevertrag und Wizard zunächst mit Beispieldaten prüfen | Titel-Rückfrage und Personen-Auswahl in derselben UI, mindestens zwei Sprachbeispiele, Auswahl erst nach Serverbestätigung wirksam; altes Ziel wird nicht übernommen |
-| A6 | Promptumfang und UI-Status prüfen | Kontextbezogene Instruktionen; Ladeanzeige endet bei Ergebnis, Fehler oder Abbruch; keine vorgetäuschten Suchschritte |
-| A7 | Keyword als weiteren Architekturfall bewerten | Gemeinsamkeiten und nötige Fachfunktionen belegt; Route und Verfeinerung nur bei echtem Bedarf; Paginierungsmetadaten am NuxtWatch-Stand geprüft |
+| A1 | Titelstrecke, Aufrufer, Verträge, Tests und Wizard-Dokument inventarisieren | Ist-/Ziel-Zuordnung, Migrationsliste und Abweichungen dokumentiert |
+| A2 | Titelverträge und Referenzfälle festhalten | Direkte TV-Suche und Film-Verfeinerung unterscheidbar; ungültige oder gekoppelte Vorschläge nicht teilweise übernommen |
+| A3 | Gemeinsamen Ablauf, Matrix und Titelfachlogik einführen | Vollständige Kriterienprüfung; technische Auswahl in der Anwendung; eine gemeinsame Ausführungsfunktion |
+| A4 | Gemeinsame Route und Auftragsbindung einführen | Direkter Start und gebundener Wizard-Start; unbekannte Aktionen, alte Antworten und Doppelstarts abgefangen; Migration abgesichert |
+| A5 | Wizard mit Beispieldaten prüfen | Ein- und mehrstufige Klärung, Vorauswahl und alternative Auswahl, beide Buttons, kein Abbruch bei offener Frage, unabhängige Pills und Ersetzung; mindestens zwei Sprachbeispiele |
+| A6 | Promptumfang und UI-Status prüfen | Kontextbezogene Anweisungen, Ende des Laufstatus bei Ergebnis oder Fehler, keine vorgetäuschten Schritte |
+| A7 | Keyword als weiteren Architekturfall prüfen | Gemeinsame und eigene Fachregeln, Bedarf für eine eigene Route und verfügbare Paginierungsmetadaten geklärt |
 
-A1–A4 bilden den ersten technischen Schnitt, definieren aber nicht den allgemeinen Suchablauf. A5–A7 begründen keine sofortige Umsetzung der UI oder weiterer Suchstrecken. Nach dem Schnitt relevante Tests, Coverage-Prüfung, ESLint und Typecheck ausführen.
-
-## Offene Grenzen
-
-- Änderungen an bereits akzeptierten Entitäten und gekoppelte Ersetzungen sind nicht Bestandteil des ersten Titelschnitts.
-- Detaillierte Prompt- und Wizard-Flows, optionale Statusstreams und weitere Suchstrecken werden separat spezifiziert. Die Wizard-Dokumentation wurde für diesen Entwurf nicht im Repository verifiziert.
+A1–A4 bilden den ersten technischen Schnitt; A5–A7 ziehen keine sofortige UI-Umsetzung oder weitere Suchstrecken nach sich. Danach relevante Tests, Coverage, ESLint und Typecheck ausführen. Detaillierte Speicherwahl, Dateiaufteilung und optionale Statusstreams bleiben Umsetzungsdetails.
