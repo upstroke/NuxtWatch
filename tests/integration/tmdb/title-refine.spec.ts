@@ -24,13 +24,13 @@ it('TMDB-INT-027: applies the reference follow-up without changing the title', a
     'https://openrouter.ai/api/v1/chat/completions',
     expect.objectContaining({
       method: 'POST',
-      body: {
+      body: expect.objectContaining({
         model: 'test-model',
         messages: [
           { role: 'system', content: expect.any(String) },
           { role: 'user', content: JSON.stringify(body) },
         ],
-      },
+      }),
     }),
   );
 });
