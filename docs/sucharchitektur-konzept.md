@@ -39,6 +39,27 @@ Der verbindliche UI-Ablauf einschließlich Frageseiten, Pill-Übersichten, Schal
 
 ## Verträge und Struktur
 
+Der Baum zeigt das Zielbild, nicht den aktuellen Repository-Stand. Neue Dateien entstehen erst, wenn der jeweilige Umsetzungsschritt sie braucht.
+
+```text
+server/
+├── api/
+│   └── search/
+│       └── index.post.ts   # Gemeinsamer Einstieg: POST /api/search
+└── services/
+    ├── search/
+    │   ├── flow.ts        # Koordination des Suchablaufs
+    │   ├── matrix.ts      # Register der Suchwege und Fachfunktionen
+    │   ├── title.ts       # Fachlogik der Titelstrecke
+    │   └── llm.ts         # Modelltransport und Promptbausteine
+    └── tmdb/              # Vorhandener TMDb-Transport und Adapter
+
+src/
+└── lib/
+    └── schemas/
+        └── search.ts      # Gemeinsame Zod-Verträge und abgeleitete Typen
+```
+
 - `src/lib/schemas/search.ts`: Zod-Verträge für Kriterien, Aktionen, Modellvorschläge und Ergebnisse; TypeScript-Typen ableiten. Kein gemeinsamer Titelzwang und keine vorsorglichen Personen- oder Keyword-Felder im ersten Schnitt. Gemeinsames `mediaTypeSchema` (`all`, `movie`, `tv`); Fachlogik entscheidet über Ausführbarkeit. Änderungsvorschläge wie `{ field: 'mediaType', value: 'movie' }` ersetzen nie das ganze Suchobjekt.
 - `server/api/search/index.post.ts`: gemeinsamer HTTP-Einstieg. `server/services/search/`: `matrix.ts` als Register, `flow.ts` als Koordination, `llm.ts` für Transport und Promptbausteine, `title.ts` für Titelfachregeln. Weitere Fachdateien erst bei unterstützten Fällen; TMDb-Transport und Adapter unter `server/services/tmdb/`.
 - LLM-Freigaben und Ausführbarkeit sind getrennt. Modellantworten erst formal, dann fachlich und hinsichtlich Zielbindung prüfen. Prompts enthalten knappe Grundanweisungen, erlaubte Operationen und relevanten Kontext, nicht standardmäßig Historie, Treffer, Übersetzungen oder fachfremde Regeln. Tokenvergleiche mit demselben Testfallbestand und unveränderten fachlichen Entscheidungen. Die Titelstrecke entscheidet über Multi-, Film- oder TV-Suche.
