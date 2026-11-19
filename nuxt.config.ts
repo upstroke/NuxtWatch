@@ -13,8 +13,13 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     tmdb: {
-      apiReadAccessToken: '',
-      baseUrl: 'https://api.themoviedb.org/3',
+      apiReadAccessToken: '', // NUXT_TMDB_API_READ_ACCESS_TOKEN from .env file
+      baseUrl: '', // NUXT_TMDB_BASE_URL from .env file
+    },
+    llm: {
+      provider: '', // NUXT_LLM_PROVIDER from .env file
+      baseUrl: '',  // NUXT_LLM_BASE_URL from .env file
+      model: '',    // NUXT_LLM_MODEL from .env file
     },
   },
   typescript: {
