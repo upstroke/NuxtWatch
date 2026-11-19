@@ -1,183 +1,49 @@
 # Testing
 
-This project uses [Vitest](https://vitest.dev/) for unit and integration tests. It uses [Playwright](https://playwright.dev/) for HTTP integration tests and future browser-based end-to-end tests.
-
-The test suite currently focuses on the TMDb integration: request validation, service orchestration, error handling, response mapping, and Nitro route behavior.
+NuxtWatch uses [Vitest](https://vitest.dev/) for unit and integration tests and [Playwright](https://playwright.dev/) for HTTP integration tests and future browser end-to-end tests. The existing suite focuses on TMDb validation, orchestration, mapping, errors, and Nitro routes.
 
 ## Commands
 
 ```bash
-npm run test            # Run all tests once
-npm run test:watch      # Run tests in watch mode
-npm run test:coverage   # Run tests with V8 coverage
-npm run test:e2e        # Run Playwright tests
+npm run test
+npm run test:watch
+npm run test:coverage
+npm run test:e2e
 ```
 
-## Architecture and testing boundaries
+## When and what to test
 
-The server code is layered so that business logic remains independent from HTTP and framework details.
+- Define observable acceptance criteria before implementation. For new features, first build a working end-to-end slice, then close meaningful automated test gaps before release. Test-driven development is not mandatory. Before changing existing behavior that must be preserved, add a focused regression test if none protects it.
+- Organize tests by behavior and boundary, not by task or schema. Before adding a test, identify the concrete failure that existing tests would miss. Reuse, extend, or consolidate existing tests when they protect the same guarantee.
+- Use the smallest scope that reliably detects the relevant failure. Overlap in code exercised is fine if the assertions protect different guarantees; do not repeat the same input matrix at several levels. Prefer observable outcomes over implementation details or non-contractual wording. For parser prompts, verify the separation of fixed instructions and user input rather than exact wording unless the wording is contractual.
+- Do not retest Zod primitives or require a dedicated test for each schema. Test important HTTP and LLM input contracts where validation is actually used. Add a focused test for a project-specific default, normalization, or cross-field rule if it is consequential and not otherwise covered. See [Typing](typing.md).
+- Example: A `clarify` request without `questionId` is rejected at the HTTP boundary without changing criteria. A well-formed request with a stale `revision` is rejected by the search flow. These are different guarantees; neither needs a duplicate standalone schema test.
+- For a feature test inventory, record guarantee → test boundary → existing test or gap. Keep feature-specific inventories in the corresponding task documentation.
 
-```text
-src/lib/                 Framework-free schemas, types, and shared domain logic
-server/services/         Framework-free TMDb services, mappers, parameters, and errors
-server/utils/            Framework-specific server helpers, such as H3 response handling
-server/api/              Nitro route handlers and HTTP boundary
-```
+## Boundaries and locations
 
-Follow these boundaries when adding code:
+| Scope | Location | Runner | Focus |
+| --- | --- | --- | --- |
+| Unit | `tests/unit` (`schemas`, `services`, `utils`) | Vitest | One cohesive unit: project-specific validation, service, mapper, parameter, error, or utility behavior |
+| Controlled integration | `tests/integration/tmdb` for TMDb | Vitest | Route-to-response or service flow with a controlled outbound transport |
+| HTTP integration | `tests/integration/http` | Playwright | Real HTTP requests to a running Nuxt server |
+| Browser end-to-end | `tests/e2e` | Playwright | User journeys; do not expand browser coverage for now |
 
-- Keep `src/lib` and `../server` free from H3, Nitro, and HTTP-framework imports.
-- Put H3-specific helpers, such as functions that receive an `H3Event`, in `../server`.
-- Keep Nitro route handlers thin: validate input, call a service, map errors, and return a response.
-- Inject external transports into services. This makes services testable without real network access.
-- Do not mock the module under test. Mock only external boundaries, especially the TMDb HTTP transport.
+- Keep `src/lib` and `server/services` framework-free. Put H3 helpers in `server/utils` and thin Nitro route handlers in `server/api`: validate, delegate, map errors, respond.
+- Inject external transports. Unit tests do not access the real network. In controlled integrations, mock the outbound TMDb transport rather than internal modules. Never mock the module under test.
+- Keep reusable deterministic data in `tests/fixtures` and shared transport or Nitro-event doubles in `tests/mocks`.
 
-## Single source of truth for types
+## Identifiers and coverage
 
-Follow [Typing](typing.md) for all TypeScript and Zod typing conventions.
-
-## Folder structure
-
-Tests are organized by the boundary they verify, not primarily by the test runner.
-
-```text
-tests/
-├── unit/
-│   ├── schemas/       # Zod and domain schema tests
-│   ├── services/      # Service, mapper, parameter, and error tests
-│   └── utils/         # Framework-specific utility tests
-├── integration/
-│   ├── http/          # HTTP integration tests using a running Nuxt server
-│   └── tmdb/          # TMDb-backed Nitro route tests with a controlled transport
-├── e2e/               # Browser-based user journeys
-├── fixtures/          # Shared deterministic test data
-└── mocks/             # Shared test doubles and helpers
-```
-
-## Test boundaries
-
-| Boundary                          | Location                 | Runner     | Typical test focus                                                                     |
-| --------------------------------- | ------------------------ | ---------- | -------------------------------------------------------------------------------------- |
-| Unit                              | `tests/unit`             | Vitest     | One cohesive unit in isolation: schema, service, mapper, parameter, error, or utility. |
-| Integration: controlled transport | `tests/integration/tmdb` | Vitest     | Route-to-response flow with a mocked TMDb transport.                                   |
-| Integration: HTTP boundary        | `tests/integration/http` | Playwright | Real HTTP requests against the running Nuxt server.                                    |
-| End-to-end                        | `tests/e2e`              | Playwright | Browser-based user journeys and acceptance criteria.                                   |
-
-## Unit tests
-
-Unit tests exercise one cohesive unit in isolation: schemas, services, mappers, parameters, errors, and utilities.
-
-They must not perform real network requests. External boundaries, especially TMDb HTTP calls, are mocked.
-
-Begin every `it` block with an explicit coverage-intent comment: `// Statement coverage:` or `// Branch coverage:`. Use `// Statement coverage:` for a verified execution path and `// Branch coverage:` for a conditional path, error branch, fallback, or boundary.
-
-## Integration tests
-
-Integration tests exercise a Nitro route handler together with its schema, service, mapper, and controlled external boundary.
-
-For TMDb routes, mock the outbound TMDb transport rather than internal application modules. This validates the route-to-response flow while keeping tests deterministic.
-
-### HTTP integration tests
-
-`tests/integration/http` contains HTTP integration tests. These tests use Playwright and execute real HTTP requests against the running Nuxt server.
-
-HTTP integration tests require a stable `TMDB-INT-…` identifier in the test title. They do not use coverage-intent comments; those comments are required for unit tests only.
-
-## End-to-end tests
-
-End-to-end tests verify user journeys through the browser-based application.
-
-A user journey describes a recognizable product goal, such as “A visitor searches for a movie”. Each journey receives a stable identifier, for example `SEARCH-001`. Each acceptance criterion receives its own test identifier, for example `SEARCH-001-AC1`.
-
-Multiple tests may verify different aspects of the same acceptance criterion, but each test receives a unique identifier. Do not reuse an identifier after removing or replacing a test.
-
-## Fixtures and mocks
-
-Use `tests/fixtures` for representative, reusable API payloads and domain data.
-
-Use `tests/mocks` for shared HTTP-client, TMDb-transport, and Nitro-event doubles. Prefer a small explicit mock over mocking the module under test.
-
-## Test identifiers
-
-Give integration and E2E tests stable identifiers that support traceability.
-
-| Test type        | Identifier                            | Purpose                                                  |
-| ---------------- | ------------------------------------- | -------------------------------------------------------- |
-| Unit test        | None                                  | The coverage-intent comment documents the test's purpose |
-| Integration test | `TMDB-INT-001`, `TMDB-INT-002`, …     | Stable technical traceability and selective execution    |
-| E2E test         | `SEARCH-001-AC1`, `SEARCH-001-AC2`, … | Traceability to a user journey and acceptance criterion  |
-
-Do not reuse an identifier after removing or replacing a test. Maintain the link between the user journey, acceptance criterion and E2E test.
-
-## Coverage
-
-Vitest collects coverage with V8 for application code in `src/lib/**`
-and `server/**`. The thresholds configured in `vitest.config.ts` define
-the coverage requirements. That configuration is the source of truth
-for which metrics are enforced and at what levels.
-
-Coverage thresholds are minimum requirements, not targets for every file.
-Use coverage reports to find meaningful behavior that is not yet tested.
-Do not add redundant cases just to increase a percentage.
-
-```text
-src/lib/**
-server/**
-```
-
-The global thresholds are:
-
-- Statements: 80%
-
-## Coverage comments
-
-Each `it` block begins with an explicit coverage intent:
-
-```ts
-// Statement coverage: validates a valid discover query.
-
-// Branch coverage: rejects an invalid genre filter.
-```
-
-Use:
-
-- `// Statement coverage:` when the test verifies that a code path executes.
-- `// Branch coverage:` when the test verifies a specific conditional path, error branch, fallback, or boundary.
+- Each unit `it` block starts with `// Statement coverage:` for a verified execution path or `// Branch coverage:` for a conditional path, error branch, fallback, or boundary. HTTP integration tests do not require these comments.
+- Give integration tests stable identifiers such as `TMDB-INT-001`. HTTP integration tests must include a `TMDB-INT-…` identifier in the title. Give browser journeys an identifier such as `SEARCH-001` and link each test to its acceptance criterion, for example `SEARCH-001-AC1`. Use distinct identifiers for distinct tests; never reuse retired identifiers.
+- V8 coverage applies to `src/lib/**` and `server/**`. The global statement threshold is currently 80%; `vitest.config.ts` is authoritative. Thresholds are minimums, not per-file targets. Use reports to find meaningful gaps, not to justify redundant tests.
 
 ## Import aliases
 
-Application and test imports use these project aliases:
+- `@lib` → `src/lib`
+- `@server` → `server`
+- `@tests` → `tests`
+- `@test-mocks` → `tests/mocks`
 
-```ts
-import { DiscoverQuerySchema } from '@lib/schemas/discover-query';
-import { TmdbError } from '@server/services/tmdb/errors';
-import { sendTmdbError } from '@server/utils/tmdb-errors';
-import { weeklyTrendingFixture } from '@tests/fixtures/tmdb/trending';
-import { tmdbTransportMock } from '@test-mocks/tmdb';
-```
-
-- `@lib` resolves to `src/lib`.
-- `@server` resolves to `server`.
-- `@tests` resolves to `tests`.
-- `@test-mocks` resolves to `tests/mocks`.
-
-Do not use Nuxt’s default `@` or `~` aliases for shared application code; they resolve to Nuxt’s application source directory rather than `src/lib` or `server`.
-
-## Testing principles
-
-- Test observable behavior, not implementation details.
-- Mock external network boundaries; do not mock the module under test.
-- Keep framework-specific code out of services and shared domain logic.
-- Keep fixtures deterministic and reusable.
-- Prefer focused tests over broad end-to-end assertions.
-- Give integration and E2E tests stable identifiers that support traceability. Do not reuse an identifier after removing or replacing a test.
-- Do not expand Playwright E2E coverage for now; Vitest unit and integration tests are the active testing focus.
-- Write tests that fail when a supported behavior changes, not when the
-  implementation is refactored or non-contractual wording is revised.
-  Small changes that preserve the behavior should not require test updates.
-- Avoid assertions on exact text fragments when the wording is not part of
-  the contract. For example, checking for a literal sentence in parser
-  instructions makes the test brittle: a harmless rewording can break it.
-  Prefer checking that the application passes fixed instructions separately
-  from user input. Assert exact wording only when the wording itself is a
-  requirement.
+Do not use Nuxt’s default `@` or `~` aliases for shared application code; they resolve to Nuxt’s application source directory.
