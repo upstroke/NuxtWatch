@@ -8,7 +8,7 @@ Die Anwendung führt von freier Eingabe zur ausführbaren Suche. Titel und Disco
 
 - Das LLM schlägt Lesarten und Kriterienänderungen vor, ändert keinen Zustand, erfindet keine IDs und wählt weder Suchstrecke noch TMDb-Endpunkt.
 - Die Matrix (`matrix.ts`) registriert Suchwege und Fachfunktionen. Sie dupliziert keine Fachregeln. `flow.ts` koordiniert die Prüfung. Jeder infrage kommende Suchweg prüft denselben Kriterienstand je Lesart, unabhängig von der Reihenfolge.
-- Die Fachlogik prüft unterstützte Kriterien und Kombinationen, Mindestangaben und nötige Auflösungen. Sie meldet ausführbar, Klärung nötig oder nicht unterstützt, jeweils mit Grund, wo erforderlich. Ausführbar heißt: Alle bestätigten Kriterien werden in ihrer gemeinten Bedeutung berücksichtigt, Mindestangaben sind erfüllt und notwendige Auflösungen abgeschlossen. Kein bestätigtes Kriterium wird stillschweigend weggelassen. Kandidatenabfragen sind keine Treff ersuche.
+- Die Fachlogik prüft unterstützte Kriterien und Kombinationen, Mindestangaben und nötige Auflösungen. Sie meldet ausführbar, Klärung nötig oder nicht unterstützt, jeweils mit Grund, wo erforderlich. Ausführbar heißt: Alle bestätigten Kriterien werden in ihrer gemeinten Bedeutung berücksichtigt, Mindestangaben sind erfüllt und notwendige Auflösungen abgeschlossen. Kein bestätigtes Kriterium wird stillschweigend weggelassen. Kandidatenabfragen sind keine Treffersuche.
 - Bei einem eindeutigen fachlichen Ziel wählt die Anwendung einen ausführbaren technischen Weg und die TMDb-Parameter. Mehrere fachlich gleichwertige Wege sind keine Nutzerfrage. Bei mehreren plausiblen, fachlich unterschiedlichen Zielen entscheidet der Nutzer, was er meint, nicht welchen Endpunkt die Anwendung aufruft. Diese Frage kann vor vollständiger technischer Ausführbarkeit nötig sein. Ohne sinnvolle Klärungsmöglichkeit oder unterstützten Suchweg erklärt die Anwendung den Grund; kein stiller Wechsel des Suchziels.
 
 Beispiel: Bei „Batman ab 2010“ bleibt die Jahresuntergrenze erhalten. Falls „Batman“ Titelbegriff oder Figur meinen kann, klärt der Wizard diese Bedeutung. Dass eine Titelsuche leichter ausführbar wäre, ist kein Grund, sie zu bevorzugen. Die Figurensuche ist hier ein konzeptionelles Beispiel, keine zugesicherte Funktion.
@@ -20,8 +20,8 @@ Der freie Suchschlitz verwendet `POST /api/search`. Die Route validiert die expl
 | Aktion | Verhalten |
 | --- | --- |
 | `submit` | Nimmt Suchtext und aktuelle Kriterien entgegen. Der erste Klick auf „Jetzt suchen“ startet ohne Klärungsbedarf direkt, wenn der Stand ausführbar ist. Sonst folgt eine konkrete Rückfrage oder ein begründeter Hinweis. |
-| `clarify` | Übernimmt eine geprüfte Antwort oder verarbeitet eine Präzisierung. Liefert die nächste notwendige Frage oder den geprüften Stand. Startet keine Treff ersuche. |
-| `execute` | Ausdrücklicher Suchstart nach Klärung. Bei der letzten oder einzigen Frage kann derselbe Klick die Auswahl bestätigen und die Suche starten. Der Server validiert die gebundene Auswahl und den resultierenden Stand vor der Ausführung. |
+| `clarify` | Übernimmt eine geprüfte Antwort oder verarbeitet eine Präzisierung. Nach erfolgreicher Übernahme liefert die Anwendung den bestätigten Kriterienstand und meldet die nächste nötige Frage, Ausführbarkeit oder den Grund der Nichtausführbarkeit. Startet keine Treffersuche. |
+| `execute` | Startet die Suche ausschließlich nach einem ausdrücklichen Klick auf „Suche starten“ in der Kriterienübersicht. Der Server prüft erneut den gebundenen, vollständig geklärten Kriterienstand. `execute` übernimmt keine Antwort. |
 
 `submit` und `execute` nutzen dieselbe interne Ausführungsfunktion. Die Suchsession mit bestätigten Kriterien, offene Klärungen und laufende Requests sind getrennt; keine globale `pending`-Phase. Der Server hält kurzlebigen Auftragszustand, keine dauerhaft gespeicherte Suchsession. Wiederherstellung nach Reload ist nicht zugesichert.
 
@@ -33,10 +33,10 @@ Der freie Suchschlitz verwendet `POST /api/search`. Die Route validiert die expl
 
 Unabhängig geklärte Kriterien erscheinen schon bei offenem Wizard als Pills. Fachlich gekoppelte Änderungen werden gemeinsam geprüft und übernommen oder gar nicht. Eindeutige Änderungen desselben Kriteriums im Suchtext ersetzen die alte Pill beim nächsten Absenden; andere bestätigte Pills bleiben erhalten. Bei „Batman ab 2010“ → „Batman ab 2020“ ersetzt `Ab 2020` die alte Jahres-Pill.
 
-1. Das Overlay zeigt nur konkrete Klärungsfragen. Die Anwendung bestimmt anhand des aktuellen Stands die nächste Frage. Jede Frage hat eine Vorauswahl, die erst durch den jeweiligen Button bestätigt wird. Eine andere Auswahl ersetzt die Vorauswahl. Passt keine Option, kann der Nutzer die Eingabe präzisieren.
-2. Sind weitere Fragen nötig, bestätigt „Übernehmen“ die aktuelle Auswahl; der Wizard führt zur nächsten Frage. Die Auswahl allein und „Übernehmen“ starten keine Suche.
-3. Ist die letzte oder einzige Frage mit der aktuellen Auswahl klärbar und die Suche damit ausführbar, bestätigt „Suche starten“ die Auswahl und startet nach serverseitiger Prüfung die Suche. Kein zusätzlicher Übernehmen-Klick, kein Review-Screen und kein automatischer Suchstart. Ergibt die Auswahl weitere Klärung, gilt wieder „Übernehmen“.
-4. Solange eine Frage offen ist, kann der Nutzer den Wizard nicht abbrechen oder schließen. Wird der gebundene Auftrag dennoch ungültig, etwa beim Verlassen der Suchansicht, darf eine verspätete Antwort keine Pill hinzufügen, keine neueren Kriterien überschreiben und das Overlay nicht wieder öffnen. Gibt es keine offene Frage mehr und ist kein Suchweg ausführbar, erklärt die Anwendung den Grund.
+1. **Frageseite:** Die Anwendung bestimmt die nächste nötige Frage. Jede Frage hat eine Vorauswahl. „Übernehmen“ bestätigt die aktuelle Auswahl, auch bei der letzten oder einzigen Frage. Passt keine Option, kann der Nutzer die Eingabe präzisieren. Weder die Auswahl allein noch „Übernehmen“ startet eine Suche.
+2. **Kriterienübersicht:** Nach jeder erfolgreich beantworteten Frage zeigt eine eigene Seite im Overlay alle bisher bestätigten Kriterien als Pills, einschließlich des neu bestätigten Kriteriums. Neue oder geänderte Pills werden hervorgehoben.
+3. **Aktion in der Übersicht:** Ist noch eine notwendige Frage offen, führt „Weiter zur nächsten Frage“ zur nächsten Frageseite; eine Suche mit Teilkriterien wird nicht angeboten. Ist der gezeigte Stand vollständig geklärt und ausführbar, startet erst „Suche starten“ die Suche. Ist der Stand nicht ausführbar und hilft keine weitere Frage, erklärt die Anwendung den Grund.
+4. Solange eine notwendige Frage offen ist, kann der Nutzer den Wizard weder auf einer Frageseite noch in der Zwischenübersicht abbrechen oder schließen. Wird der gebundene Auftrag dennoch ungültig, etwa beim Verlassen der Suchansicht, darf eine verspätete Antwort keine Pill hinzufügen, keine neueren Kriterien überschreiben und das Overlay nicht wieder öffnen.
 
 Die UI zeigt lokalisierte Fragen, Optionen, Hinweise und Fehlercodes; sie importiert keine Servermatrix und sendet keine rohe Modellantwort als Nutzerentscheidung. Laufstatus ist flüchtig und verändert weder Kriterien noch Chatverlauf. Technische Fehler übernehmen keine unverifizierten Änderungen.
 
@@ -58,7 +58,7 @@ Discovery ist eine strukturierte Filtersuche und kein Fallback zur Titelsuche. F
 | A2 | Titelverträge und Referenzfälle festhalten | Direkte TV-Suche und Film-Verfeinerung unterscheidbar; ungültige oder gekoppelte Vorschläge nicht teilweise übernommen |
 | A3 | Gemeinsamen Ablauf, Matrix und Titelfachlogik einführen | Vollständige Kriterienprüfung; technische Auswahl in der Anwendung; eine gemeinsame Ausführungsfunktion |
 | A4 | Gemeinsame Route und Auftragsbindung einführen | Direkter Start und gebundener Wizard-Start; unbekannte Aktionen, alte Antworten und Doppelstarts abgefangen; Migration abgesichert |
-| A5 | Wizard mit Beispieldaten prüfen | Ein- und mehrstufige Klärung, Vorauswahl und alternative Auswahl, beide Buttons, kein Abbruch bei offener Frage, unabhängige Pills und Ersetzung; mindestens zwei Sprachbeispiele |
+| A5 | Wizard mit Beispieldaten prüfen | Ein- und mehrstufige Klärung, Vorauswahl und alternative Auswahl, Übernehmen bei jeder Frage, Kriterienübersicht nach jeder Antwort, Weiter bei offener Frage und separater Start erst bei ausführbarem Stand; kein Abbruch bei offener Frage, unabhängige Pills und Ersetzung; mindestens zwei Sprachbeispiele |
 | A6 | Promptumfang und UI-Status prüfen | Kontextbezogene Anweisungen, Ende des Laufstatus bei Ergebnis oder Fehler, keine vorgetäuschten Schritte |
 | A7 | Keyword als weiteren Architekturfall prüfen | Gemeinsame und eigene Fachregeln, Bedarf für eine eigene Route und verfügbare Paginierungsmetadaten geklärt |
 
