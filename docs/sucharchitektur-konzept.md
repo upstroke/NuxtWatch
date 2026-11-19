@@ -17,11 +17,11 @@ Beispiel: Bei „Batman ab 2010“ bleibt die Jahresuntergrenze erhalten. Falls 
 
 Der freie Suchschlitz verwendet `POST /api/search`. Die Route validiert die explizite Aktion und delegiert an `flow.ts`; unbekannte Aktionen werden abgelehnt. Streckenspezifische Routen können für bekannte strukturierte Aufrufe bestehen bleiben. Der alte Pfad `/api/search/title/refine` entfällt erst nach Migration oder abgesichertem Übergang. Detail- und Trending-Routen bleiben unverändert.
 
-| Aktion | Verhalten |
-| --- | --- |
-| `submit` | Nimmt Suchtext und aktuelle Kriterien entgegen. Ohne Klärungsbedarf startet die ausführbare Suche direkt auf den ausdrücklichen Auftrag hin. Sonst folgt eine konkrete Rückfrage oder ein begründeter Hinweis. |
+| Aktion    | Verhalten                                                                                                                                                                                                                                                                     |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `submit`  | Nimmt Suchtext und aktuelle Kriterien entgegen. Ohne Klärungsbedarf startet die ausführbare Suche direkt auf den ausdrücklichen Auftrag hin. Sonst folgt eine konkrete Rückfrage oder ein begründeter Hinweis.                                                                |
 | `clarify` | Übernimmt eine geprüfte Antwort oder verarbeitet eine Präzisierung. Nach erfolgreicher Übernahme liefert die Anwendung den bestätigten Kriterienstand und meldet die nächste nötige Frage, Ausführbarkeit oder den Grund der Nichtausführbarkeit. Startet keine Treffersuche. |
-| `execute` | Startet die Suche nach einer ausdrücklichen Freigabe. Der Server prüft erneut den gebundenen, vollständig geklärten Kriterienstand. `execute` übernimmt keine Antwort. |
+| `execute` | Startet die Suche nach einer ausdrücklichen Freigabe. Der Server prüft erneut den gebundenen, vollständig geklärten Kriterienstand. `execute` übernimmt keine Antwort.                                                                                                        |
 
 `submit` und `execute` nutzen dieselbe interne Ausführungsfunktion. Die Suchsession mit bestätigten Kriterien, offene Klärungen und laufende Requests sind getrennt; keine globale `pending`-Phase. Der Server hält kurzlebigen Auftragszustand, keine dauerhaft gespeicherte Suchsession. Wiederherstellung nach Reload ist nicht zugesichert.
 
@@ -70,14 +70,14 @@ Discovery ist eine strukturierte Filtersuche und kein Fallback zur Titelsuche. F
 
 ## Aufgaben nach Freigabe
 
-| ID | Aufgabe | Abnahme |
-| --- | --- | --- |
-| A1 | Titelstrecke, Aufrufer, Verträge, Tests und Wizard-Dokument inventarisieren | Ist-/Ziel-Zuordnung, Migrationsliste und Abweichungen dokumentiert |
-| A2 | Titelverträge und Referenzfälle festhalten | Direkte TV-Suche und Film-Verfeinerung unterscheidbar; ungültige oder gekoppelte Vorschläge nicht teilweise übernommen |
-| A3 | Gemeinsamen Ablauf, Matrix und Titelfachlogik einführen | Vollständige Kriterienprüfung; technische Auswahl in der Anwendung; eine gemeinsame Ausführungsfunktion |
-| A4 | Gemeinsame Route und Auftragsbindung einführen | Direkter Start und gebundener Wizard-Start; unbekannte Aktionen, alte Antworten und Doppelstarts abgefangen; Migration abgesichert |
-| A5 | Wizard mit Beispieldaten prüfen | Abnahme gemäß [Wizard-Spezifikation](clarificaton-wizzard-flow.md), mindestens zwei Sprachbeispiele |
-| A6 | Promptumfang und UI-Status prüfen | Kontextbezogene Anweisungen, Ende des Laufstatus bei Ergebnis oder Fehler, keine vorgetäuschten Schritte |
-| A7 | Keyword als weiteren Architekturfall prüfen | Gemeinsame und eigene Fachregeln, Bedarf für eine eigene Route und verfügbare Paginierungsmetadaten geklärt |
+| ID  | Aufgabe                                                                     | Abnahme                                                                                                                            |
+| --- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| A1  | Titelstrecke, Aufrufer, Verträge, Tests und Wizard-Dokument inventarisieren | Ist-/Ziel-Zuordnung, Migrationsliste und Abweichungen dokumentiert                                                                 |
+| A2  | Titelverträge und Referenzfälle festhalten                                  | Direkte TV-Suche und Film-Verfeinerung unterscheidbar; ungültige oder gekoppelte Vorschläge nicht teilweise übernommen             |
+| A3  | Gemeinsamen Ablauf, Matrix und Titelfachlogik einführen                     | Vollständige Kriterienprüfung; technische Auswahl in der Anwendung; eine gemeinsame Ausführungsfunktion                            |
+| A4  | Gemeinsame Route und Auftragsbindung einführen                              | Direkter Start und gebundener Wizard-Start; unbekannte Aktionen, alte Antworten und Doppelstarts abgefangen; Migration abgesichert |
+| A5  | Wizard mit Beispieldaten prüfen                                             | Abnahme gemäß [Wizard-Spezifikation](clarificaton-wizzard-flow.md), mindestens zwei Sprachbeispiele                                |
+| A6  | Promptumfang und UI-Status prüfen                                           | Kontextbezogene Anweisungen, Ende des Laufstatus bei Ergebnis oder Fehler, keine vorgetäuschten Schritte                           |
+| A7  | Keyword als weiteren Architekturfall prüfen                                 | Gemeinsame und eigene Fachregeln, Bedarf für eine eigene Route und verfügbare Paginierungsmetadaten geklärt                        |
 
 A1–A4 bilden den ersten technischen Schnitt; A5–A7 ziehen keine sofortige UI-Umsetzung oder weitere Suchstrecken nach sich. Danach relevante Tests, Coverage, ESLint und Typecheck ausführen. Detaillierte Speicherwahl, Dateiaufteilung und optionale Statusstreams bleiben Umsetzungsdetails.

@@ -7,49 +7,49 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { generateText } from 'ai';
 
 export type LlmConfig = {
-    provider: string;
-    baseUrl: string;
-    model: string;
+  provider: string;
+  baseUrl: string;
+  model: string;
 };
 
 type LlmInput = {
-    system: string;
-    userContent: string;
+  system: string;
+  userContent: string;
 };
 
 export async function generateLlmText(
-    config: LlmConfig,
-    { system, userContent }: LlmInput,
+  config: LlmConfig,
+  { system, userContent }: LlmInput,
 ): Promise<string> {
-    const providerName = config.provider.trim();
-    const baseUrl = config.baseUrl.trim();
-    const modelId = config.model.trim();
+  const providerName = config.provider.trim();
+  const baseUrl = config.baseUrl.trim();
+  const modelId = config.model.trim();
 
-    if (!providerName || !baseUrl || !modelId) {
-        throw new Error(
-            'Incomplete LLM configuration: NUXT_LLM_PROVIDER, '
-            + 'NUXT_LLM_BASE_URL, and NUXT_LLM_MODEL must be set.',
-        );
-    }
+  if (!providerName || !baseUrl || !modelId) {
+    throw new Error(
+      'Incomplete LLM configuration: NUXT_LLM_PROVIDER, ' +
+        'NUXT_LLM_BASE_URL, and NUXT_LLM_MODEL must be set.',
+    );
+  }
 
-    const provider = createOpenAICompatible({
-        name: providerName,
-        baseURL: baseUrl,
-    });
+  const provider = createOpenAICompatible({
+    name: providerName,
+    baseURL: baseUrl,
+  });
 
-    const { text } = await generateText({
-        model: provider.chatModel(modelId),
-        system,
-        messages: [{ role: 'user', content: userContent }],
-        maxOutputTokens: 256,
-        maxRetries: 0,
-    });
+  const { text } = await generateText({
+    model: provider.chatModel(modelId),
+    system,
+    messages: [{ role: 'user', content: userContent }],
+    maxOutputTokens: 256,
+    maxRetries: 0,
+  });
 
-    const result = text.trim();
+  const result = text.trim();
 
-    if (!result) {
-        throw new Error('The configured language model returned no text.');
-    }
+  if (!result) {
+    throw new Error('The configured language model returned no text.');
+  }
 
-    return result;
+  return result;
 }

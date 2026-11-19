@@ -31,13 +31,13 @@ export type TmdbRuntimeConfig = z.infer<typeof TmdbRuntimeConfigSchema>;
 
 ## Shared type locations
 
-| Type | Location | Rule |
-| --- | --- | --- |
-| Zod contract and derived type | `src/lib/schemas` or relevant domain module for the derived type | Keep the type associated with its schema |
-| Cross-module type | `src/types/<topic>.ts` (e.g. `src/types/search.ts`) | Only when independent modules need the same domain type and none naturally owns it |
-| Feature or domain type | Near its feature or domain | Keep it close to its use |
-| Local function type | In the function’s file | Do not centralize one-off types |
-| Injected dependency type | At the boundary defining it | Keep it with its consumer or provider |
+| Type                          | Location                                                         | Rule                                                                               |
+| ----------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Zod contract and derived type | `src/lib/schemas` or relevant domain module for the derived type | Keep the type associated with its schema                                           |
+| Cross-module type             | `src/types/<topic>.ts` (e.g. `src/types/search.ts`)              | Only when independent modules need the same domain type and none naturally owns it |
+| Feature or domain type        | Near its feature or domain                                       | Keep it close to its use                                                           |
+| Local function type           | In the function’s file                                           | Do not centralize one-off types                                                    |
+| Injected dependency type      | At the boundary defining it                                      | Keep it with its consumer or provider                                              |
 
 Follow DRY (Don't Repeat Yourself): define each contract once. Sharing a type is not a reason to move it away from the module that owns it.
 

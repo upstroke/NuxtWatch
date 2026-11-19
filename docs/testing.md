@@ -22,12 +22,12 @@ npm run test:e2e
 
 ## Boundaries and locations
 
-| Scope | Location | Runner | Focus |
-| --- | --- | --- | --- |
-| Unit | `tests/unit` (`schemas`, `services`, `utils`) | Vitest | One cohesive unit: project-specific validation, service, mapper, parameter, error, or utility behavior |
-| Controlled integration | `tests/integration/tmdb` for TMDb | Vitest | Route-to-response or service flow with a controlled outbound transport |
-| HTTP integration | `tests/integration/http` | Playwright | Real HTTP requests to a running Nuxt server |
-| Browser end-to-end | `tests/e2e` | Playwright | User journeys; do not expand browser coverage for now |
+| Scope                  | Location                                      | Runner     | Focus                                                                                                  |
+| ---------------------- | --------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------ |
+| Unit                   | `tests/unit` (`schemas`, `services`, `utils`) | Vitest     | One cohesive unit: project-specific validation, service, mapper, parameter, error, or utility behavior |
+| Controlled integration | `tests/integration/tmdb` for TMDb             | Vitest     | Route-to-response or service flow with a controlled outbound transport                                 |
+| HTTP integration       | `tests/integration/http`                      | Playwright | Real HTTP requests to a running Nuxt server                                                            |
+| Browser end-to-end     | `tests/e2e`                                   | Playwright | User journeys; do not expand browser coverage for now                                                  |
 
 - Keep `src/lib` and `server/services` framework-free. Put H3 helpers in `server/utils` and thin Nitro route handlers in `server/api`: validate, delegate, map errors, respond.
 - Inject external transports. Unit tests do not access the real network. In controlled integrations, mock the outbound TMDb transport rather than internal modules. Never mock the module under test.

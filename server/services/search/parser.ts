@@ -19,10 +19,13 @@ const change = z.discriminatedUnion('field', [
   z.strictObject({ field: z.literal('year'), operation: z.literal('set'), value: year.nullable() }),
 ]);
 
-const changes = z.array(change).max(3).refine(
-  (edits) => new Set(edits.map((edit) => edit.field)).size === edits.length,
-  'A field may only be edited once',
-);
+const changes = z
+  .array(change)
+  .max(3)
+  .refine(
+    (edits) => new Set(edits.map((edit) => edit.field)).size === edits.length,
+    'A field may only be edited once',
+  );
 const message = z.string().trim().min(1);
 const proposal = z.discriminatedUnion('status', [
   z.strictObject({ status: z.literal('ready'), changes: changes.optional() }),

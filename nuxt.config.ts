@@ -18,8 +18,8 @@ export default defineNuxtConfig({
     },
     llm: {
       provider: '', // NUXT_LLM_PROVIDER from .env file
-      baseUrl: '',  // NUXT_LLM_BASE_URL from .env file
-      model: '',    // NUXT_LLM_MODEL from .env file
+      baseUrl: '', // NUXT_LLM_BASE_URL from .env file
+      model: '', // NUXT_LLM_MODEL from .env file
     },
   },
   typescript: {
