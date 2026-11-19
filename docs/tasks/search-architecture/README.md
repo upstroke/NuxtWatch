@@ -17,6 +17,13 @@ Die interaktive CLI ist der erste Client für `POST /api/search` mit `submit`, `
 
 Neue automatisierte Tests schließen nach dem funktionierenden Durchstich und vor der Freigabe relevante Lücken gemäß [Teststrategie](../../testing.md). Die Bestandsaufnahme legt keine neuen Tests an.
 
+## Merkpunkte aus dem früheren Entwurf
+
+- Server, CLI und spätere UI verwenden dieselben fachlichen Werte, spiegeln aber nicht dieselbe Ordnerstruktur. Kriterien, HTTP-Requests und LLM-Vorschläge bleiben getrennte Verträge. Beispiel: `all`, `movie` und `tv` verwenden ein gemeinsames `mediaTypeSchema`; bei `{ field, value }` bestimmt das Feld das Werteschema. Ein LLM-Vorschlag ersetzt nie das gesamte Suchobjekt.
+- Formale Gültigkeit, Freigabe einer Änderung für das LLM und fachliche Ausführbarkeit sind getrennte Prüfungen. Ein gültiger Wert ist weder automatisch als Modelländerung erlaubt noch auf jeder Suchstrecke ausführbar. Gekoppelte Änderungen werden gemeinsam übernommen oder nicht; unabhängige bestätigte Kriterien können während einer Klärung bereits angezeigt werden.
+- Die spätere UI erhält einen Baustein pro Kriterium, nicht je einen für Film und Serie. Sie nutzt gemeinsame Werte, verantwortet aber Labels, Bedienung und Pills selbst. Für den CLI-Durchstich werden keine vorsorglichen UI-Dateien angelegt. Unter `tests/` gilt die Gliederung nach Verhalten und Testgrenze, kein Spiegel des Produktionsbaums.
+- Alte Beispiele mit `POST /api/search/title` und `refine` erklären die ursprüngliche Aufgabentrennung, sind aber keine Vorlage für den freien Sucheinstieg. Dafür gilt der gemeinsame Vertrag mit `submit`, `clarify` und `execute`. TMDb-Aufrufe und Ergebnis-Mapping bleiben von der Suchkoordination getrennt; der im Entwurf genannte Ordner `server/services/tmdb/search/` ist kein belegter Iststand.
+
 ## Offen
 
 - Welche konkreten Eingaben eignen sich für die beiden Abnahmefälle? Die Antwort folgt aus den nachgewiesenen Fähigkeiten der Titelstrecke.
