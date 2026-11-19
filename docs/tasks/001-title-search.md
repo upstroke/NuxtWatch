@@ -10,53 +10,53 @@ Work from the current `main` in NuxtWatch. The cleanup is complete; the NextWatc
 
 ## Reference flow
 
-| User message            | Search criteria                                                           | Verified TMDb mapping                                                               |
-| ----------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| “Find The Matrix”       | Set the title. No media type or year is required.                         | `/search/multi` with `query=The Matrix`; map only movie and TV hits to title cards. |
-| “I mean the 1999 movie” | Keep the title; add movie as the media type and 1999 as the release year. | `/search/movie` with `query=The Matrix` and `primary_release_year=1999`.            |
+| User message | Search criteria | TMDb mapping |
+| --- | --- | --- |
+| “Find The Matrix” | Set the title; no media type or year is required. | `/search/multi` with `query=The Matrix`; map movie and TV hits to title cards. |
+| “I mean the 1999 movie” | Keep the title; add `movie` and `1999`. | `/search/movie` with `query=The Matrix` and `primary_release_year=1999`. |
 
-The TMDb requests are verified; the end-to-end chat flow is not. Multiple title matches are valid results, not a reason to ask for clarification.
+Multiple title matches are valid results, not a reason to ask for clarification. The follow-up was verified through the internal API routes, not through the chat UI.
 
 ## Phase 1 — Inspect and agree
 
-- [x] Review the parser output schema and instructions, and inventory the internal search route, input schema, and tests. The [Phase 1 inventory](001-title-search-phase-1.md) records what can be reused and what is missing. The earlier LLM response was not located; the live response below is available for the first title test.
-- [x] Agree on the first implementation scope and test plan. Validate the title proposal into the shared search object and send only those criteria as JSON to `POST /api/search/title`. Keep the TMDb Multi Search service and its title-card mapper side by side. See the [agreed layout and verification plan](001-title-search-phase-1.md#agreed-layout-and-contract).
-
-Phase 1 records the design decision. Phase 2 tracks implementation and verification.
+- [x] Review the parser output schema and instructions and inventory the internal search route, input schema, and tests. See the [Phase 1 inventory](001-title-search-phase-1.md).
+- [x] Agree on the first implementation scope and test plan. Validate the title proposal and send only the search criteria as JSON to `POST /api/search/title`. Keep the TMDb Multi Search service and its title-card mapper side by side. See the [agreed layout and contract](001-title-search-phase-1.md#agreed-layout-and-contract).
 
 ### Findings — chat schema usage
 
 The `git grep` check on `origin/feat/001-title-search` covered `app`, `server`, `src`, and `tests`. Matches for `ChatIntentSchema`, `ChatIntent`, and `baseRevision` were limited to `src/lib/schemas/chat.ts` and `tests/unit/schemas/chat.spec.ts`. `src/lib/schemas/index.ts` re-exports the chat schema, but no application use was found in the checked paths.
 
-`ChatIntentSchema` requires `baseRevision`, while `src/lib/parser/instructions.ts` tells the model not to emit revisions. The schema is therefore not a direct match for the raw model response. Agreed first scope: leave `chat.ts` unchanged, validate a proposal to set a non-empty title, and use it to build the search object (for example, `{ title: 'The Matrix' }`). Reject invalid or unsupported proposals without changing the search state or dispatching a search.
-
-`tests/unit/parser/instructions.spec.ts` checks only the instructions version.
+`ChatIntentSchema` requires `baseRevision`, while `src/lib/parser/instructions.ts` tells the model not to emit revisions. The schema is not a direct match for the raw model response. The first scope leaves `chat.ts` unchanged, validates a proposal to set a non-empty title, and uses it to build the search object. Invalid or unsupported proposals do not change search state or dispatch a search. `tests/unit/parser/instructions.spec.ts` checks only the instructions version.
 
 ### Findings — live OpenRouter title test
 
-- Input: `Finde The Matrix`
+- Input: `Finde The Matrix`.
 - SDK: `@openrouter/sdk@1.5.108`; requested model: `openrouter/free`; reported model: `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free`.
-- Observed model response: `{"status":"ready","changes":[{"field":"title","operation":"set","value":"The Matrix"}]}`
-- Result: the response passed the test's strict validation for a single non-empty title change and produced `{"title":"The Matrix"}`.
+- Observed model response: `{"status":"ready","changes":[{"field":"title","operation":"set","value":"The Matrix"}]}`.
+- Result: strict single-title validation produced `{"title":"The Matrix"}`.
 
-The manual test used a short title-only prompt and an inline validation schema. It did not use `instructions.ts` or `ChatIntentSchema`, call the internal search API or TMDb, or verify the follow-up turn. The observed response can be used inline in an automated test without a network call or a separate fixture file.
+This manual test used a short title-only prompt and inline validation. It did not use `instructions.ts` or `ChatIntentSchema`, call the internal search API or TMDb, or verify the follow-up.
 
-## Phase 2 — Implement and verify
+## Phase 2 — Implement and verify (complete)
 
-- [x] Verify the title-only path in separate adapter and handler tests. The documented model response produces one `POST /api/search/title` with `{"title":"The Matrix"}` as its body. With mocked TMDb transport, the handler calls `/search/multi` and maps movie and TV hits to title cards, excluding person hits.
-- [x] Verify that invalid proposals and a synthetic clarification-status proposal do not dispatch a search. The adapter returns `not-dispatched` without calling the internal API and does not modify search state. The route separately rejects invalid request bodies before calling TMDb.
-- [ ] Verify “I mean the 1999 movie” next. Apply a second validated proposal and check that it retains the title, adds media type and year, and results in `/search/movie` with `primary_release_year=1999`.
-- [ ] Change `src/lib/parser/instructions.ts` only if the agreed contract or a parser test shows a concrete need.
+Phase 2 covers the internal search and refinement paths only. UI integration is not an acceptance criterion.
 
-### Verification status
+- [x] Verify the title-only adapter and handler separately. The validated proposal dispatches one `POST /api/search/title` with `{"title":"The Matrix"}`. With controlled TMDb transport, the handler calls `/search/multi` and maps movie and TV hits, excluding people.
+- [x] Verify that invalid proposals and a synthetic clarification-status proposal do not dispatch a search or change state. The route rejects invalid request bodies before calling TMDb.
+- [x] Verify the reference follow-up through live OpenRouter and TMDb. Starting with `{"title":"The Matrix","mediaType":"all"}` and no year, “I mean the 1999 movie” kept the title and added `movie` and `1999`. The script passed the full criteria to `/api/search/title`. TMDb returned three movies from 1999, including *The Matrix* (`603`).
+- [x] Verify the typed TMDb filters. A live OpenRouter follow-up changed the year from 1999 to 2003 with `movie` already set; the full criteria returned ten movies from 2003. Direct TV requests for *Breaking Bad* returned the main series (`1396`) for 2008 and *Breaking Bad: Original Minisodes* (`337563`) for 2009. The TV requests did not involve OpenRouter.
+- [x] Confirm tests, coverage, ESLint, and typecheck. All four were reported green for `dffc9e0` on `feat/001-title-search`.
 
-Tests, coverage, ESLint, and typecheck were reported green through `388e872` on `feat/001-title-search`, after aligning the tests with [the testing guide](../testing.md). The adapter unit test in `tests/unit/utils/dispatch-title-search-to-api.spec.ts` mocks `$fetch` and includes coverage-intent comments. The Vitest integration test in `tests/integration/tmdb/title-search.spec.ts` (`TMDB-INT-021`–`TMDB-INT-026`) calls the handler directly with mocked TMDb transport; the superseded unit test was removed.
+The follow-up uses dedicated `TITLE_REFINEMENT_INSTRUCTIONS` in `src/lib/parser/refine-title-search.ts`. No change to the shared `src/lib/parser/instructions.ts` was required. Vitest handler tests use controlled external transport per [the testing guide](../testing.md): `TMDB-INT-021`–`026` cover the title route, `TMDB-INT-027`–`030` cover refinement, and `TMDB-INT-031`–`034` cover typed search filters.
 
-This verifies the two boundaries separately, not a live end-to-end chat flow. Phase 2 remains open: the follow-up turn and UI integration are not verified. Ask only when missing or ambiguous information blocks the request as stated; do not silently drop explicit criteria.
+### Known limitation
 
-## Open decision
+An intermittent OpenRouter `400` was observed during the live follow-up; the internal refinement route returned `502`. A subsequent attempt succeeded, but the upstream cause is unknown. `tests/regression/title-refine-provider-error.spec.ts` (`TMDB-INT-035`) verifies the `502` mapping and the `fetch` phase and upstream status in the server log. It does not fix the upstream failure.
 
-Before connecting the UI, agree whether it sends the validated search object immediately or only after the filter review and “Search now” described in the [wizard draft](../clarificaton-wizzard-flow.md). Search readiness is not search execution. This decision does not block the search-object or API tests.
+## Deferred work
+
+- Chat UI integration and rendering title cards. Before connecting the UI, decide whether it dispatches immediately or waits for filter review and “Search now” as described in the [wizard draft](../clarificaton-wizzard-flow.md). Search readiness is not search execution.
+- TV year refinement through OpenRouter. The existing movie-only refinement returns `unchanged` for TV year corrections; direct TV search with a first-air-year filter is already supported.
 
 ## Out of scope
 
