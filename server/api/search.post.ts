@@ -1,6 +1,7 @@
 /** Validates HTTP intent, resolves session storage, and delegates request transitions. */
 import { randomUUID } from 'node:crypto';
 import { searchRequestSchema } from '@lib/schemas/search-request';
+import { LlmRuntimeConfigSchema } from '@lib/schemas/runtime-config';
 import { submitForSession } from '@server/services/search/workflow';
 import { createTmdbHttpClient } from '@server/services/tmdb/http';
 import { isTmdbError, toTmdbHttpError } from '@server/services/tmdb/errors';
@@ -21,14 +22,11 @@ export default defineEventHandler(async (event) => {
   }
 
   const runtime = useRuntimeConfig(event);
-  const llm = {
-    provider: runtime.llm.provider.trim(),
-    baseUrl: runtime.llm.baseUrl.trim(),
-    model: runtime.llm.model.trim(),
-  };
-  if (!llm.provider || !llm.baseUrl || !llm.model) {
+  const llmConfig = LlmRuntimeConfigSchema.safeParse(runtime.llm);
+  if (!llmConfig.success) {
     throw createError({ statusCode: 503, statusMessage: 'Search configuration unavailable' });
   }
+  const llm = llmConfig.data;
 
   let tmdb;
   try {

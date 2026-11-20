@@ -5,18 +5,16 @@
  */
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { generateText } from 'ai';
+import type { LlmRuntimeConfig } from '@lib/schemas/runtime-config';
 
-export type LlmConfig = {
-  provider: string;
-  baseUrl: string;
-  model: string;
-};
+export type LlmConfig = LlmRuntimeConfig;
 
 type LlmInput = {
   system: string;
   userContent: string;
 };
 
+/** Generates non-empty model text without interpreting or applying search criteria. */
 export async function generateLlmText(
   config: LlmConfig,
   { system, userContent }: LlmInput,
