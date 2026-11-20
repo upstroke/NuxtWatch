@@ -1,4 +1,4 @@
-/** Evaluates supported execution paths and runs direct searches without session storage access. */
+/** Evaluates supported execution paths and runs title searches without session storage access. */
 import type { SearchCriteria } from '@lib/schemas/search-criteria';
 import type { TmdbHttpClient } from '../tmdb/http';
 import { searchTitles } from '../tmdb/title-search';
@@ -8,19 +8,9 @@ import type { LlmConfig } from './llm';
 import { parseSearchProposal } from './parser';
 import type { ParserInput } from './parser';
 
-/** Evaluates domain requirements and the provider paths currently implemented. */
+/** Supports each ready title search; a year without a media type still needs clarification. */
 export function decideSearchExecution(criteria: SearchCriteria) {
-  const decision = decideSearch(criteria);
-  if (decision.status !== 'ready') return decision;
-
-  if (criteria.mediaType !== 'all' || criteria.year !== undefined) {
-    return {
-      status: 'unsupported' as const,
-      reason: 'unsupported_title_criteria' as const,
-    };
-  }
-
-  return decision;
+  return decideSearch(criteria);
 }
 
 /** Interprets and executes a submission when no session-bound request lifecycle is required. */
@@ -52,6 +42,10 @@ export async function searchSubmission(
     return { status: 'not_executed' as const, criteria, decision };
   }
 
-  const results = await searchTitles(http, decision.criteria.title);
-  return { status: 'completed' as const, criteria: decision.criteria, results };
+  const confirmed = decision.criteria;
+  const options = confirmed.mediaType === 'all'
+    ? undefined
+    : { mediaType: confirmed.mediaType, year: confirmed.year };
+  const results = await searchTitles(http, confirmed.title, options);
+  return { status: 'completed' as const, criteria: confirmed, results };
 }
