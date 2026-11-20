@@ -19,7 +19,7 @@ export function openSearchRequest(state: SearchState, requestId: string): Search
   return request;
 }
 
-/** Checks freshness before search execution and before committing returned criteria. */
+/** Checks freshness before search execution and returns the committed request identity. */
 export async function submitForSession(
   state: SearchState,
   requestId: string,
@@ -43,5 +43,5 @@ export async function submitForSession(
   }
 
   state.criteria = { ...result.criteria };
-  return result;
+  return { ...result, requestId: request.requestId, revision: request.revision };
 }
