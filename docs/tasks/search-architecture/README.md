@@ -1,6 +1,6 @@
 # Sucharchitektur – Arbeitsstand
 
-Einstieg für die Weiterarbeit ohne Chatverlauf. Stand: 20. November 2026, 17:15 Uhr. Branch: `feat/shared-search-architecture`. Implementierungsstand bis `d9f93fc`.
+Einstieg für die Weiterarbeit ohne Chatverlauf. Stand: 20. November 2026, Tagesabschluss. Branch: `feat/shared-search-architecture`. Produktionsstand bis `d9f93fc`, lokales Vergleichsscript bis `6baabbd`.
 
 Diese Übersicht beschreibt den aktuellen Iststand und ersetzt abweichende ältere Implementierungsangaben in den verlinkten Schritt- und Entscheidungsdokumenten. Zielabläufe und State-Machine-Diagramme sind nicht automatisch implementiert.
 
@@ -8,6 +8,8 @@ Diese Übersicht beschreibt den aktuellen Iststand und ersetzt abweichende älte
 
 - [Architekturkonzept](../../sucharchitektur-konzept.md)
 - [LLM-Suchvorbereitung: Erkenntnisse und Vergleichsplan](llm-search-preparation.md)
+- [Konkreter LLM-Entwurf](llm-search-preparation-draft.md), [festgeschriebenes Vergleichspaket](parser-comparison/README.md), [lokale Durchführung](parser-comparison/RUNNING.md)
+- [Qwen-Ergebnis und Übergabe zum Modellvergleich](parser-comparison/results-qwen-2026-11-20.md)
 - [Zielstruktur und Verantwortlichkeiten](zielstruktur.md)
 - [Suchablauf, Interpretation und Terminal-Interaktion](interaction-state-decisions.md)
 - [Entscheidung 1: Session und Auftrag](session-request-decision.md)
@@ -54,25 +56,36 @@ Alle drei Titelsuchwege verwenden `include_adult=true`, validieren Providerantwo
 
 Der Parser akzeptiert Änderungen an `title`, `mediaType` und `year` sowie allgemeine Klärungs-/Unsupported-Meldungen. Er erhält aktuelle Kriterien einschließlich `all` und die aktuelle Nutzereingabe, aber keinen vorherigen Gesprächsverlauf. Allgemeine Modellfragen werden nicht automatisch in strukturierte Frageinstanzen umgewandelt.
 
-Aktueller Prompt: `1.4.0` (`d9f93fc`), Regeltext aus `1.2.1` plus vier Beispiele aus `1.3.0`. Die darin wieder enthaltenen Personen-, Genre- und Pending-Regeln erweitern nicht den implementierten Vertrag. Details, Befunde und nächste Schritte stehen in [LLM-Suchvorbereitung](llm-search-preparation.md).
+Aktueller Produktionsprompt: `1.4.0` (`d9f93fc`), Regeltext aus `1.2.1` plus vier Beispiele aus `1.3.0`. Die darin wieder enthaltenen Personen-, Genre- und Pending-Regeln erweitern nicht den implementierten Vertrag. Der Versuchskandidat 0.1 wurde nicht integriert. Details stehen in [LLM-Suchvorbereitung](llm-search-preparation.md) und im [Vergleichsergebnis](parser-comparison/results-qwen-2026-11-20.md).
 
 Die CLI unterstützt weiterhin nur `submit` und serverseitiges `reset`, keine Auswahl per `clarify` und kein `execute`. Eine neue Texteingabe ist ein neuer Submit, keine gebundene Frageantwort. Kein automatischer Folgeaufruf.
 
 Die State Machines bleiben fachliches Modell; umgesetzt sind explizite Funktionen ohne State-Machine-Bibliothek, globale Pending-Phase oder generische Regel-Engine.
 
+### Isolierter Parser-Vergleich
+
+- Entwurf `095d62d`, festgeschriebener Kandidat und 14 Fälle `22b0463`, lokales Script `6baabbd`.
+- `scripts/compare-search-parser.mjs` plant standardmäßig ohne Netzwerk. Modellaufrufe benötigen `--run`; `--smoke` begrenzt auf einen Aufruf. Keine produktiven Sessions oder TMDb-Aufrufe, keine zusätzlichen Abhängigkeiten und kein zweiter produktiver Parser. Ergebnisse unter dem ignorierten `test-results/parser-comparison/`.
+- Der Nutzer hat Dry-run, einen erfolgreichen separaten V01/A-Smoke-Test und den vollständigen Qwen-Vergleich ausgeführt: 126 Aufrufe abgeschlossen, vier ungültige Antworten ausschließlich in A, keine Tokenlimit-Abschneidungen. B/C behandeln den Unsupported-Fall V14 besser. Die gewünschte Rückfrage bei V10 liefert keine Variante.
+- Der begrenzte Zusatzkontext zeigt in diesen Fällen keinen erkennbaren Nutzen. Ein vollständiger Verlauf wurde nicht getestet; ein Verlaufstest wird vorerst nicht weiterverfolgt. Keine neue produktive Kontextverwaltung. Vollständiger Befund und Einschränkungen in der [Ergebnisnotiz](parser-comparison/results-qwen-2026-11-20.md).
+
 ## Prüfstand
 
-- Laut Nutzerbericht war Typecheck für `97e3a07` erfolgreich. Die zunächst widersprüchliche Lint-Meldung wurde durch die konkrete `prefer-const`-Ausgabe geklärt; nach `6f40f09` wurde Lint ausdrücklich als erfolgreich bestätigt. Für die späteren Promptcommits liegt keine ausdrückliche neue Checkbestätigung vor. Frühere Bestätigungen reichen bis einschließlich `225b368` zurück.
+- Laut Nutzerbericht war Typecheck für `97e3a07` erfolgreich. Die zunächst widersprüchliche Lint-Meldung wurde durch die konkrete `prefer-const`-Ausgabe geklärt; nach `6f40f09` wurde Lint ausdrücklich als erfolgreich bestätigt. Für die späteren Promptcommits und das Vergleichsscript liegt keine ausdrückliche neue Checkbestätigung vor. Frühere Bestätigungen reichen bis einschließlich `225b368` zurück.
 - Tests wurden in diesen Schritten weder geändert noch ausgeführt. Bestehende Multi-Search-Tests erwarten bislang eine Query ohne `include_adult`; diese Erwartung passt nicht mehr zum implementierten Aufruf.
 - Mit Prompt `1.3.0` wurden manuell beobachtet: Film plus Jahr mit drei Treffern, Serie plus Jahr mit einem Treffer, Titel ohne Medien-/Jahresangabe nach Reset mit 20 Treffern sowie Titel plus Jahr ohne Medienangabe nach Reset mit Medientyp-Rückfrage und ohne Suche. Der Serienauszug zeigte keinen Reset und ist nicht als isolierter Reset-Fall bestätigt.
 - Mit Prompt `1.4.0` wurden nach Reset Film plus Jahr mit drei Treffern und anschließend ohne Reset der Wechsel zu Serie plus anderem Jahr mit einem Treffer beobachtet. Eine weitere unqualifizierte Titeländerung wechselte den Medientyp auf `all`, behielt das alte Jahr und führte zur Rückfrage. Das ist keine bestätigte fachliche Themenwechselregel.
 - Trefferzahlen beschreiben nur die jeweilige empfangene Antwort und sind keine festen Abnahmewerte. Die manuellen Checks nehmen weder Parallelität, Revisionsbindung, Reservierung noch sämtliche Fehler-/Wiederholungsfälle ab.
 - Historisch bestätigt: direkter HTTP-/CLI-Durchstich für The Matrix einschließlich HTTP 200, `no-store` und normalisierter Film-ID 603. Vorhandene Tests wurden zuvor nach Teststrategie getrennt (`08757a2`). Für `llm.ts` jetzt keine Tests ergänzen; globalen Mindestwert und fehlendes Coverage-Ziel pro Datei nicht ändern.
-- Dieser Dokumentationsschritt ändert weder Produktionscode noch Tests; keine Checks ausgeführt.
+- Der lokale Parser-Vergleich ist keine Testsuite, kein Typecheck/Lint und keine Abnahme der Such-/Sessionpfade. Dieser Dokumentationsschritt ändert weder Produktionscode noch Tests; keine weiteren Checks oder Modellaufrufe ausgeführt.
 
 ## Unmittelbar nächste Arbeit
 
-Zunächst [LLM-Auftrag, begrenzten Kontext und Vergleichsfälle entwerfen](llm-search-preparation.md), danach einen gesondert vereinbarten Parser-Vergleich ohne TMDb-Aufrufe und produktive Sessionänderungen durchführen. Kein neuer produktiver Parser, kein neues Antwortformat und kein weiterer Produktionsprompt ohne Auswertung und konkrete Freigabe.
+Zunächst ein zweites Modell mit unverändertem Vergleichspaket prüfen, bevor Produktionsmodell oder Produktionsprompt geändert werden. Ausgewählt ist `bartowski/google_gemma-4-26B-A4B-it-GGUF`, Datei `gemma-4-26B-A4B-it-Q4_K_M.gguf`. Zum Tagesabschluss läuft der Download laut Nutzer noch; Abschluss, Laden, API-ID und Modellverhalten sind nicht bestätigt. Kein Gemma-Lauf gestartet.
+
+Nach Download: tatsächliche API-ID und Runtime-/Chat-Template-, Kontext-, Thinking- und Sampling-Einstellungen dokumentieren, `NUXT_LLM_MODEL` nur lokal setzen, einzelnen Smoke-Test durchführen und Rohantwort prüfen. Erst danach vollständigen Vergleich gesondert starten. Effektive Qwen-Serverdefaults waren nicht vollständig erfasst; Unterschiede und notwendige Runtime-/Tokenlimitänderungen ausdrücklich dokumentieren. Wiedereinstieg in der [Übergabenotiz](parser-comparison/results-qwen-2026-11-20.md), Befehle in [RUNNING.md](parser-comparison/RUNNING.md).
+
+Kein Verlaufstest, keine produktive Kontextverwaltung, keine neue Vertragsfassung und keine Produktionsintegration des Kandidaten im aktuellen Auftrag. Die zuvor diskutierte Bereinigung des Produktionsprompts ist bis zur Modellauswertung zurückgestellt. Ältere Abschnitte zum weiteren Vorgehen sind als ursprüngliche Planung zu lesen, nicht als noch offener Entwurfsauftrag.
 
 Die Anwendung bleibt für Validierung, Kriterienübernahme, Bindungen, Auflösung und Ausführung verantwortlich. Das Modell soll Sprache und Gesprächsbezug interpretieren und tatsächliche Unklarheit benennen; die Anwendung soll freie Sprache nicht durch eine zweite Regel-Engine nachinterpretieren.
 
