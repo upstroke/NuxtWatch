@@ -1,11 +1,27 @@
-/** Executes directly supported submissions; clarification never triggers a TMDb request. */
+/** Evaluates supported execution paths and runs direct searches without session storage access. */
+import type { SearchCriteria } from '@lib/schemas/search-criteria';
 import type { TmdbHttpClient } from '../tmdb/http';
 import { searchTitles } from '../tmdb/title-search';
-import { submitSearch } from './coordinator';
+import { decideSearch, submitSearch } from './coordinator';
 import { generateLlmText } from './llm';
 import type { LlmConfig } from './llm';
 import { parseSearchProposal } from './parser';
 import type { ParserInput } from './parser';
+
+/** Evaluates domain requirements and the provider paths currently implemented. */
+export function decideSearchExecution(criteria: SearchCriteria) {
+  const decision = decideSearch(criteria);
+  if (decision.status !== 'ready') return decision;
+
+  if (criteria.mediaType !== 'all' || criteria.year !== undefined) {
+    return {
+      status: 'unsupported' as const,
+      reason: 'unsupported_title_criteria' as const,
+    };
+  }
+
+  return decision;
+}
 
 /** Interprets and executes a submission when no session-bound request lifecycle is required. */
 export async function submitAndSearch(
@@ -31,18 +47,11 @@ export async function searchSubmission(
   }
 
   const criteria = outcome.decision.criteria;
-  // The current transport path cannot preserve a specific media type or year.
-  if (criteria.mediaType !== 'all' || criteria.year !== undefined) {
-    return {
-      status: 'not_executed' as const,
-      criteria,
-      decision: {
-        status: 'unsupported' as const,
-        reason: 'unsupported_title_criteria' as const,
-      },
-    };
+  const decision = decideSearchExecution(criteria);
+  if (decision.status !== 'ready') {
+    return { status: 'not_executed' as const, criteria, decision };
   }
 
-  const results = await searchTitles(http, criteria.title);
-  return { status: 'completed' as const, criteria, results };
+  const results = await searchTitles(http, decision.criteria.title);
+  return { status: 'completed' as const, criteria: decision.criteria, results };
 }

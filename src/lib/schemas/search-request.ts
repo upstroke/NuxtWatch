@@ -1,4 +1,4 @@
-/** Clients submit intent or bound answers, never replacement server criteria. */
+/** Clients submit intent or bound actions, never replacement server criteria. */
 import { z } from 'zod';
 import { mediaTypeQuestionSchema } from './search-question';
 
@@ -16,11 +16,18 @@ export const searchClarifyRequestSchema = z.strictObject({
   }),
 });
 
+export const searchExecuteRequestSchema = z.strictObject({
+  action: z.literal('execute'),
+  ...mediaTypeQuestionSchema.pick({ requestId: true, revision: true }).shape,
+});
+
 export const searchRequestSchema = z.discriminatedUnion('action', [
   searchSubmitRequestSchema,
   searchClarifyRequestSchema,
+  searchExecuteRequestSchema,
   z.strictObject({ action: z.literal('reset') }),
 ]);
 
 export type SearchSubmitRequest = z.infer<typeof searchSubmitRequestSchema>;
 export type SearchClarifyRequest = z.infer<typeof searchClarifyRequestSchema>;
+export type SearchExecuteRequest = z.infer<typeof searchExecuteRequestSchema>;
