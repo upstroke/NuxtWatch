@@ -6,12 +6,14 @@
  */
 import { z } from 'zod';
 import { PARSER_INSTRUCTIONS } from '@lib/parser/instructions';
+import {
+  searchTitleSchema as title,
+  searchMediaTypeSchema as mediaType,
+  searchYearSchema as year,
+} from '@lib/schemas/search-criteria';
+import type { SearchCriteria } from '@lib/schemas/search-criteria';
 import { generateLlmText } from './llm';
 import type { LlmConfig } from './llm';
-
-const title = z.string().trim().min(1).max(500);
-const mediaType = z.enum(['all', 'movie', 'tv']);
-const year = z.number().int().min(1).max(9999);
 
 const change = z.discriminatedUnion('field', [
   z.strictObject({ field: z.literal('title'), operation: z.literal('set'), value: title }),
@@ -33,11 +35,11 @@ const proposal = z.discriminatedUnion('status', [
   z.strictObject({ status: z.literal('unsupported'), message }),
 ]);
 
-type SearchDraft = { title?: string; mediaType: z.infer<typeof mediaType>; year?: number };
 type SearchProposal = z.infer<typeof proposal>;
 
-export type ParserInput = { currentFilters: SearchDraft; userText: string };
+export type ParserInput = { currentFilters: SearchCriteria; userText: string };
 
+/** Generates and validates a proposal without changing the supplied criteria. */
 export async function parseSearchProposal(
   config: LlmConfig,
   input: ParserInput,
