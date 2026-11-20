@@ -34,10 +34,14 @@ export default defineEventHandler(async (event) => {
   );
 
   try {
-    return await submitAndSearch(llm, {
-      currentFilters: request.data.currentFilters,
-      userText: request.data.userText,
-    }, http);
+    return await submitAndSearch(
+      llm,
+      {
+        currentFilters: request.data.currentFilters,
+        userText: request.data.userText,
+      },
+      http,
+    );
   } catch (error) {
     if (isTmdbError(error)) {
       throw createError(toTmdbHttpError(error));

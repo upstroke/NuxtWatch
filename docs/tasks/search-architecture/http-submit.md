@@ -23,12 +23,12 @@ Optionale Kriterien werden als `currentFilters` übertragen, zum Beispiel `{"med
 
 ## Testinventur und Status
 
-| Zusicherung | Grenze | Vorhanden oder offen |
-| --- | --- | --- |
-| Parser, Koordinator und Titelsuchdienst arbeiten zusammen; Rückfragen verhindern die Ausführung. | Kontrollierte Integration | `tests/integration/tmdb/search-submission.spec.ts`; keine Wiederholung der kompletten internen Fallmatrix im HTTP-Test |
-| Fehlende Kriterien verwenden den Default; ungültige Eingaben werden vor externen Aufrufen abgewiesen. | HTTP-Integration am laufenden Server | Offen; an der tatsächlichen Route prüfen, kein separater Zod-Primitivtest |
-| HTTP-Erfolg, fachliches Ergebnis, sichere Fehler und Cache-Header erreichen den Client korrekt. | HTTP-Integration | Offen; passende vorhandene HTTP-Testinfrastruktur wiederverwenden |
-| Der direkte Fall liefert mit der lokalen Konfiguration echte Treffer. | Manueller Live-Abgleich | Offen; obigen Aufruf ausführen und keine feste Trefferzahl voraussetzen |
+| Zusicherung                                                                                           | Grenze                               | Vorhanden oder offen                                                                                                   |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Parser, Koordinator und Titelsuchdienst arbeiten zusammen; Rückfragen verhindern die Ausführung.      | Kontrollierte Integration            | `tests/integration/tmdb/search-submission.spec.ts`; keine Wiederholung der kompletten internen Fallmatrix im HTTP-Test |
+| Fehlende Kriterien verwenden den Default; ungültige Eingaben werden vor externen Aufrufen abgewiesen. | HTTP-Integration am laufenden Server | Offen; an der tatsächlichen Route prüfen, kein separater Zod-Primitivtest                                              |
+| HTTP-Erfolg, fachliches Ergebnis, sichere Fehler und Cache-Header erreichen den Client korrekt.       | HTTP-Integration                     | Offen; passende vorhandene HTTP-Testinfrastruktur wiederverwenden                                                      |
+| Der direkte Fall liefert mit der lokalen Konfiguration echte Treffer.                                 | Manueller Live-Abgleich              | Offen; obigen Aufruf ausführen und keine feste Trefferzahl voraussetzen                                                |
 
 Route und Request-Vertrag werden in diesem Schritt ergänzt. Tests, Typecheck, Lint und Live-Aufruf wurden für diese Änderung noch nicht ausgeführt. Die zuvor gemeldeten grünen lokalen Checks gelten für den vorherigen Stand.
 

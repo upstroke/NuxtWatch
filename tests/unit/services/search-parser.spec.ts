@@ -16,21 +16,36 @@ describe('search parser contract', () => {
     expect(request.system).not.toContain(input.userText);
     expect(request.system.trim().length).toBeGreaterThan(0);
     expect(JSON.parse(request.userContent)).toMatchObject({
-      context: { currentFilters: input.currentFilters }, userText: input.userText,
+      context: { currentFilters: input.currentFilters },
+      userText: input.userText,
     });
   });
 
   // Branch coverage: invalid serialized output is rejected at the parser boundary.
   it('rejects non-JSON model output', async () => {
-    await expect(parseSearchProposal(config, {
-      currentFilters: { mediaType: 'all' }, userText: 'search',
-    }, async () => 'not json')).rejects.toThrow(SyntaxError);
+    await expect(
+      parseSearchProposal(
+        config,
+        {
+          currentFilters: { mediaType: 'all' },
+          userText: 'search',
+        },
+        async () => 'not json',
+      ),
+    ).rejects.toThrow(SyntaxError);
   });
 
   // Branch coverage: a model-supplied endpoint is not an accepted search proposal.
   it('rejects endpoint selection by the model', async () => {
-    await expect(parseSearchProposal(config, {
-      currentFilters: { mediaType: 'all' }, userText: 'search',
-    }, async () => JSON.stringify({ status: 'ready', endpoint: '/search/multi' }))).rejects.toThrow();
+    await expect(
+      parseSearchProposal(
+        config,
+        {
+          currentFilters: { mediaType: 'all' },
+          userText: 'search',
+        },
+        async () => JSON.stringify({ status: 'ready', endpoint: '/search/multi' }),
+      ),
+    ).rejects.toThrow();
   });
 });

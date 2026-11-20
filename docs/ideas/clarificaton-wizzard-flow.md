@@ -1,6 +1,6 @@
 # Clarification Wizard
 
-Dieses Dokument spezifiziert den UI-Ablauf. Zuständigkeiten, Suchwegprüfung und Auftragsbindung stehen im [Sucharchitektur-Konzept](sucharchitektur-konzept.md).
+Dieses Dokument spezifiziert den UI-Ablauf. Zuständigkeiten, Suchwegprüfung und Auftragsbindung stehen im [Sucharchitektur-Konzept](../sucharchitektur-konzept.md).
 
 ## Einstieg
 
@@ -29,4 +29,4 @@ Dieses Dokument spezifiziert den UI-Ablauf. Zuständigkeiten, Suchwegprüfung un
 - Der ausdrückliche Start nutzt genau die angezeigten Kriterien und löst bei Wiederholung keinen zweiten Aufruf aus. Veraltete Antworten und Starts werden abgefangen.
 - Tastaturbedienung und Fokuswechsel funktionieren; technische Fehler und leere Ergebnisse bleiben unterscheidbar.
 
-![Wizard-Entwurf](images/clarification-wizzard_dark_desktop.png)
+![Wizard-Entwurf](../images/clarification-wizzard_dark_desktop.png)

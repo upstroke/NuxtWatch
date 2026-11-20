@@ -1,6 +1,6 @@
 # Sucharchitektur – Arbeitsstand
 
-Diese README ist der Einstieg für die Weiterarbeit, auch ohne Chatverlauf. Siehe [Architekturkonzept](../../sucharchitektur-konzept.md), [Wizard-Spezifikation](../../clarificaton-wizzard-flow.md), [Zielstruktur](zielstruktur.md), [CLI-Abnahme](cli-abnahme.md) und [Testinventur](test-inventory.md).
+Diese README ist der Einstieg für die Weiterarbeit, auch ohne Chatverlauf. Siehe [Architekturkonzept](../../sucharchitektur-konzept.md), [Wizard-Spezifikation](../../ideas/clarificaton-wizzard-flow.md), [Zielstruktur](zielstruktur.md), [CLI-Abnahme](cli-abnahme.md) und [Testinventur](test-inventory.md).
 
 ## Stand am 19. November 2026
 

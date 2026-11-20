@@ -46,4 +46,3 @@ Do not create a catch-all `types.ts` or an automatic type barrel. Import from th
 ## Related documentation
 
 - [Testing](testing.md)
-- [Service boundaries and ADR 001](work/specs/architecture/001-service-boundaries.md)

@@ -18,13 +18,13 @@ Die Eingabe wird als `submit` an `/api/search` gesendet. Die CLI zeigt die vom S
 
 ## Beobachtbare Abnahme und Testinventur
 
-| Zusicherung | Grenze | Prüfung / Status |
-| --- | --- | --- |
-| „Finde The Matrix“ erreicht den vorhandenen HTTP-Einstieg und zeigt Kriterien und Treffer. | Manueller CLI-Live-Durchlauf | Noch auszuführen; keine feste Trefferzahl voraussetzen |
-| Eine weitere Eingabe sendet die zuletzt vom Server bestätigten Kriterien mit; `/reset` startet ohne sie. | CLI mit kontrolliertem HTTP-Server | Automatisierte Prüfung noch offen |
-| Rückfragen und Ablehnungen werden unverändert angezeigt und lösen keinen automatischen Folgeaufruf aus. | CLI mit kontrolliertem HTTP-Server | Noch offen; die bestehende interne Suchmatrix hier nicht wiederholen |
-| HTTP-, Netzwerk- oder ungültige Antworten überschreiben den lokalen Kriterienstand nicht. | CLI mit kontrolliertem HTTP-Server | Noch offen |
-| CLI entscheidet nicht über Suchweg, Endpunkt oder fachliche Klärungsoptionen. | Implementierungsprüfung | Nur `/api/search` und `submit`; keine interne Suchlogik |
+| Zusicherung                                                                                              | Grenze                             | Prüfung / Status                                                     |
+| -------------------------------------------------------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------- |
+| „Finde The Matrix“ erreicht den vorhandenen HTTP-Einstieg und zeigt Kriterien und Treffer.               | Manueller CLI-Live-Durchlauf       | Noch auszuführen; keine feste Trefferzahl voraussetzen               |
+| Eine weitere Eingabe sendet die zuletzt vom Server bestätigten Kriterien mit; `/reset` startet ohne sie. | CLI mit kontrolliertem HTTP-Server | Automatisierte Prüfung noch offen                                    |
+| Rückfragen und Ablehnungen werden unverändert angezeigt und lösen keinen automatischen Folgeaufruf aus.  | CLI mit kontrolliertem HTTP-Server | Noch offen; die bestehende interne Suchmatrix hier nicht wiederholen |
+| HTTP-, Netzwerk- oder ungültige Antworten überschreiben den lokalen Kriterienstand nicht.                | CLI mit kontrolliertem HTTP-Server | Noch offen                                                           |
+| CLI entscheidet nicht über Suchweg, Endpunkt oder fachliche Klärungsoptionen.                            | Implementierungsprüfung            | Nur `/api/search` und `submit`; keine interne Suchlogik              |
 
 Der Client prüft nur die Antwort-Hülle. Er führt keine zusätzliche fachliche Kriterienvalidierung oder Treffer-Normalisierung durch. Die ausgegebene Trefferzahl bezieht sich ausschließlich auf die empfangene Antwort, nicht auf sämtliche TMDb-Seiten.
 

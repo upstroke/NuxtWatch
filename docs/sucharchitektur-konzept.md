@@ -35,7 +35,7 @@ Unabhängig geklärte Kriterien können bereits während einer offenen Klärung 
 
 Die UI importiert keine Servermatrix und sendet keine rohe Modellantwort als Nutzerentscheidung. Laufstatus ist flüchtig und verändert weder Kriterien noch Chatverlauf. Technische Fehler übernehmen keine unverifizierten Änderungen. Wird der gebundene Auftrag ungültig, darf eine verspätete Antwort keine neueren Kriterien überschreiben oder das Overlay erneut öffnen.
 
-Der verbindliche UI-Ablauf einschließlich Frageseiten, Pill-Übersichten, Schaltflächen und Rückkehr zur Eingabe steht in der [Wizard-Spezifikation](clarificaton-wizzard-flow.md).
+Der verbindliche UI-Ablauf einschließlich Frageseiten, Pill-Übersichten, Schaltflächen und Rückkehr zur Eingabe steht in der [Wizard-Spezifikation](ideas/clarificaton-wizzard-flow.md).
 
 ## Verträge und Struktur
 

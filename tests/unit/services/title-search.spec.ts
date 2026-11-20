@@ -62,8 +62,20 @@ describe('TMDb title search', () => {
     const http = {
       get: vi.fn().mockResolvedValue({
         results: [
-          { media_type: 'movie', id: 201, title: 'Synthetic Film', genre_ids: [], release_date: '' },
-          { media_type: 'tv', id: 202, name: 'Synthetic Series', genre_ids: [], vote_average: null },
+          {
+            media_type: 'movie',
+            id: 201,
+            title: 'Synthetic Film',
+            genre_ids: [],
+            release_date: '',
+          },
+          {
+            media_type: 'tv',
+            id: 202,
+            name: 'Synthetic Series',
+            genre_ids: [],
+            vote_average: null,
+          },
         ],
       }),
     };

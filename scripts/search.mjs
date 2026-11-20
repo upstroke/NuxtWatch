@@ -51,7 +51,9 @@ async function main() {
           signal: AbortSignal.timeout(120000),
         });
         if (!response.ok) {
-          console.error(`HTTP ${response.status}: Anfrage fehlgeschlagen. Kriterien bleiben unverändert.`);
+          console.error(
+            `HTTP ${response.status}: Anfrage fehlgeschlagen. Kriterien bleiben unverändert.`,
+          );
           continue;
         }
         const result = responseSchema.safeParse(await response.json());
@@ -68,10 +70,14 @@ async function main() {
         } else {
           console.log('Nicht ausgeführt. Serverentscheidung:');
           console.log(JSON.stringify(result.data.decision, null, 2));
-          console.log('Kein automatischer Folgeaufruf. Neue Eingabe ist ein neuer submit; für eine neue Suche /reset verwenden.');
+          console.log(
+            'Kein automatischer Folgeaufruf. Neue Eingabe ist ein neuer submit; für eine neue Suche /reset verwenden.',
+          );
         }
       } catch {
-        console.error('Anfrage abgebrochen, Server nicht erreichbar oder Antwort ungültig. Kriterien bleiben unverändert.');
+        console.error(
+          'Anfrage abgebrochen, Server nicht erreichbar oder Antwort ungültig. Kriterien bleiben unverändert.',
+        );
       }
     }
   } finally {
