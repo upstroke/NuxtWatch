@@ -2,6 +2,10 @@
 
 Status: Zielbild, kein bestätigter Repository-Iststand. NuxtWatch ist aus NextWatch v0.0.1 entstanden. Die Aufgaben betreffen nur NuxtWatch.
 
+## Laufende Erprobung des LLM-Auftrags
+
+Die [Erkenntnisse und der Vergleichsplan zur LLM-Suchvorbereitung](tasks/search-architecture/llm-search-preparation.md) dokumentieren die manuellen Promptversuche vom 20. November 2026 und das vereinbarte weitere Vorgehen. Untersucht wird ein aufgabenorientierter Auftrag mit beschriebenen Suchmöglichkeiten und begrenztem Gesprächskontext. Eine neue Parserarchitektur, ein zweiter produktiver Parser oder ein Ersatz des Änderungsvertrags sind damit nicht beschlossen. LLM-Interpretation und serverseitige Validierung, Kriterienübernahme und Ausführung bleiben getrennt. Den tatsächlichen Implementierungs- und Prüfstand führt die [Arbeitsstandsübersicht](tasks/search-architecture/README.md).
+
 ## Gemeinsame Grundlage
 
 Die Anwendung führt von freier Eingabe zur ausführbaren Suche. Titel und Discovery sind Beispiele für Suchstrecken; Personen und Keywords können Kriterien oder bei Bedarf eigenständig aufrufbare Suchen sein. Keine generische Regel-Engine, zweite Routing-Matrix oder neuer globaler Store.
