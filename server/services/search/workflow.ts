@@ -1,7 +1,8 @@
 /** Owns request opening, questions, revisions, and freshness checks independently of HTTP and storage. */
 import type { MediaTypeQuestion } from '@lib/schemas/search-question';
+import type { SearchClarifyRequest } from '@lib/schemas/search-request';
 import type { TmdbHttpClient } from '../tmdb/http';
-import { submitSearch } from './coordinator';
+import { decideSearch, submitSearch } from './coordinator';
 import type { LlmConfig } from './llm';
 import type { ParserInput } from './parser';
 import { searchSubmission } from './submit';
@@ -22,6 +23,48 @@ export function openSearchRequest(state: SearchState, requestId: string): Search
   const request = { requestId, revision: 1 };
   state.currentRequest = request;
   return request;
+}
+
+/** Applies an offered selection and closes its bound question without calling external services. */
+export function clarifySearch(
+  state: SearchState,
+  input: SearchClarifyRequest,
+  isSessionCurrent: () => boolean,
+) {
+  const request = state.currentRequest;
+  const question = request?.question;
+  if (
+    !isSessionCurrent() ||
+    !request ||
+    request.requestId !== input.requestId ||
+    request.revision !== input.revision ||
+    !question ||
+    question.requestId !== input.requestId ||
+    question.questionId !== input.questionId ||
+    question.revision !== input.revision
+  ) {
+    return { status: 'rejected' as const, reason: 'stale_clarification' as const };
+  }
+
+  if (!question.options.includes(input.answer.value)) {
+    return { status: 'rejected' as const, reason: 'selection_not_offered' as const };
+  }
+
+  const criteria = { ...state.criteria, mediaType: input.answer.value };
+  const decision = decideSearch(criteria);
+
+  // Selection acceptance and question closure form one synchronous domain transition.
+  state.criteria = criteria;
+  delete request.question;
+  request.revision += 1;
+
+  return {
+    status: 'clarified' as const,
+    requestId: request.requestId,
+    revision: request.revision,
+    criteria: { ...criteria },
+    decision,
+  };
 }
 
 /** Commits criteria and a concrete question together, or executes a current direct search. */

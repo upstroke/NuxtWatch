@@ -1,6 +1,6 @@
 /** Defines regular HTTP search responses; technical errors use the HTTP error boundary. */
 import { z } from 'zod';
-import { searchCriteriaSchema } from './search-criteria';
+import { searchCriteriaSchema, searchTitleSchema } from './search-criteria';
 import { mediaTypeQuestionSchema } from './search-question';
 import { SearchResultCardSchema } from './ui/search-result-card';
 
@@ -20,6 +20,16 @@ const decision = z.union([
   }),
 ]);
 
+// A ready domain decision does not guarantee that its provider path is implemented.
+const clarifiedDecision = z.union([
+  decision,
+  z.strictObject({
+    status: z.literal('ready'),
+    path: z.literal('title'),
+    criteria: searchCriteriaSchema.extend({ title: searchTitleSchema }),
+  }),
+]);
+
 export const searchResponseSchema = z.discriminatedUnion('status', [
   z.strictObject({
     status: z.literal('completed'),
@@ -33,6 +43,12 @@ export const searchResponseSchema = z.discriminatedUnion('status', [
     criteria: searchCriteriaSchema,
     decision,
     question: mediaTypeQuestionSchema.optional(),
+  }),
+  z.strictObject({
+    status: z.literal('clarified'),
+    ...requestBinding.shape,
+    criteria: searchCriteriaSchema,
+    decision: clarifiedDecision,
   }),
   z.strictObject({
     status: z.literal('reset'),
