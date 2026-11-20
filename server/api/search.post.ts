@@ -48,6 +48,7 @@ export default defineEventHandler(async (event) => {
       llm,
       http,
       context.isCurrent,
+      randomUUID,
     );
   } catch (error) {
     if (isTmdbError(error)) throw createError(toTmdbHttpError(error));
