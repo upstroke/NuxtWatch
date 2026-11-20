@@ -4,12 +4,12 @@ Am 20. November 2026 fachlich festgelegt; noch keine Laufzeitimplementierung. Er
 
 ## Begriffe und Kennungen
 
-| Begriff | Bedeutung | Vorgesehene Kennung |
-| --- | --- | --- |
-| Suchsession | Zusammenhängender Suchkontext mit bestätigten Kriterien; keine globale Ausführungsphase und keine Anmeldung. | `sessionId` |
-| Suchauftrag | Ein konkreter Suchversuch in einer Session, gegebenenfalls mit mehreren Klärungen. Kein einzelner HTTP-Request. | `requestId` |
-| Rückfrage | Eine konkrete offene fachliche Entscheidung eines Auftrags; unabhängig von Fragevorlage und Sprache. | `questionId` |
-| Revision | Version des fachlichen Stands, gegen den eine Aktion geprüft wird. | `revision` |
+| Begriff     | Bedeutung                                                                                                       | Vorgesehene Kennung |
+| ----------- | --------------------------------------------------------------------------------------------------------------- | ------------------- |
+| Suchsession | Zusammenhängender Suchkontext mit bestätigten Kriterien; keine globale Ausführungsphase und keine Anmeldung.    | `sessionId`         |
+| Suchauftrag | Ein konkreter Suchversuch in einer Session, gegebenenfalls mit mehreren Klärungen. Kein einzelner HTTP-Request. | `requestId`         |
+| Rückfrage   | Eine konkrete offene fachliche Entscheidung eines Auftrags; unabhängig von Fragevorlage und Sprache.            | `questionId`        |
+| Revision    | Version des fachlichen Stands, gegen den eine Aktion geprüft wird.                                              | `revision`          |
 
 Für die weitere Vertragsausarbeitung ersetzt `requestId` die bisher vorgeschlagene Auftragskennung `searchId`. Der fachliche Fragetyp bleibt `kind`; er ist keine konkrete Fragenkennung. Welche Kennungen jede Nachricht explizit tragen muss und worauf sich die Revision technisch genau bezieht, wird im nächsten Vertragsschritt festgelegt.
 

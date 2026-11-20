@@ -48,16 +48,16 @@ Beispiel einer Frage innerhalb einer Serverantwort:
 
 Fragezustand, Ergebnis der Antwortverarbeitung, Ausführbarkeit und laufende Requests bleiben getrennt; keine globale `pending`-Phase. Mögliche Fragezustände: `open`, `answered`, `superseded`. Exakte Ergebnis-Enums beim API-Entwurf festlegen.
 
-| Ereignis | Beobachtbares Ergebnis |
-| --- | --- |
-| Gültige Antwort, weitere Frage nötig | Übernommene Entscheidung bestätigen, verbleibenden Klärungsgrund und nächste Frage liefern; kein Trefferaufruf. |
-| Gültige Antwort, keine Frage mehr nötig, Suche ausführbar | Bestätigte Kriterien und Ausführbarkeit liefern; Overlay schließen, Kriterien als Pills anzeigen; Suche startet erst nach erneuter ausdrücklicher Aktion. |
-| Antwort nicht zuordenbar oder weiterhin mehrdeutig | Kriterien erhalten; konkret erklären, was noch unklar ist und welche Antwort benötigt wird. |
-| Keine Option passt | Kriterienspezifische Korrektur ermöglichen; keine falsche Auswahl erzwingen. |
-| Antwort veraltet, Frage ersetzt oder bereits beantwortet | Nicht erneut anwenden; verständliche Rückmeldung und verfügbaren aktuellen Stand liefern. |
-| Kriterien eindeutig, aber kein unterstützter Suchweg | Einschränkung erklären; nicht mit sinnlosen Rückfragen fortfahren. |
-| `execute` bei offener Klärung oder veraltetem Stand | Nicht ausführen; passenden Grund zurückgeben. |
-| Wiederholtes oder paralleles `execute` für dieselbe Freigabe | Keinen doppelten externen Suchaufruf auslösen. |
+| Ereignis                                                     | Beobachtbares Ergebnis                                                                                                                                    |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Gültige Antwort, weitere Frage nötig                         | Übernommene Entscheidung bestätigen, verbleibenden Klärungsgrund und nächste Frage liefern; kein Trefferaufruf.                                           |
+| Gültige Antwort, keine Frage mehr nötig, Suche ausführbar    | Bestätigte Kriterien und Ausführbarkeit liefern; Overlay schließen, Kriterien als Pills anzeigen; Suche startet erst nach erneuter ausdrücklicher Aktion. |
+| Antwort nicht zuordenbar oder weiterhin mehrdeutig           | Kriterien erhalten; konkret erklären, was noch unklar ist und welche Antwort benötigt wird.                                                               |
+| Keine Option passt                                           | Kriterienspezifische Korrektur ermöglichen; keine falsche Auswahl erzwingen.                                                                              |
+| Antwort veraltet, Frage ersetzt oder bereits beantwortet     | Nicht erneut anwenden; verständliche Rückmeldung und verfügbaren aktuellen Stand liefern.                                                                 |
+| Kriterien eindeutig, aber kein unterstützter Suchweg         | Einschränkung erklären; nicht mit sinnlosen Rückfragen fortfahren.                                                                                        |
+| `execute` bei offener Klärung oder veraltetem Stand          | Nicht ausführen; passenden Grund zurückgeben.                                                                                                             |
+| Wiederholtes oder paralleles `execute` für dieselbe Freigabe | Keinen doppelten externen Suchaufruf auslösen.                                                                                                            |
 
 ## Übersetzbare Texte
 
@@ -65,30 +65,30 @@ Eine zentrale Textdatei vorsehen; endgültigen Pfad und Dateiformat an die Proje
 
 Für diesen Schnitt benötigte Schlüssel und deutsche Textentwürfe:
 
-| Schlüssel | Text |
-| --- | --- |
-| `clarification.mediaType.required_for_year` | Meinst du einen Film oder eine Serie? |
-| `clarification.mediaType.movie` | Film |
-| `clarification.mediaType.tv` | Serie |
-| `clarification.mediaType.unresolved` | Ich konnte deine Antwort weder „Film“ noch „Serie“ zuordnen. Bitte wähle eine Option oder beschreibe, was du stattdessen suchst. |
-| `clarification.answer.accepted` | „{label}“ wurde übernommen. |
-| `clarification.answer.stale` | Deine Suchangaben haben sich inzwischen geändert. Diese Antwort wurde deshalb nicht übernommen. |
-| `clarification.action.apply` | Übernehmen |
-| `search.action.execute` | Suche starten |
+| Schlüssel                                   | Text                                                                                                                             |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `clarification.mediaType.required_for_year` | Meinst du einen Film oder eine Serie?                                                                                            |
+| `clarification.mediaType.movie`             | Film                                                                                                                             |
+| `clarification.mediaType.tv`                | Serie                                                                                                                            |
+| `clarification.mediaType.unresolved`        | Ich konnte deine Antwort weder „Film“ noch „Serie“ zuordnen. Bitte wähle eine Option oder beschreibe, was du stattdessen suchst. |
+| `clarification.answer.accepted`             | „{label}“ wurde übernommen.                                                                                                      |
+| `clarification.answer.stale`                | Deine Suchangaben haben sich inzwischen geändert. Diese Antwort wurde deshalb nicht übernommen.                                  |
+| `clarification.action.apply`                | Übernehmen                                                                                                                       |
+| `search.action.execute`                     | Suche starten                                                                                                                    |
 
 Rückfrage- und Hinweistexte künftig nach Kriterium und konkretem Klärungsgrund gliedern, zum Beispiel `clarification.keyword.multiple_candidates` oder `clarification.yearRange.invalid_order`. Diese späteren Fälle jetzt nicht implementieren. Kein universelles „Eingabe präzisieren“ ohne Erklärung des ungelösten Problems. Gültige Antworten mit weiterer Folgefrage nicht als Fehler darstellen. Technische Fehler benötigen eigene sichere Rückmeldungen.
 
 ## Abnahme und Testinventur
 
-| Zusicherung | Grenze | Vorhanden oder Lücke |
-| --- | --- | --- |
-| AC1: Direkt ausführbarer Titel benötigt keine zweite Freigabe. | Kontrollierte Integration / bestehender Live-Fall | Bestehende Suchtests und bestätigter Matrix-Durchstich erhalten; keine komplette doppelte Fallmatrix. |
-| AC2: Office mit Jahr liefert eine gebundene Medientyp-Frage ohne Trefferaufruf. | Suchablauf mit kontrollierten externen Grenzen | Die bisherige Rückfrageprüfung deckt noch nicht die Auftragsbindung ab. |
-| AC3: Auswahl „Serie“ bestätigt Kriterien ohne LLM- und Trefferaufruf. | Klärungsablauf | Neu. |
-| AC4: Freitext wird mit Fragekontext interpretiert; unbrauchbare Antwort wird konkret erklärt, ohne Kriterien zu verlieren. | Parser-Vertragsgrenze / Klärungsablauf, unterschiedliche Zusicherungen | Neu; keine Tests für `llm.ts` ergänzen (Nutzerentscheidung). |
-| AC5: Veraltete und doppelte Antworten überschreiben keinen neueren Stand; verspätete Modellantworten werden erneut auf Aktualität geprüft. | Klärungsablauf | Neu. |
-| AC6: Erst ausdrückliches `execute` verwendet TV Search mit Titel und `first_air_date_year=2005`; keine doppelte Ausführung derselben Freigabe. | Ausführungsablauf und TMDb-Dienst, getrennte Zusicherungen | Neu; bestehendes Mapping wiederverwenden. |
-| AC7: HTTP-Grenze validiert Aktionen und bildet Ergebnisse sicher ab; CLI zeigt Auswahl, Bestätigung und gesonderte Startaktion. | HTTP-Integration / manueller CLI-Durchstich | Neu; stabile Testkennungen gemäß Teststrategie vergeben. |
+| Zusicherung                                                                                                                                    | Grenze                                                                 | Vorhanden oder Lücke                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| AC1: Direkt ausführbarer Titel benötigt keine zweite Freigabe.                                                                                 | Kontrollierte Integration / bestehender Live-Fall                      | Bestehende Suchtests und bestätigter Matrix-Durchstich erhalten; keine komplette doppelte Fallmatrix. |
+| AC2: Office mit Jahr liefert eine gebundene Medientyp-Frage ohne Trefferaufruf.                                                                | Suchablauf mit kontrollierten externen Grenzen                         | Die bisherige Rückfrageprüfung deckt noch nicht die Auftragsbindung ab.                               |
+| AC3: Auswahl „Serie“ bestätigt Kriterien ohne LLM- und Trefferaufruf.                                                                          | Klärungsablauf                                                         | Neu.                                                                                                  |
+| AC4: Freitext wird mit Fragekontext interpretiert; unbrauchbare Antwort wird konkret erklärt, ohne Kriterien zu verlieren.                     | Parser-Vertragsgrenze / Klärungsablauf, unterschiedliche Zusicherungen | Neu; keine Tests für `llm.ts` ergänzen (Nutzerentscheidung).                                          |
+| AC5: Veraltete und doppelte Antworten überschreiben keinen neueren Stand; verspätete Modellantworten werden erneut auf Aktualität geprüft.     | Klärungsablauf                                                         | Neu.                                                                                                  |
+| AC6: Erst ausdrückliches `execute` verwendet TV Search mit Titel und `first_air_date_year=2005`; keine doppelte Ausführung derselben Freigabe. | Ausführungsablauf und TMDb-Dienst, getrennte Zusicherungen             | Neu; bestehendes Mapping wiederverwenden.                                                             |
+| AC7: HTTP-Grenze validiert Aktionen und bildet Ergebnisse sicher ab; CLI zeigt Auswahl, Bestätigung und gesonderte Startaktion.                | HTTP-Integration / manueller CLI-Durchstich                            | Neu; stabile Testkennungen gemäß Teststrategie vergeben.                                              |
 
 Vor Freigabe relevante automatisierte Lücken schließen. Keine dedizierten Tests für jedes Schema und keine Coverage-Ziele pro Datei. Dieser Dokumentationsschritt ändert weder Produktionscode noch Tests.
 
