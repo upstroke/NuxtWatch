@@ -66,7 +66,10 @@ export default defineEventHandler(async (event) => {
   }
 
   if (result.status === 'superseded') {
-    throw createError({ statusCode: 409, statusMessage: 'Search request replaced or session expired' });
+    throw createError({
+      statusCode: 409,
+      statusMessage: 'Search request replaced or session expired',
+    });
   }
   context.touch();
   return parseSearchResponse(result);

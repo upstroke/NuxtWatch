@@ -52,6 +52,8 @@ export function getSearchSession(event: H3Event, reset = false) {
   return {
     session: current,
     isCurrent: () => sessions.get(sessionKey) === current && current.expiresAt > Date.now(),
-    touch: () => { current.expiresAt = Date.now() + lifetime; },
+    touch: () => {
+      current.expiresAt = Date.now() + lifetime;
+    },
   };
 }

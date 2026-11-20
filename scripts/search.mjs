@@ -60,7 +60,8 @@ async function main() {
         }
         if (!response.ok) {
           console.error(`HTTP ${response.status}: Anfrage fehlgeschlagen.`);
-          if (response.status === 410) console.error('Suchkontext abgelaufen. Bitte /reset verwenden.');
+          if (response.status === 410)
+            console.error('Suchkontext abgelaufen. Bitte /reset verwenden.');
           continue;
         }
         const result = responseSchema.safeParse(await response.json());
