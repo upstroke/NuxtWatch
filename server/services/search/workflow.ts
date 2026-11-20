@@ -1,4 +1,4 @@
-/** Owns request opening, replacement, and freshness checks independently of HTTP and storage. */
+/** Owns request opening, replacement, revisions, and freshness checks independently of HTTP and storage. */
 import type { TmdbHttpClient } from '../tmdb/http';
 import { submitSearch } from './coordinator';
 import type { LlmConfig } from './llm';
@@ -19,7 +19,7 @@ export function openSearchRequest(state: SearchState, requestId: string): Search
   return request;
 }
 
-/** Checks freshness before search execution and returns the committed request identity. */
+/** Commits current criteria and their revision before searching, then checks result freshness. */
 export async function submitForSession(
   state: SearchState,
   requestId: string,
@@ -36,12 +36,22 @@ export async function submitForSession(
     return { status: 'superseded' as const };
   }
 
+  const criteria = outcome.criteria;
+  const criteriaChanged =
+    state.criteria.title !== criteria.title ||
+    state.criteria.mediaType !== criteria.mediaType ||
+    state.criteria.year !== criteria.year;
+
+  if (criteriaChanged) {
+    state.criteria = { ...criteria };
+    request.revision += 1;
+  }
+
   const result = await searchSubmission(outcome, http);
 
   if (!isSessionCurrent() || state.currentRequest !== request) {
     return { status: 'superseded' as const };
   }
 
-  state.criteria = { ...result.criteria };
   return { ...result, requestId: request.requestId, revision: request.revision };
 }
