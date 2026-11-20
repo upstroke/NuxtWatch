@@ -1,6 +1,7 @@
-/** Validates intent and obtains authoritative criteria from the server session. */
+/** Validates HTTP intent, resolves session storage, and delegates request transitions. */
+import { randomUUID } from 'node:crypto';
 import { searchRequestSchema } from '@lib/schemas/search-request';
-import { submitAndSearch } from '@server/services/search/submit';
+import { submitForSession } from '@server/services/search/workflow';
 import { createTmdbHttpClient } from '@server/services/tmdb/http';
 import { isTmdbError, toTmdbHttpError } from '@server/services/tmdb/errors';
 import { getTmdbConfig } from '@server/utils/tmdb';
@@ -17,9 +18,6 @@ export default defineEventHandler(async (event) => {
   const session = context.session;
   if (request.data.action === 'reset') {
     return { status: 'reset' as const, criteria: session.criteria };
-  }
-  if (session.busy) {
-    throw createError({ statusCode: 409, statusMessage: 'Search submission already running' });
   }
 
   const runtime = useRuntimeConfig(event);
@@ -42,26 +40,25 @@ export default defineEventHandler(async (event) => {
     $fetch<unknown>(url, { ...options, redirect: 'error' }),
   );
 
-  session.busy = true;
   context.touch();
-  let result: Awaited<ReturnType<typeof submitAndSearch>>;
+  let result: Awaited<ReturnType<typeof submitForSession>>;
   try {
-    result = await submitAndSearch(
+    result = await submitForSession(
+      session,
+      randomUUID(),
+      request.data.userText,
       llm,
-      { currentFilters: { ...session.criteria }, userText: request.data.userText },
       http,
+      context.isCurrent,
     );
   } catch (error) {
     if (isTmdbError(error)) throw createError(toTmdbHttpError(error));
     throw createError({ statusCode: 502, statusMessage: 'Search processing failed' });
-  } finally {
-    session.busy = false;
   }
 
-  if (!context.isCurrent()) {
-    throw createError({ statusCode: 409, statusMessage: 'Search context replaced or expired' });
+  if (result.status === 'superseded') {
+    throw createError({ statusCode: 409, statusMessage: 'Search request replaced or session expired' });
   }
-  session.criteria = { ...result.criteria };
   context.touch();
   return result;
 });

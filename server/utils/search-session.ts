@@ -2,12 +2,10 @@
 import { randomBytes } from 'node:crypto';
 import { createError, getCookie, getRequestURL, setCookie } from 'h3';
 import type { H3Event } from 'h3';
-import type { ParserInput } from '../services/search/parser';
+import type { SearchState } from '../services/search/workflow';
 
-type SearchSession = {
-  criteria: ParserInput['currentFilters'];
+type SearchSession = SearchState & {
   expiresAt: number;
-  busy: boolean;
 };
 
 // Initial operational limits, not a promise of durable session resumption.
@@ -16,6 +14,7 @@ const capacity = 1000;
 const cookieName = 'nuxtwatch-search';
 const sessions = new Map<string, SearchSession>();
 
+/** Resolves cookie-bound storage and exposes session lifetime checks to the caller. */
 export function getSearchSession(event: H3Event, reset = false) {
   const now = Date.now();
   for (const [key, value] of sessions) {
@@ -37,7 +36,7 @@ export function getSearchSession(event: H3Event, reset = false) {
       throw createError({ statusCode: 503, statusMessage: 'Search session capacity reached' });
     }
     key = randomBytes(32).toString('hex');
-    session = { criteria: { mediaType: 'all' }, expiresAt: now + lifetime, busy: false };
+    session = { criteria: { mediaType: 'all' }, expiresAt: now + lifetime };
     sessions.set(key, session);
   }
 
