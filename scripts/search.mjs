@@ -1,9 +1,8 @@
-/** Interactive client for the current submit-only HTTP slice. */
+/** Interactive submit client; authoritative criteria remain on the server. */
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import { z } from 'zod';
 
-// Validate the envelope only; domain decisions and result mapping belong to the server.
 const responseSchema = z.discriminatedUnion('status', [
   z.object({
     status: z.literal('completed'),
@@ -15,6 +14,10 @@ const responseSchema = z.discriminatedUnion('status', [
     criteria: z.record(z.string(), z.unknown()),
     decision: z.record(z.string(), z.unknown()),
   }),
+  z.object({
+    status: z.literal('reset'),
+    criteria: z.record(z.string(), z.unknown()),
+  }),
 ]);
 
 async function main() {
@@ -24,59 +27,62 @@ async function main() {
   }
   const endpoint = new URL('/api/search', baseUrl);
   const terminal = createInterface({ input: stdin, output: stdout });
-  let criteria;
+  let cookie;
 
   terminal.on('SIGINT', () => terminal.close());
   console.log(`Suche über ${endpoint.href}`);
-  console.log('Befehle: /reset für neue Kriterien, /exit zum Beenden.');
-  console.log('Dieser Client unterstützt zunächst submit, noch nicht clarify oder execute.');
+  console.log('Befehle: /reset für einen neuen Server-Suchkontext, /exit zum Beenden.');
+  console.log('Dieser Client unterstützt submit und reset, noch nicht clarify oder execute.');
 
   try {
     while (!terminal.closed) {
       const text = (await terminal.question('Suche> ')).trim();
       if (!text) continue;
       if (text === '/exit') break;
-      if (text === '/reset') {
-        criteria = undefined;
-        console.log('Lokaler Kriterienstand zurückgesetzt.');
-        continue;
-      }
 
       try {
         const response = await fetch(endpoint, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({ action: 'submit', userText: text, currentFilters: criteria }),
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            ...(cookie ? { Cookie: cookie } : {}),
+          },
+          body: JSON.stringify(
+            text === '/reset' ? { action: 'reset' } : { action: 'submit', userText: text },
+          ),
           redirect: 'error',
           signal: AbortSignal.timeout(120000),
         });
+        for (const value of response.headers.getSetCookie()) {
+          const pair = value.split(';', 1)[0];
+          if (pair?.startsWith('nuxtwatch-search=')) cookie = pair;
+        }
         if (!response.ok) {
-          console.error(
-            `HTTP ${response.status}: Anfrage fehlgeschlagen. Kriterien bleiben unverändert.`,
-          );
+          console.error(`HTTP ${response.status}: Anfrage fehlgeschlagen.`);
+          if (response.status === 410) console.error('Suchkontext abgelaufen. Bitte /reset verwenden.');
           continue;
         }
         const result = responseSchema.safeParse(await response.json());
         if (!result.success) {
-          console.error('Unerwartete Serverantwort. Kriterien bleiben unverändert.');
+          console.error('Unerwartete Serverantwort. Kein automatischer Folgeaufruf.');
           continue;
         }
-        criteria = result.data.criteria;
-        console.log('Kriterien:');
-        console.log(JSON.stringify(criteria, null, 2));
-        if (result.data.status === 'completed') {
+        console.log('Server-Kriterien:');
+        console.log(JSON.stringify(result.data.criteria, null, 2));
+        if (result.data.status === 'reset') {
+          console.log('Neuer serverseitiger Suchkontext begonnen.');
+        } else if (result.data.status === 'completed') {
           console.log(`Treffer (${result.data.results.length} in dieser Antwort):`);
           console.log(JSON.stringify(result.data.results, null, 2));
         } else {
           console.log('Nicht ausgeführt. Serverentscheidung:');
           console.log(JSON.stringify(result.data.decision, null, 2));
-          console.log(
-            'Kein automatischer Folgeaufruf. Neue Eingabe ist ein neuer submit; für eine neue Suche /reset verwenden.',
-          );
+          console.log('Kein automatischer Folgeaufruf. Neue Eingabe ist ein neuer submit.');
         }
       } catch {
         console.error(
-          'Anfrage abgebrochen, Server nicht erreichbar oder Antwort ungültig. Kriterien bleiben unverändert.',
+          'Anfrage abgebrochen, Server nicht erreichbar oder Antwort ungültig. Serverstand kann bereits geändert sein; keine automatische Wiederholung.',
         );
       }
     }
