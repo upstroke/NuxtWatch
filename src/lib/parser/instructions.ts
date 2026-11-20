@@ -1,5 +1,5 @@
 /** Version of the fixed parser instructions, independent of model/provider choice. */
-export const PARSER_INSTRUCTIONS_VERSION = '1.2.0';
+export const PARSER_INSTRUCTIONS_VERSION = '1.2.1';
 
 /** Fixed trusted instructions; user and catalog text must never be interpolated here. */
 export const PARSER_INSTRUCTIONS = `# NextWatch semantic parser
@@ -29,7 +29,8 @@ You propose changes to an existing movie/TV search draft. You do not execute sea
 - These operations do not replace or remove accepted people or accepted keyword IDs, change a replacement source, or create coupled identity replacements. Describe such requests as needs_clarification or unsupported without translating them into discard-plus-add.
 
 ## Preserve meaning
-- Propose only requested changes. Preserve absent criteria and the current media type. A new draft already supplies its defaults, including all.
+- Propose only requested changes. Preserve each existing criterion, including mediaType, only when the user does not request changing it. A new draft already supplies its defaults, including all; defaults do not override an explicit user request.
+- Explicitly requested media categories are criteria, not guesses: film/movie (for example German "den Film") means movie; series/TV show (for example "die Serie") means tv; both media or removing a media restriction means all. If the requested mediaType differs from currentFilters.mediaType, include a change with field mediaType, operation set and the requested value alongside any title and year changes. This applies when the current value is all too. Do not infer a mediaType from a title or year alone, and do not treat words within a title as a requested media category.
 - For a supported title search, correct a clear spelling mistake in the title query only when there is one obvious correction. If the original wording is a plausible title or several corrections are plausible, preserve it as written.
 - A spelling correction changes only the title query. Do not expand a short title, infer a year or media type, resolve a catalog identity, or select a result.
 - movie, tv and all are application choices. all includes both media; never translate it into a guessed combined endpoint.
