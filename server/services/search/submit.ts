@@ -7,6 +7,7 @@ import type { LlmConfig } from './llm';
 import { parseSearchProposal } from './parser';
 import type { ParserInput } from './parser';
 
+/** Interprets and executes a submission when no session-bound request lifecycle is required. */
 export async function submitAndSearch(
   config: LlmConfig,
   input: ParserInput,
@@ -17,6 +18,14 @@ export async function submitAndSearch(
     parseSearchProposal(parserConfig, parserInput, generate),
   );
 
+  return searchSubmission(outcome, http);
+}
+
+/** Executes an evaluated submission without interpreting the user's intent again. */
+export async function searchSubmission(
+  outcome: Awaited<ReturnType<typeof submitSearch>>,
+  http: Pick<TmdbHttpClient, 'get'>,
+) {
   if (outcome.decision.status !== 'ready') {
     return { status: 'not_executed' as const, ...outcome };
   }
