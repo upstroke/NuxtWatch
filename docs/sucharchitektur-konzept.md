@@ -37,6 +37,12 @@ Die UI importiert keine Servermatrix und sendet keine rohe Modellantwort als Nut
 
 Der verbindliche UI-Ablauf einschließlich Frageseiten, Pill-Übersichten, Schaltflächen und Rückkehr zur Eingabe steht in der [Wizard-Spezifikation](ideas/clarificaton-wizzard-flow.md).
 
+Die geplante Verwaltung übersetzbarer Rückfrage-, Bestätigungs- und
+Hinweistexte beschreibt die [Textkatalog-Skizze](ideas/translation-catalog.md).
+Für den aktuellen Arbeitsstand genügt eine zentrale Textdatei.
+Ein sprachunabhängiger Schlüsselkatalog, separate Sprachdateien und
+automatische Vollständigkeitsprüfungen sind als spätere Erweiterung vorgesehen.
+
 ## Verträge und Struktur
 
 Der Baum zeigt das Zielbild, nicht den aktuellen Repository-Stand. Neue Dateien entstehen erst, wenn der jeweilige Umsetzungsschritt sie braucht.
