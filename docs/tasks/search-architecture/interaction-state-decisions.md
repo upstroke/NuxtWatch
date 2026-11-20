@@ -67,6 +67,10 @@ execute → bestätigten ausführbaren Stand ausdrücklich suchen
 
 ## Modellrichtung: zwei zusammenarbeitende Zustandsmaschinen
 
+Die Zustandsmaschinen beschreiben zunächst das fachliche Ablaufmodell. Ihre technische Umsetzung ist noch nicht festgelegt. Für den ersten Submit-Schnitt genügen einfache, explizite Operationen im Suchbereich. Eine ausdrückliche Übergangsfunktion oder State-Machine-Implementierung wird ergänzt, wenn sie die konkreten Abläufe verständlicher macht. Eine zusätzliche Bibliothek ist damit nicht beschlossen.
+
+Unabhängig von der Umsetzung bleiben die Verantwortungsgrenzen bestehen: HTTP-Routen behandeln Ein- und Ausgabe, Session-/Storage-Anbindung übernimmt Zuordnung und Ablage, und der frameworkfreie Suchablauf entscheidet über Auftragseröffnung, Ablösung, Revision und zulässige Übergänge.
+
 ### Suchablauf
 
 Die serverseitige Ablaufsteuerung führt Session, Auftrag, bestätigte Kriterien, Revision, aktuelle Frage und Suchausführungen zusammen. Fragezustand, Antwortverarbeitung, Ausführbarkeit und technische Requests bleiben getrennt; keine globale `pending`-Phase.
