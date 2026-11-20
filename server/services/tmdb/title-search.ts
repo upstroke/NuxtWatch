@@ -20,7 +20,7 @@ export async function searchTitles(
 ): Promise<SearchResultCard[]> {
   const query: Record<string, string> = { query: title, include_adult: 'true' };
   let path = '/search/multi';
-  let schema = TmdbTitleSearchResponseSchema;
+  const schema = TmdbTitleSearchResponseSchema;
 
   if (options?.mediaType === 'movie') {
     path = '/search/movie';
