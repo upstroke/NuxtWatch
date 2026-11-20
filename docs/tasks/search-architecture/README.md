@@ -1,35 +1,51 @@
 # Sucharchitektur – Arbeitsstand
 
-Diese README ist der Einstieg für die Weiterarbeit, auch ohne Chatverlauf. Siehe [Architekturkonzept](../../sucharchitektur-konzept.md), [Wizard-Spezifikation](../../clarificaton-wizzard-flow.md), [Zielstruktur](zielstruktur.md), [CLI-Abnahme](cli-abnahme.md) und [Testinventur](test-inventory.md).
+Einstieg für die Weiterarbeit ohne Chatverlauf. Siehe [Architekturkonzept](../../sucharchitektur-konzept.md), [Wizard-Spezifikation](../../clarificaton-wizzard-flow.md), [Zielstruktur](zielstruktur.md), [CLI-Abnahme](cli-abnahme.md), [Testinventur](test-inventory.md), [HTTP-Schnitt](http-submit.md) und [direkte CLI](cli-direkt.md).
 
-## Stand am 19. November 2026
+## Stand am 20. November 2026
 
 Branch: `feat/shared-search-architecture`.
 
-- Bestandsaufnahme A1 abgeschlossen. Titelsuchdienst und Rohantwortvertrag sind umgesetzt: `server/services/tmdb/title-search.ts` ruft `/search/multi` auf, validiert die Antwort und normalisiert Film- und Serientreffer; Personen werden ausgelassen.
-- `submitAndSearch` in `server/services/search/submit.ts` verbindet Parser, Koordinator und Titelsuchdienst. Commit: `68de6a6`.
-- Direkt unterstützt: Titel mit `mediaType: all` ohne Jahr. Rückfragen und Ablehnungen starten keine TMDb-Suche. Technisch nicht unterstützte Kriterien werden ausdrücklich abgelehnt, nicht stillschweigend entfernt.
-- Tests nach Verhalten und Grenze getrennt: Koordinator und Parser als Unit-Tests, gemeinsamer Ablauf als kontrollierte Integration unter `tests/integration/tmdb`. Testinventur ergänzt; doppelte Mapping- und Transportfehlerprüfungen aus der Ablauf-Suite entfernt. Commit: `08757a2`.
-- Der Nutzer hat am 19. November lokal bestätigt: Tests grün, Typecheck und Lint in Ordnung. Kein neuer Coverage-Wert gemeldet. Dies ersetzt nicht den noch offenen Live-Abgleich mit LM Studio und TMDb. Historische Nicht-ausgeführt-Vermerke in der Testinventur beziehen sich auf den Erstellungszeitpunkt.
-- Für den Durchstich läuft das Modell lokal über LM Studio. Runtime-Konfiguration bleibt unverändert; gehostete Anbieter und API-Key-Erweiterungen sind jetzt kein Arbeitspaket. Langfristiges Ziel bleibt eine hostbare WebApp.
+Der direkte Titelsuch-Durchstich ist implementiert und vom Nutzer über HTTP sowie CLI live bestätigt:
 
-## Nächster Schritt
+```text
+CLI → POST /api/search → LLM-Parser → Koordinator → TMDb-Titelsuchdienst → CLI
+```
 
-`POST /api/search` als dünnen Nitro-Handler anbinden: Request mit Zod validieren, vorhandene serverseitige Konfiguration und externen Transport bereitstellen, an den Suchablauf delegieren, Ergebnis und Fehler abbilden. Zuerst den direkten Fall „The Matrix“ bis zu echten Treffern schließen, danach die CLI anschließen. Die spätere Nuxt-Oberfläche verwendet denselben gemeinsamen Vertrag.
+### Implementiert
 
-Die kleine noch offene Präzisierung von Testtitel und Inventur zu `SEARCH-SUBMIT-INT-005` ist kein bekannter Funktionsfehler: Der Test bestätigt die Ablehnung der Kombination aus konkretem Medientyp und Jahr, isoliert aber nicht die Jahresprüfung. Keine weitere große Test-Umbauphase; bei Gelegenheit korrekt benennen.
+- Bestandsaufnahme A1 abgeschlossen. `server/services/tmdb/title-search.ts` ruft `/search/multi` auf, validiert die Rohantwort und normalisiert Film- und Serientreffer; Personen werden ausgelassen.
+- `submitAndSearch` in `server/services/search/submit.ts` verbindet Parser, Koordinator und Titelsuchdienst (`68de6a6`). Direkt unterstützt: Titel mit `mediaType: all` ohne Jahr. Rückfragen und Ablehnungen starten keine Treffersuche; nicht unterstützte Kriterien werden nicht stillschweigend entfernt.
+- Tests nach Verhalten und Grenze getrennt: Koordinator und Parser als Unit-Tests, gemeinsamer Ablauf als kontrollierte Integration unter `tests/integration/tmdb`. Testinventur ergänzt, doppelte Mapping- und Transportfehlerprüfungen aus der Ablauf-Suite entfernt (`08757a2`).
+- `server/api/search.post.ts` und der Zod-Request-Vertrag in `src/lib/schemas/search-request.ts` stellen `submit` bereit (`23e349b`). Ohne Kriterien gilt `mediaType: all`. Sichere Fehlerabbildung und `Cache-Control: no-store`; TMDb-Redirects werden verweigert. Noch keine serverseitige Session oder Auftragsbindung.
+- `scripts/search.mjs` ist der erste interaktive HTTP-Client (`981e487`). Er zeigt Serverkriterien, Ergebnisse und Entscheidungen als JSON, übernimmt den letzten gültigen Server-Kriterienstand für die nächste Eingabe und bietet `/reset` sowie `/exit`. Keine eigene Suchweglogik und kein automatischer Folgeaufruf. Eine weitere Texteingabe ist derzeit ein neuer `submit`, keine gebundene Klärungsantwort.
+- Das Modell läuft lokal über LM Studio. Runtime-Konfiguration unverändert; gehostete Anbieter und API-Key-Erweiterungen sind kein aktuelles Arbeitspaket. Langfristiges Ziel bleibt eine hostbare WebApp.
+
+### Bestätigte Prüfungen und Grenzen
+
+- Am 19. November meldete der Nutzer Tests, Typecheck und Lint lokal grün. Diese Meldung gilt für den damaligen Stand vor den HTTP- und CLI-Erweiterungen; für die neueren Commits liegt keine erneute vollständige Check-Bestätigung vor.
+- Am 20. November bestätigte der Nutzer den HTTP-Live-Aufruf „Finde The Matrix“: HTTP 200, `Cache-Control: no-store`, `status: completed`, Kriterien `mediaType: all` und `title: The Matrix`, normalisierte Treffer einschließlich Film-ID 603.
+- Anschließend bestätigte der Nutzer den CLI-Live-Durchlauf: dieselben Kriterien und 20 Treffer in der empfangenen Antwort, darunter Film-ID 603. Dies ist keine feste erwartete Trefferzahl und keine Aussage über sämtliche TMDb-Seiten.
+- Damit ist der direkte Erfolgsfall mit lokalem Modell und TMDb live bestätigt. Rückfragefortsetzung, Reset, Fehlerverhalten und HTTP-Integrationstests sind dadurch nicht vollständig abgenommen. Frühere Offen-Vermerke zum direkten Live-Abgleich in den verlinkten Schritt-Dokumenten beschreiben den Stand bei deren Erstellung und werden durch diese Rückmeldung aktualisiert.
+- `llm.ts` hat laut Nutzerbericht weiterhin 0 % Coverage. Nutzerentscheidung vom 20. November: jetzt keine Tests dafür ergänzen. Kein Coverage-Ziel pro Datei; globaler Mindestwert unverändert. Ein aktueller globaler Coverage-Wert liegt nicht vor.
+
+## Nächster Durchstich: The Office von 2005
+
+Ziel gemäß [CLI-Abnahme](cli-abnahme.md): `submit` stellt die Frage nach Film oder Serie, `clarify` übernimmt „Serie“ ohne Treffersuche, erst die ausdrückliche Aktion „Suche starten“ sendet `execute`. Dafür TV-Titelsuche mit `query=The Office` und `first_air_date_year=2005` ergänzen und anschließend die CLI erweitern.
+
+Noch nicht implementiert und noch keine beschlossene technische Ausgestaltung: Auftragsbindung, Revisionen, Fragenkennung und Auftragsspeicher. Als nächster Entwurf wurden `searchId`, `revision`, `questionId` sowie ein begrenzter, kurzlebiger In-Memory-Speicher auf einer Serverinstanz vorgeschlagen. Diese Vorschläge vor der Umsetzung konkretisieren; Single-Instance-Annahme und Speicherlebensdauer nicht als bereits entschieden behandeln.
 
 ## Verbindliche Leitplanken
 
-- Das LLM schlägt Interpretationen und Änderungen vor; die Anwendung entscheidet über Suchstrecke, Voraussetzungen und TMDb-Aufruf. Bestätigte Kriterien werden nicht stillschweigend weggelassen.
-- Ohne Klärungsbedarf führt der erste Suchklick die ausführbare Suche aus. Bei Klärungsbedarf wird geklärt; danach startet nichts automatisch. Erst eine erneute ausdrückliche Suchaktion führt aus. Gemeinsamer Zielvertrag: `submit`, `clarify`, `execute`.
+- Das LLM schlägt Interpretationen und Änderungen vor; die Anwendung entscheidet über Suchstrecke, Voraussetzungen und TMDb-Aufruf. Bestätigte Kriterien nicht stillschweigend weglassen.
+- Ohne Klärungsbedarf startet die erste ausdrückliche Suchaktion die ausführbare Suche. Nach einer Klärung startet nichts automatisch; erst eine erneute ausdrückliche Suchaktion führt aus. Gemeinsamer Zielvertrag: `submit`, `clarify`, `execute`.
 - Suchsession, bestätigte Kriterien, offene Klärungen und laufende Requests bleiben getrennt. Keine globale `pending`-Phase. Verspätete Antworten dürfen weder neuere Kriterien überschreiben noch doppelt ausführen.
-- Tests gemäß [Teststrategie](../../testing.md): Zusicherung und passende Grenze bestimmen, bestehende Tests wiederverwenden, keine doppelten Fallmatrizen und keine Coverage-Ziele pro Datei.
+- Tests gemäß [Teststrategie](../../testing.md): Zusicherung und passende Grenze bestimmen, bestehende Tests wiederverwenden, keine doppelten Fallmatrizen. Nach funktionierendem Schnitt relevante Lücken vor Freigabe schließen.
 
-## Offen und später
+## Weitere offene Punkte
 
-- HTTP-Vertrag und Fehlerabbildung konkretisieren; HTTP-Integration und manueller Live-Abgleich stehen aus. HTTP-Tests sollen nicht die komplette interne Testmatrix wiederholen.
-- Auftragsbindung, Revisionen und kurzlebiger Auftragsspeicher für `clarify`/`execute`; insbesondere klären, ob der erste Schnitt auf einer einzelnen Serverinstanz läuft.
+- Testtitel und Inventur zu `SEARCH-SUBMIT-INT-005` präzisieren: Der Test bestätigt die Ablehnung der Kombination aus konkretem Medientyp und Jahr, isoliert aber nicht die Jahresprüfung. Kein nachgewiesener Funktionsfehler; keine große Test-Umbauphase daraus machen.
 - Bestätigung und Anzeige unabhängiger Kriterien während einer offenen Klärung.
-- Kein Handler oder Aufrufer für den alten Pfad `/api/search/title/refine` wurde in A1 gefunden; keine vorsorgliche Migration einplanen.
-- Discovery, Genre-Katalog, Keyword-Auflösung und UI-Ausbau blockieren den direkten Titelsuch-Durchstich nicht.
+- HTTP- und CLI-Verträge gezielt automatisiert prüfen, ohne die gesamte interne Suchmatrix zu wiederholen.
+- Kein Handler oder Aufrufer für `/api/search/title/refine` wurde in A1 gefunden; keine vorsorgliche Migration einplanen.
+- Discovery, Genre-Katalog, Keyword-Auflösung und UI-Ausbau bleiben spätere Anwendungsfälle. Vor öffentlichem Hosting Zugriffsschutz, Missbrauchsbegrenzung und Ressourcenlimits klären.
