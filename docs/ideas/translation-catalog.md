@@ -12,16 +12,16 @@ Fachwerte (`movie`, `tv`), Fragetyp und `questionId` bleiben sprachunabhängig. 
 
 ## Benötigte Schlüssel und Textentwürfe
 
-| Schlüssel | Deutscher Entwurf / Parameter |
-| --- | --- |
-| `clarification.mediaType.required_for_year` | Meinst du einen Film oder eine Serie? |
-| `clarification.mediaType.movie` | Film |
-| `clarification.mediaType.tv` | Serie |
-| `clarification.mediaType.unresolved` | Ich konnte deine Antwort keinem Medientyp zuordnen. Bitte wähle eine Option oder präzisiere deinen Suchwunsch. |
-| `clarification.answer.accepted` | „{label}“ wurde übernommen. |
-| `clarification.answer.stale` | Deine Suchangaben haben sich inzwischen geändert. Diese Antwort wurde nicht übernommen. |
-| `clarification.action.apply` | Übernehmen |
-| `search.action.execute` | Suche starten |
+| Schlüssel                                   | Deutscher Entwurf / Parameter                                                                                  |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `clarification.mediaType.required_for_year` | Meinst du einen Film oder eine Serie?                                                                          |
+| `clarification.mediaType.movie`             | Film                                                                                                           |
+| `clarification.mediaType.tv`                | Serie                                                                                                          |
+| `clarification.mediaType.unresolved`        | Ich konnte deine Antwort keinem Medientyp zuordnen. Bitte wähle eine Option oder präzisiere deinen Suchwunsch. |
+| `clarification.answer.accepted`             | „{label}“ wurde übernommen.                                                                                    |
+| `clarification.answer.stale`                | Deine Suchangaben haben sich inzwischen geändert. Diese Antwort wurde nicht übernommen.                        |
+| `clarification.action.apply`                | Übernehmen                                                                                                     |
+| `search.action.execute`                     | Suche starten                                                                                                  |
 
 Entwürfe, kein bereits produktiver Katalog. Gültige Antworten mit weiterer Folgefrage nicht als Fehler darstellen. Sichere technische Fehlerrückmeldungen von fachlicher Unklarheit und leeren Ergebnissen unterscheiden. Keine universelle Aufforderung ohne konkreten Grund.
 

@@ -12,35 +12,35 @@ Current application choice: title alone uses Multi; explicit film/series uses Mo
 
 All paths are GET requests relative to `https://api.themoviedb.org/3`. An inventory is not an implementation commitment.
 
-| Task | Endpoints | Purpose / boundary |
-| --- | --- | --- |
-| Text title search | `/search/multi`, `/search/movie`, `/search/tv` | Multi searches movies, TV and people; Movie does not search TV, TV does not search movies. Keep only movie/TV title cards. |
-| Resolve people | `/search/person` | Names to candidates/IDs, not final title results. |
-| Resolve keywords | `/search/keyword` | Text to keyword candidates/IDs. |
-| Other text searches | `/search/company`, `/search/collection` | Inventory only; no current flow commitment. |
-| Filtered discovery | `/discover/movie`, `/discover/tv` | Filters/sorting, not a replacement for free-text title matching. |
-| Trends | `/trending/all/{time_window}`, `/trending/movie/{time_window}`, `/trending/tv/{time_window}`, `/trending/person/{time_window}` | `day` or `week`; trends are not text-search matches. |
-| Details | `/movie/{movie_id}`, `/tv/{series_id}` | Use selected result ID and media type; no external-ID lookup needed. |
-| Providers | `/movie/{movie_id}/watch/providers`, `/tv/{series_id}/watch/providers` | Country-specific availability; not direct playback links. |
-| Genre catalog | `/genre/movie/list`, `/genre/tv/list` | IDs/names for the relevant type. |
-| Person TV credits | `/person/{person_id}/tv_credits` | Candidate workaround for person-based TV searches; combinations still to verify. |
-| Similar titles | `/movie/{movie_id}/similar`, `/tv/{series_id}/similar` | Resolve intended reference work first; cross-media behavior not promised. |
-| External IDs | `/find/{external_id}` | External identifier such as IMDb, not a title string. |
+| Task                | Endpoints                                                                                                                      | Purpose / boundary                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| Text title search   | `/search/multi`, `/search/movie`, `/search/tv`                                                                                 | Multi searches movies, TV and people; Movie does not search TV, TV does not search movies. Keep only movie/TV title cards. |
+| Resolve people      | `/search/person`                                                                                                               | Names to candidates/IDs, not final title results.                                                                          |
+| Resolve keywords    | `/search/keyword`                                                                                                              | Text to keyword candidates/IDs.                                                                                            |
+| Other text searches | `/search/company`, `/search/collection`                                                                                        | Inventory only; no current flow commitment.                                                                                |
+| Filtered discovery  | `/discover/movie`, `/discover/tv`                                                                                              | Filters/sorting, not a replacement for free-text title matching.                                                           |
+| Trends              | `/trending/all/{time_window}`, `/trending/movie/{time_window}`, `/trending/tv/{time_window}`, `/trending/person/{time_window}` | `day` or `week`; trends are not text-search matches.                                                                       |
+| Details             | `/movie/{movie_id}`, `/tv/{series_id}`                                                                                         | Use selected result ID and media type; no external-ID lookup needed.                                                       |
+| Providers           | `/movie/{movie_id}/watch/providers`, `/tv/{series_id}/watch/providers`                                                         | Country-specific availability; not direct playback links.                                                                  |
+| Genre catalog       | `/genre/movie/list`, `/genre/tv/list`                                                                                          | IDs/names for the relevant type.                                                                                           |
+| Person TV credits   | `/person/{person_id}/tv_credits`                                                                                               | Candidate workaround for person-based TV searches; combinations still to verify.                                           |
+| Similar titles      | `/movie/{movie_id}/similar`, `/tv/{series_id}/similar`                                                                         | Resolve intended reference work first; cross-media behavior not promised.                                                  |
+| External IDs        | `/find/{external_id}`                                                                                                          | External identifier such as IMDb, not a title string.                                                                      |
 
 Official starting points: [finding data](https://developer.themoviedb.org/docs/finding-data), [Multi](https://developer.themoviedb.org/reference/search-multi), [Movie](https://developer.themoviedb.org/reference/search-movie), [TV](https://developer.themoviedb.org/reference/search-tv), [Discover Movie](https://developer.themoviedb.org/reference/discover-movie), [Discover TV](https://developer.themoviedb.org/reference/discover-tv). Dynamic reference pages may not expose their full parameter lists to a text fetch; do not mistake that for proof that parameters do not exist.
 
 ## Candidate flows: verify one at a time
 
-| User goal | Next required work |
-| --- | --- |
-| Find a title | Use the verified title routes and blocker matrix in the concept. |
-| Filtered films/series, e.g. sci-fi from a year onward | Verify every requested filter and date meaning for that endpoint before extending criteria. |
-| Titles like a reference work | Resolve the reference through title search; ambiguous reference needs selection, not automatic identity guessing. Then call Similar. |
-| Open viewing request | Trending is a candidate, not implied by an empty criteria object. Clarify intent only where needed. |
-| Trending and streamable today | Daily trends then region-specific provider checks before claiming streamability; ask region if unknown. Provider preference is optional unless requested. |
-| Popular and streamable | Discover with availability filters/popularity sorting; do not label this daily Trending. |
-| Named people, keywords or genres | Resolve required IDs first. Person-based TV combinations, multiple people and other filters need separate verification. |
-| Recent regional theatrical releases | Discover is a candidate; it does not prove nearby showtimes today. |
+| User goal                                             | Next required work                                                                                                                                        |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Find a title                                          | Use the verified title routes and blocker matrix in the concept.                                                                                          |
+| Filtered films/series, e.g. sci-fi from a year onward | Verify every requested filter and date meaning for that endpoint before extending criteria.                                                               |
+| Titles like a reference work                          | Resolve the reference through title search; ambiguous reference needs selection, not automatic identity guessing. Then call Similar.                      |
+| Open viewing request                                  | Trending is a candidate, not implied by an empty criteria object. Clarify intent only where needed.                                                       |
+| Trending and streamable today                         | Daily trends then region-specific provider checks before claiming streamability; ask region if unknown. Provider preference is optional unless requested. |
+| Popular and streamable                                | Discover with availability filters/popularity sorting; do not label this daily Trending.                                                                  |
+| Named people, keywords or genres                      | Resolve required IDs first. Person-based TV combinations, multiple people and other filters need separate verification.                                   |
+| Recent regional theatrical releases                   | Discover is a candidate; it does not prove nearby showtimes today.                                                                                        |
 
 Weekly home cards are separately described in [Home](home.md); explicit daily-trend search is not the same flow. Details require explicit title-card selection even for one result. Reference-title and person selections resolve inputs; they are not final-result navigation. Provider responses distinguish subscription/rent/buy by country and supply a TMDb link, not playback; attribute availability data to JustWatch when displayed.
 

@@ -43,17 +43,17 @@ Der Client nutzt HTTP und Cookie-Zuordnung, keine direkten Serverimporte oder ei
 
 Bestandsangaben aus der früheren Inventur, beim Umbau am Code prüfen, kein aktueller Nachweis grüner Tests:
 
-| Zusicherung | Grenze und vorhandener Ansatz / Lücke |
-| --- | --- |
-| Direkter Titel startet ohne zweite Freigabe; Klärung/Unsupported starten keinen Trefferaufruf | Kontrollierte Integration: `tests/integration/tmdb/search-submission.spec.ts`; vorhandene SEARCH-SUBMIT-INT-Kennungen nicht neu vergeben |
-| Änderungen auf Kopie; Jahrentfernung; ungenannte Kriterien bleiben | Coordinator/Flow: bisher `tests/unit/services/search-submission.spec.ts`; auf neue Zuständigkeiten anpassen |
-| Systemauftrag getrennt, Nutzerdaten keine Instruktionen, ungültige Vorschläge abweisen | Bestehende Parser-Vertragsgrenze: `tests/unit/services/search-parser.spec.ts` |
-| Multi/Movie/TV-Parameter, Mapping, Personen ausschließen, leere Antwort versus Fehler | Vorhandener Adapter: `tests/unit/services/title-search.spec.ts`; keine identische Mapping-Matrix im Flow wiederholen |
-| Auswahl ohne LLM/Treffersuche; Freitext mit ursprünglichem Wunsch und Fragekontext | Klärungsablauf gezielt prüfen; Titel/Jahr erhalten, Jahreskorrektur übernehmen, Folgefragen ermöglichen |
-| Veraltete/doppelte Antwort, neuer Submit/Reset während Interpretation | Flow mit kontrollierten asynchronen Grenzen; keine alte Übernahme oder reaktivierte Suche |
-| Execute nur auf aktuellem freigegebenem Stand, doppelte/parallele Starts, ausdrückliche Fehlerwiederholung | Gemeinsame Ausführung/Reservierung; keine erneute LLM-Interpretation |
-| Aktionen, Cookie/Reset, sichere Fehler, no-store, ungültige Antwort | HTTP-Integration; interne Fallmatrix nicht vollständig duplizieren |
-| Eingabeabsicht, Kriterien, Folgefrage und kompakte Ergebnisse | Manueller Terminal-Durchstich, keine fixe Live-Trefferzahl |
+| Zusicherung                                                                                                | Grenze und vorhandener Ansatz / Lücke                                                                                                    |
+| ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Direkter Titel startet ohne zweite Freigabe; Klärung/Unsupported starten keinen Trefferaufruf              | Kontrollierte Integration: `tests/integration/tmdb/search-submission.spec.ts`; vorhandene SEARCH-SUBMIT-INT-Kennungen nicht neu vergeben |
+| Änderungen auf Kopie; Jahrentfernung; ungenannte Kriterien bleiben                                         | Coordinator/Flow: bisher `tests/unit/services/search-submission.spec.ts`; auf neue Zuständigkeiten anpassen                              |
+| Systemauftrag getrennt, Nutzerdaten keine Instruktionen, ungültige Vorschläge abweisen                     | Bestehende Parser-Vertragsgrenze: `tests/unit/services/search-parser.spec.ts`                                                            |
+| Multi/Movie/TV-Parameter, Mapping, Personen ausschließen, leere Antwort versus Fehler                      | Vorhandener Adapter: `tests/unit/services/title-search.spec.ts`; keine identische Mapping-Matrix im Flow wiederholen                     |
+| Auswahl ohne LLM/Treffersuche; Freitext mit ursprünglichem Wunsch und Fragekontext                         | Klärungsablauf gezielt prüfen; Titel/Jahr erhalten, Jahreskorrektur übernehmen, Folgefragen ermöglichen                                  |
+| Veraltete/doppelte Antwort, neuer Submit/Reset während Interpretation                                      | Flow mit kontrollierten asynchronen Grenzen; keine alte Übernahme oder reaktivierte Suche                                                |
+| Execute nur auf aktuellem freigegebenem Stand, doppelte/parallele Starts, ausdrückliche Fehlerwiederholung | Gemeinsame Ausführung/Reservierung; keine erneute LLM-Interpretation                                                                     |
+| Aktionen, Cookie/Reset, sichere Fehler, no-store, ungültige Antwort                                        | HTTP-Integration; interne Fallmatrix nicht vollständig duplizieren                                                                       |
+| Eingabeabsicht, Kriterien, Folgefrage und kompakte Ergebnisse                                              | Manueller Terminal-Durchstich, keine fixe Live-Trefferzahl                                                                               |
 
 Die alten Ablehnungsfälle für konkreten Medientyp/Jahr sind keine heutigen Sollregeln; sie müssen die vorhandenen Movie-/TV-Wege absichern. Frühere Nutzerentscheidung bleibt: keine zusätzlichen dedizierten Tests für `llm.ts` ohne neue Vereinbarung. Keine Schema-Primitivtests oder Coverage-Ziele pro Datei.
 
