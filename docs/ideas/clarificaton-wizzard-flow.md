@@ -1,32 +1,31 @@
-# Clarification Wizard
+# Klärungs-Wizard – Terminal und spätere Web-UI
 
-Dieses Dokument spezifiziert den UI-Ablauf. Zuständigkeiten, Suchwegprüfung und Auftragsbindung stehen im [Sucharchitektur-Konzept](../sucharchitektur-konzept.md).
+Stand: 21. November 2026. Aktualisierte Referenz für NuxtWatch; gemeinsames Verhalten nach [Konzept](../sucharchitektur-konzept.md), Umsetzung nach [Arbeitsstand](../tasks/search-architecture/README.md). Kein vollständiger Implementierungsnachweis. Der bestehende Dateiname bleibt bis zu einer gesonderten Umbenennung erhalten.
 
-## Einstieg
+## Gemeinsamer Ablauf
 
-- Ohne Klärungsbedarf startet „Jetzt suchen“ am Suchschlitz eine ausführbare Suche direkt. Es gibt keine vorgeschaltete Übersicht. Ist die Suche nicht ausführbar und hilft keine Rückfrage, erklärt die Anwendung den Grund.
-- Bei Klärungsbedarf öffnet sich der Wizard als Overlay. Die bisher ausgeführte Suche bleibt bis zum ausdrücklichen Start einer neuen Suche unverändert.
+- Ohne Klärungsbedarf darf ein ausdrücklicher Submit direkt suchen; keine vorgeschaltete Bestätigung allein wegen mehrerer erwarteter Treffer.
+- Bei Klärungsbedarf zeigt die Oberfläche die gebundene Frage und bestätigte Kriterien. Angeboten werden nur serverseitig zulässige Optionen; eine allgemeine LLM-Frage hat zunächst nur Freitext, keine aus ihrem Wortlaut abgeleiteten Optionen.
+- Auswahl wird ohne LLM gegen die konkrete Frage geprüft. Freitext bei offener Frage ist eine gebundene Antwort und wird mit ursprünglichem Suchwunsch, bestätigten Kriterien und Frageverlauf interpretiert.
+- Nach Übernahme werden bestätigte Kriterien und nächste notwendige Frage beziehungsweise Ausführbarkeit angezeigt. Keine Treffersuche allein durch Antworten oder Anzeigen einer Übersicht.
+- Erst ausdrückliches Execute startet nach Klärung die Suche mit dem gebundenen Serverstand. Clientseitige Ersatzkriterien umgehen die Bindung nicht.
+- Ein ausdrücklich neuer Submit oder Reset bleibt möglich und löst den bisherigen Auftrag ab. Eine offene Pflichtfrage darf weder übersprungen noch mit ungeklärten Kriterien ausgeführt werden; sie sperrt den Nutzer aber nicht in einem unkündbaren Dialog ein.
+- Ist kein Weg ausführbar und keine sinnvolle Rückfrage möglich, Grund erklären und Präzisierung/neuen Auftrag ermöglichen. Unabhängige Teilbestätigung ist Ziel, noch nicht vollständig umgesetzt.
 
-## Ablauf im Overlay
+## Terminal zuerst, bedarfsgerecht
 
-1. **Frage:** Pro Seite erscheint eine von der Anwendung bestimmte Frage mit Vorauswahl. Die aktive Option ist erkennbar; technische IDs werden nicht angezeigt. „Übernehmen“ bestätigt die aktuelle Auswahl, auch bei der einzigen oder letzten Frage. Passt keine Option, kann der Nutzer die Eingabe präzisieren. Notwendige Kriterien werden nicht übersprungen oder stillschweigend weggelassen.
-2. **Kriterienübersicht:** Nach jeder erfolgreich beantworteten Frage zeigt eine eigene Seite alle bestätigten Kriterien als Pills. Neue oder geänderte Pills werden hervorgehoben. Offene oder nicht unterstützte Kriterien werden nicht als bestätigt angezeigt. Unabhängig geklärte Kriterien können bereits während der Klärung als Pills sichtbar sein.
-3. **Nächster Schritt:** Ist noch eine notwendige Frage offen, führt „Weiter zur nächsten Frage“ zur nächsten Frageseite. Solange eine notwendige Frage offen ist, kann der Wizard weder auf der Frageseite noch in der Übersicht geschlossen oder abgebrochen werden. Erst wenn keine notwendige Frage mehr offen und der gezeigte Stand ausführbar ist, bietet die Übersicht „Suche starten“ an. Lässt sich kein Suchweg ausführen und ist keine sinnvolle Rückfrage mehr möglich, zeigt die Übersicht den Grund und bietet „Zur Eingabe zurück“ an. Der Button schließt das Overlay, behält bestätigte Pills bei und startet keine Suche. Das beendet eine nicht ausführbare Klärung und ist kein Abbruch bei offener Pflichtfrage.
-4. **Suchstart:** Weder die Auswahl noch „Übernehmen“ noch das Öffnen der Übersicht startet eine Suche. „Suche starten“ sendet den angezeigten Kriterienstand zur erneuten serverseitigen Prüfung und Ausführung. Die ausgeführten Kriterien müssen den angezeigten entsprechen. Nach akzeptiertem Start schließt sich das Overlay; die Suchansicht zeigt bestätigte Kriterien und den bestehenden Ergebnisbereich. Technische Fehler bleiben von leeren Ergebnissen unterscheidbar.
+Das Terminal ist eine alternative Oberfläche derselben HTTP-Aktionen, kein separater Parser-Testpfad. Fragen, Kriterien und einfache Auswahllisten genügen zunächst. `/submit TEXT`, `/reset` und ausdrückliches Execute bleiben unterscheidbar. Nicht den gesamten grafischen Wizard vorab nachbauen; pro Durchstich nur benötigte Interaktion ergänzen.
 
-## Zustände und Bedienung
+Treffer kompakt als Tabelle, Textkarte oder reduziertes Objekt darstellen, beispielsweise Titel, Typ und Jahr. ID plus Medientyp intern zur Identifikation erhalten. Keine vollständigen Providerobjekte in der Normalansicht. Fehler, leere Trefferliste und Treffer unterscheiden; frühere Ergebnisse nicht als Ergebnis einer neuen blockierten Revision ausgeben.
 
-- Die UI entscheidet nicht selbst über Suchweg oder Ausführbarkeit. Vorgegebene Antworten werden per Optionskennung an die Anwendung übermittelt und benötigen keinen erneuten LLM-Aufruf. Eine freie Präzisierung kann neu interpretiert werden.
-- Veraltete Antworten und Startversuche dürfen keine neueren Kriterien überschreiben, das Overlay nicht erneut öffnen und keine zweite Suche auslösen.
-- Texte sind lokalisierbar. Auswahl, Buttons und Wechsel zwischen Frage und Übersicht müssen per Tastatur bedienbar sein; der Fokus wechselt nachvollziehbar. Ergebnisdarstellung und Detailseiten werden nicht neu gestaltet.
+## Spätere grafische Darstellung
+
+Overlay mit einer Frage je Seite, eindeutig erkennbarer Auswahl und „Übernehmen“ als Bestätigung. Nach Übernahme kann eine Kriterienübersicht als Pills folgen; geänderte Werte hervorheben. „Weiter“ führt zur nächsten Frage, „Suche starten“ ist nur auf ausführbarem Stand verfügbar. Neuer Auftrag/Reset bleiben explizite Auswege; grafische Abbruchdetails gesondert konkretisieren. Keine widersprüchliche Pflicht, einen ungeklärten Dialog zwingend bis zum Ende zu führen.
+
+Die Web-UI importiert keine Servermatrix. Veraltete Antworten öffnen kein altes Overlay und überschreiben keine Kriterien. Lokalisierbare Texte, Tastaturbedienung und nachvollziehbarer Fokus bleiben Zielanforderungen. Detailseiten benötigen eine explizite Trefferauswahl, auch bei nur einem Treffer.
 
 ## Abnahme
 
-- Ausführbare Eingabe ohne Rückfrage startet direkt am Suchschlitz.
-- Ein- und mehrstufige Klärung zeigen nach jeder bestätigten Antwort die vollständige Pill-Übersicht. Unveränderte Vorauswahl und abweichende Auswahl werden korrekt übernommen.
-- Unabhängige Kriterien werden während der Klärung angezeigt. Ein eindeutig im Suchtext geändertes Kriterium ersetzt beim nächsten Absenden die entsprechende Pill; andere bestätigte Pills bleiben erhalten.
-- Bei offener Pflichtfrage ist nur das Weiterführen oder Präzisieren der Klärung möglich, nicht der Suchstart oder Abbruch. Ist kein Weg ausführbar und keine sinnvolle Rückfrage mehr möglich, zeigt die Übersicht den Grund; „Zur Eingabe zurück“ schließt das Overlay ohne Suche und erhält die bestätigten Pills.
-- Der ausdrückliche Start nutzt genau die angezeigten Kriterien und löst bei Wiederholung keinen zweiten Aufruf aus. Veraltete Antworten und Starts werden abgefangen.
-- Tastaturbedienung und Fokuswechsel funktionieren; technische Fehler und leere Ergebnisse bleiben unterscheidbar.
+Direkter Submit ohne unnötige Frage; ein-/mehrstufige gebundene Klärung; Auswahl/Freitext; Korrektur ohne Kriterienverlust; ausdrückliches Execute; Ablösung durch Submit/Reset; veraltete Aktionen abweisen; technische Fehler von leeren Ergebnissen unterscheiden. Grafische Fokus-/Pill-Details erst bei Umsetzung der Web-UI abnehmen.
 
-![Wizard-Entwurf](../images/clarification-wizzard_dark_desktop.png)
+![Historischer grafischer Wizard-Entwurf](../images/clarification-wizzard_dark_desktop.png)

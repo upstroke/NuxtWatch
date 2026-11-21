@@ -1,67 +1,34 @@
-# Idee und Entscheidung: übersetzbare Texte mit verbindlichem Schlüsselkatalog
+# Übersetzbare Anwendungstexte
 
-Stand: 20. November 2026. Zielbild vereinbart; keine sofortige Implementierung der Mehrsprachigkeit oder des Prüfskripts. Bezug: [Klärungs-Wizard](clarificaton-wizzard-flow.md) und [Rückfrage-Vertrag](../tasks/search-architecture/clarification-flow.md).
+Stand: 21. November 2026. Verbindliches Architekturziel, noch keine implementierte Mehrsprachigkeitsinfrastruktur. [Konzept](../sucharchitektur-konzept.md), [Zielstruktur](../tasks/search-architecture/zielstruktur.md), [Wizard](clarificaton-wizzard-flow.md).
 
-## Zunächst eine Datei
+## Jetzt: eine zentrale Datei
 
-Für den aktuellen Arbeitsstand genügt eine einzige zentrale Textdatei mit deutschen Texten und stabilen Schlüsseln. Dateiformat und Laufzeitpfad bei der Umsetzung festlegen. Noch keine zusätzlichen Sprachdateien, keine i18n-Bibliothek und kein Prüfskript allein für diesen Entwurf anlegen.
+Als nächster Umsetzungsschnitt ist `server/services/search/texts.ts` vorgesehen. Zunächst tatsächlich benötigte Anwendungstexte und Fragezuordnungen zentral pflegen. Keine neue Bibliothek, vollständigen Sprachdateien oder Prüfinfrastruktur allein für den Durchstich. Deutschsprachige Entwürfe legen keine neue globale Standardsprache fest.
 
-Diese Markdown-Datei dokumentiert die Entscheidung; sie ist noch kein von der Anwendung geladener Textkatalog. Die spätere Aufteilung darf den Rückfrage-Durchstich nicht blockieren.
+Fachliche Bewertung liefert Grund, betroffene Kriterien und Parameter. Die Anwendung ordnet eine Frage mit Antwortvertrag zu; die zentrale Textverwaltung liefert die Formulierung. Terminal und Web-UI erfinden keine eigenen Fachfragen. Konkreter Auslieferungsvertrag für Textschlüssel/gerenderten Text und Locale ist beim Umbau festzulegen; keine Serverimporte im Browser.
 
-## Späteres Zielbild
+Fachwerte (`movie`, `tv`), Fragetyp und `questionId` bleiben sprachunabhängig. Das gilt nicht automatisch für freie LLM-Nachrichten: Sie sind Modellausgabe in der Nutzersprache, keine stabilen Katalogschlüssel. Systematisch erzeugte Optionen dürfen nicht aus dem freien Fragetext extrahiert werden.
 
-- Eine sprachunabhängige Schlüsseldatei definiert alle Pflichtschlüssel und die je Text benötigten benannten Platzhalter.
-- Jede unterstützte Sprache erhält eine eigene Textdatei mit denselben Schlüsseln.
-- Unterstützte Sprachen werden ausdrücklich konfiguriert, nicht nur aus vorhandenen Dateien abgeleitet. So fällt auch eine vollständig fehlende Sprachdatei auf.
-- Anwendungstypen beziehungsweise erlaubte Textschlüssel möglichst aus dem gemeinsamen Katalog ableiten; keine zweite manuell gepflegte Schlüsselliste im Code.
-- Deutsch ist eine Sprache unter mehreren, nicht die implizite Quelle für die Vollständigkeit aller anderen Sprachen.
+## Benötigte Schlüssel und Textentwürfe
 
-Beispiel des späteren Schlüsselvertrags, kein festgelegtes Speicherformat:
+| Schlüssel | Deutscher Entwurf / Parameter |
+| --- | --- |
+| `clarification.mediaType.required_for_year` | Meinst du einen Film oder eine Serie? |
+| `clarification.mediaType.movie` | Film |
+| `clarification.mediaType.tv` | Serie |
+| `clarification.mediaType.unresolved` | Ich konnte deine Antwort keinem Medientyp zuordnen. Bitte wähle eine Option oder präzisiere deinen Suchwunsch. |
+| `clarification.answer.accepted` | „{label}“ wurde übernommen. |
+| `clarification.answer.stale` | Deine Suchangaben haben sich inzwischen geändert. Diese Antwort wurde nicht übernommen. |
+| `clarification.action.apply` | Übernehmen |
+| `search.action.execute` | Suche starten |
 
-```json
-{
-  "clarification.mediaType.required_for_year": { "params": [] },
-  "clarification.answer.accepted": { "params": ["label"] }
-}
-```
+Entwürfe, kein bereits produktiver Katalog. Gültige Antworten mit weiterer Folgefrage nicht als Fehler darstellen. Sichere technische Fehlerrückmeldungen von fachlicher Unklarheit und leeren Ergebnissen unterscheiden. Keine universelle Aufforderung ohne konkreten Grund.
 
-Beispiel einer deutschen Sprachdatei:
+## Später: gemeinsame Schlüssel und Sprachen
 
-```json
-{
-  "clarification.mediaType.required_for_year": "Meinst du einen Film oder eine Serie?",
-  "clarification.answer.accepted": "„{label}“ wurde übernommen."
-}
-```
+Ein sprachunabhängiger Katalog definiert Pflichtschlüssel und benannte Platzhalter; Typen daraus ableiten, keine zweite manuelle Schlüsselliste. Jede konfigurierte Sprache erhält dieselben Schlüssel. Unterstützte Sprachen explizit konfigurieren, damit auch vollständig fehlende Sprachdateien auffallen. Deutsch ist nicht automatisch die Vollständigkeitsquelle.
 
-## Späterer Vollständigkeitscheck
+Ein späterer Check meldet je Sprache fehlende/unlesbare/ungültige Datei, fehlende und unbekannte Schlüssel, leere oder nichttextuelle Werte sowie fehlende oder zusätzliche Platzhalter. Reihenfolge/Wiederholung erlaubter Platzhalter und identische Übersetzungen sind nicht grundsätzlich Fehler. Fehlercode bei Verstößen; Fallback verdeckt keine Lücke. Kein automatisches Erzeugen vermeintlicher Übersetzungen. Der Check prüft Struktur, nicht sprachliche Qualität.
 
-Ein kleines Skript soll für jede konfigurierte Sprache gesammelt prüfen und mit Sprache sowie Schlüssel melden:
-
-1. Sprachdatei fehlt, ist nicht lesbar oder hat ein ungültiges Format.
-2. Pflichtschlüssel fehlt.
-3. Wert ist kein Text oder nach Entfernen äußerer Leerzeichen leer.
-4. Unbekannter Schlüssel ist vorhanden, etwa durch Tippfehler oder veraltete Einträge.
-5. Platzhalter fehlen oder zusätzliche, nicht vereinbarte Platzhalter werden verwendet. Wiederholung oder Reihenfolge eines vereinbarten Platzhalters ist kein Fehler.
-
-Bei Fehlern endet der Check mit einem Fehlercode. Später als eigener lokaler und automatisierter Check einbindbar, zum Beispiel `i18n:check`. Ein Laufzeit-Fallback darf fehlende Übersetzungen in dieser Prüfung nicht verdecken. Nicht automatisch Texte erzeugen oder als übersetzt markieren.
-
-Beispielausgabe:
-
-```text
-en:
-  Fehlende Übersetzung: clarification.mediaType.required_for_year
-  Fehlender Platzhalter {label}: clarification.answer.accepted
-```
-
-Der Check bestätigt Struktur und Vollständigkeit, nicht sprachliche Qualität oder fachliche Richtigkeit. Identische Texte in verschiedenen Sprachen sind nicht grundsätzlich fehlerhaft.
-
-## Fachliche Textgliederung bleibt unabhängig
-
-Texte nach Kriterium und konkretem Klärungsgrund gliedern; zusätzlich Optionslabels, Bestätigungen, Aktionen und sichere Fehlerrückmeldungen berücksichtigen. Ein universelles „Eingabe präzisieren“ ohne Erklärung reicht nicht. Gültige Antworten mit weiterer Folgefrage nicht als Fehler darstellen.
-
-Fachlogik liefert Textschlüssel und Parameter; Clients stellen die Texte dar. Fachwerte wie `tv`, konkrete `questionId` und wiederverwendbare Fragetypen sind keine Übersetzungen. Der Textkatalog entscheidet nicht über Fragezustand, Kriterienübernahme oder Suchausführung.
-
-## Später konkretisieren
-
-Laufzeitpfad, Dateiformat, Platzhaltersyntax, Sprachkonfiguration und Lade-/Fallback-Verhalten festlegen, sobald Mehrsprachigkeit umgesetzt wird. Zunächst nur die tatsächlich benötigten Texte in der einen Arbeitsdatei pflegen; keine vollständigen Kataloge für spätere Suchkriterien vorwegnehmen.
+Dateiformat, Locale-Konfiguration, Laden, Fallback und genaue Platzhaltersyntax bei Bedarf festlegen. Internationalisierung bleibt im Konzept, blockiert aber keinen Durchstich durch vorgezogenen Vollausbau.
