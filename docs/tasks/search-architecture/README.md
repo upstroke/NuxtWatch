@@ -1,70 +1,67 @@
-# Sucharchitektur – Arbeitsstand und nächste Schritte
+# Sucharchitektur – Arbeitsstand und Tasks
 
-Stand: 21. November 2026. Branch: `feat/shared-search-architecture`. Dokumentierter Implementierungsstand: `81dc0e8`; Zielbild aktualisiert mit `dcb41e6`. Dokumentation ist kein Nachweis bereits erfolgter Code-Umstrukturierung oder neuer Checks.
+Stand: 21. November 2026. Branch: `feat/shared-search-architecture`. Dokumentierter Implementierungsstand: `81dc0e8`; Zielbild `dcb41e6`, Konsolidierung `a0e6ad9`. Keine Code-Umstrukturierung oder neuen Checks durch diese Taskplanung.
+
+## Aktiver Umsetzungstask
+
+| Task | Status | Ziel |
+| --- | --- | --- |
+| [01 – Gemeinsame Suchmatrix und Ablaufsteuerung](01-shared-search-matrix.md) | Vorbereitet, nicht begonnen | Zielstruktur umsetzen, gemeinsame Hindernismatrix herstellen, mit vorhandenen Titelwegen im Terminal prüfen |
+
+Ein aktiver Task pro konkretem Umsetzungsschritt/Durchstich, nicht pro Datei oder automatisch pro Kriterium. Jeder Task enthält Umfang, Ausschlüsse, nummerierte Abnahmekriterien, tatsächliches Prüfprotokoll und Findings. Task 02 entsteht erst nach Auswahl des nächsten Anwendungsfalls, beispielsweise Keyword. Findings gehen in die gemeinsamen Regeln zurück; abgeschlossene Tasks bleiben zunächst als Abnahmebeleg. Keine neue Sammlung von Zwischenstandsnotizen.
 
 ## Verbindliche Grundlage
 
-- [Konzept, Architekturbild und Hindernismatrix](../../sucharchitektur-konzept.md): gemeinsame Regeln.
-- [Zielstruktur](zielstruktur.md): Namen, Zuständigkeiten und Umbau.
-- [TMDb-Analyse](../../tmdb-api-analysis.md), [verifizierte Requests](../../tmdb-search-examples.md), [Wizard](../../ideas/clarificaton-wizzard-flow.md), [übersetzbare Texte](../../ideas/translation-catalog.md).
-- [Testing](../../testing.md) und [Typing](../../typing.md): unveränderte gemeinsame Entwicklungsregeln.
+- [Konzept und Hindernismatrix](../../sucharchitektur-konzept.md), [Zielstruktur](zielstruktur.md).
+- [TMDb-Analyse](../../tmdb-api-analysis.md), [geprüfte Requests](../../tmdb-search-examples.md), [Wizard](../../ideas/clarificaton-wizzard-flow.md), [Textkatalog](../../ideas/translation-catalog.md).
+- [Testing](../../testing.md) und [Typing](../../typing.md); aktuelle Ausnahme für explorative Suchdurchstiche beachten.
 
-Historische Durchstichsnotizen sind nach dieser Konsolidierung keine aktuelle Arbeitsanweisung mehr.
+## Prüfung in der explorativen Phase
+
+Automatisierte Tests sind ausdrücklich zurückgestellt. Keine neuen, erweiterten, duplizierten oder umgebauten Tests als Teil dieser Durchstiche. Bestehende Tests nicht pauschal löschen. Inkompatibilitäten durch geänderte Pfade/Verträge als Lücke im aktiven Task protokollieren, nicht durch Ausschlüsse, Konfigurationsänderungen oder unnötige Kompatibilitätsschichten verdecken.
+
+Abnahmekriterien bleiben verbindlich und werden zunächst per Codeprüfung und manuell im Terminal beurteilt. Typecheck/Lint ausführen; Ergebnisse und gegebenenfalls durch unveränderte Testdateien verursachte Fehler ehrlich berichten. Keine grünen Checks behaupten oder Prüfumfang stillschweigend verkleinern. Ein Terminaldurchlauf beweist keine vollständige Race-/Parallelitätssicherheit. Nicht reproduzierte Punkte bleiben ungeprüft. Spätere automatisierte Absicherung separat vereinbaren: zuerst vorhandene Tests inventarisieren, jede Zusicherung einer geeigneten Grenze zuordnen und doppelte Fallmatrizen vermeiden. Die bisherige Testinventur ist nur historische Orientierung, kein aktueller Auftrag zum Testumbau.
 
 ## Implementierung und Nachweise
 
-- HTTP und Terminal unterstützen Submit, gebundene Klärung, Execute und Reset. Serverkriterien, Auftrag, Revision und konkrete Frage sind getrennt gebunden. Der Suchbereich besteht noch aus `workflow.ts`, `coordinator.ts`, `submit.ts`, `parser.ts`, `llm.ts`; die neue gemeinsame `matrix.ts` fehlt.
-- Titel ohne Medientyp/Jahr: Multi; Film/Serie optional mit Einzeljahr: Movie/TV. Titel plus Jahr ohne Medientyp: Klärung gemäß aktueller Produktentscheidung. Keine Zusammenführung zweier Titellisten, keine Jahres-Nachfilterung. Multi-Personen werden nicht zu Titelkarten; `include_adult=true`, keine Adult-basierte Treffer-Ausfilterung.
-- Clarify sucht nicht. Submit/Execute teilen die Reservierung; Execute interpretiert nicht erneut. Dieselbe laufende/erfolgreiche Revision startet nicht nochmals; technischer Fehler erlaubt ausdrücklichen neuen Versuch. Session-Map: 30 Minuten Inaktivität, maximal 1.000 Sessions, prozesslokal, nicht neustartfest.
-- JSON seit `81dc0e8`, aktuelle Interpretationsregeln beibehalten. Drei vom Nutzer gezeigte Fälle nach „Finde Morgenbogen von 1999“: „Ich meine den Film“ → movie/1999, „ich meine die Serie“ → tv/1999, „ich meine den Film von 2001“ → movie/2001. Titel erhalten, ready, keine Titelrückfrage/automatische Suche. Execute dabei nicht geprüft. Zuvor vier erfolgreiche Textläufe; Ursache des früheren Fehlers nicht isoliert bestimmt.
-- Typecheck/Lint für den früheren Textstand bestätigt, erneute ausdrückliche Bestätigung für `81dc0e8` nicht dokumentiert. Keine neue Testsuite oder lokale Checks durch diese Konsolidierung.
+- HTTP und Terminal unterstützen Submit, gebundene Klärung, Execute und Reset. Serverkriterien, Auftrag, Revision und Frage sind getrennt gebunden. Noch vorhanden: `workflow.ts`, `coordinator.ts`, `submit.ts`, `parser.ts`, `llm.ts`; gemeinsame `matrix.ts` fehlt.
+- Titel ohne Typ/Jahr: Multi; Film/Serie optional mit Einzeljahr: Movie/TV. Titel/Jahr ohne Typ: Klärung, keine Listen-Zusammenführung oder Jahres-Nachfilterung. Multi-Personen werden nicht zu Titelkarten; `include_adult=true`, keine Adult-basierte Ausfilterung.
+- Clarify sucht nicht. Submit/Execute teilen die Reservierung; Execute interpretiert nicht erneut. Laufende/erfolgreiche Revision startet nicht nochmals, technischer Fehler erlaubt ausdrücklichen neuen Versuch. Prozesslokale Session: 30 Minuten Inaktivität, maximal 1.000, nicht neustartfest.
+- JSON seit `81dc0e8`, Interpretationsregeln erhalten. Drei gezeigte Antworten auf „Finde Morgenbogen von 1999“: Film → movie/1999, Serie → tv/1999, Film von 2001 → movie/2001. Titel erhalten, ready, keine Titelrückfrage/automatische Suche; Execute nicht geprüft. Zuvor vier erfolgreiche Textläufe, keine isolierte Ursachenbestimmung.
+- Typecheck/Lint des früheren Textstands bestätigt; erneute ausdrückliche Bestätigung für `81dc0e8` nicht dokumentiert. Kein aktueller automatisierter Erfolgsnachweis.
 
-## Abgeschlossener Parservergleich: übernommenes Fazit
+## Abgeschlossener Parservergleich
 
-Qwen und Gemma wurden jeweils mit 14 Fällen, drei Varianten und drei Wiederholungen geprüft: jeweils 126 abgeschlossene Aufrufe. Qwen: A 38/42 vertragsgültig, B/C jeweils 42/42; kein Tokenlimit-Abbruch. Gemma: 126/126 vertragsgültig, kein Abbruch; B/C stellten die erwarteten Fragen bei Titel/Jahr und mehrdeutiger Fortführung. B war bevorzugter Integrationskandidat, C ohne erkennbaren zusätzlichen Nutzen. Die bevorzugte Titelrückfrage bei fehlendem Titel wurde auch mit Gemma nicht zuverlässig erreicht.
+Qwen/Gemma jeweils 14 Fälle × drei Varianten × drei Wiederholungen, je 126 abgeschlossen. Qwen A 38/42 vertragsgültig, B/C je 42/42; keine Abschneidungen. Gemma 126/126 vertragsgültig ohne Abschneidung; B/C stellten erwartete Fragen bei Titel/Jahr und mehrdeutiger Fortführung. B bevorzugt, C ohne erkennbaren Mehrwert; bevorzugte Titelrückfrage bei fehlendem Titel auch bei Gemma nicht zuverlässig.
 
-Gemma: `google_gemma-4-26b-a4b-it`, Q4_K_M, Lauf am 21. November ab 10:19:23.618Z, Vergleichsstand `6baabbd`. Kontext laut damaliger Nutzerangabe 20066, null ausgewiesene Reasoning-Tokens im vollständigen Lauf. Vergleichslimit 2048 gegenüber Qwen 256; angezeigte Gemma-Samplingwerte sind kein vollständiger Nachweis effektiver API-Defaults. Deshalb kein isolierter Modelleffekt und keine allgemeine Zuverlässigkeitsabnahme. Diese historischen Vergleichswerte sind nicht automatisch Einstellungen jedes späteren App-Aufrufs.
+Gemma-Vergleich: `google_gemma-4-26b-a4b-it`, Q4_K_M, 21. November ab 10:19:23.618Z, Stand `6baabbd`, Kontext laut damaliger Angabe 20066, null Reasoning-Tokens. Vergleichslimit 2048 versus Qwen 256; UI-Sampling kein vollständiger Nachweis effektiver Defaults. Kein isolierter Modelleffekt, keine semantische Zuverlässigkeitsabnahme und keine automatische Aussage über spätere App-Einstellungen. Zusatzkontext wurde ohne nichtleere offene Frage getestet; Ergebnis widerlegt gebundenen Klärungskontext nicht. Kein weiterer Vergleich als Pflichtaufgabe. Rohantworten nicht ungeprüft veröffentlichen oder lokale `test-results/` pauschal löschen.
 
-Vertragsgültigkeit ist keine semantische Erfolgsquote. Der Zusatzkontext wurde ohne nichtleere offene Frage getestet; sein fehlender Nutzen widerlegt nicht den später erprobten gebundenen Klärungskontext. Kein weiterer vollständiger Modellvergleich als offene Architekturpflicht. Rohantworten bleiben lokal, keine ungeprüfte Veröffentlichung oder pauschale Löschung lokaler `test-results/`.
-
-## Terminal bedienen
-
-Bei laufendem Nuxt, Modellserver und lokaler Konfiguration:
+## Terminal
 
 ```sh
 node scripts/search.mjs
-# Abweichender Nuxt-Server:
 node scripts/search.mjs http://localhost:3001
 ```
 
-Der Client nutzt HTTP und Cookie-Zuordnung, keine direkten Serverimporte oder eigenen Providerzugangsdaten. Ohne offene Frage ist Text Submit; bei offener Frage gebundene Freitextantwort. `/select NUMMER` beantwortet angebotene Auswahl, `/submit TEXT` eröffnet ausdrücklich einen neuen Auftrag, `/execute` startet den geklärten Stand, `/reset` neuen Kontext, `/exit` beendet den Client. Kein automatischer Suchstart nach Clarify. Wizard und kompakte Trefferansicht werden bedarfsgerecht erweitert, nicht als fertig behauptet.
+Nuxt, Modellserver und lokale Konfiguration müssen bereitstehen. HTTP/Cookie-Client ohne eigene Providerzugangsdaten oder Serverimporte. Text ohne Frage → Submit; mit offener Frage → gebundene Antwort. `/select NUMMER`, `/submit TEXT`, `/execute`, `/reset`, `/exit` bleiben explizite Aktionen. Wizard und kompakte Treffer nach Bedarf erweitern.
 
-## Übernommene Abnahme- und Regressionsplanung
+## Zurückgestellte Testorientierung
 
-Bestandsangaben aus der früheren Inventur, beim Umbau am Code prüfen, kein aktueller Nachweis grüner Tests:
+Aus früherer Inventur übernommen, Pfade/Abdeckung nicht erneut geprüft und kein Änderungsauftrag:
 
-| Zusicherung                                                                                                | Grenze und vorhandener Ansatz / Lücke                                                                                                    |
-| ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Direkter Titel startet ohne zweite Freigabe; Klärung/Unsupported starten keinen Trefferaufruf              | Kontrollierte Integration: `tests/integration/tmdb/search-submission.spec.ts`; vorhandene SEARCH-SUBMIT-INT-Kennungen nicht neu vergeben |
-| Änderungen auf Kopie; Jahrentfernung; ungenannte Kriterien bleiben                                         | Coordinator/Flow: bisher `tests/unit/services/search-submission.spec.ts`; auf neue Zuständigkeiten anpassen                              |
-| Systemauftrag getrennt, Nutzerdaten keine Instruktionen, ungültige Vorschläge abweisen                     | Bestehende Parser-Vertragsgrenze: `tests/unit/services/search-parser.spec.ts`                                                            |
-| Multi/Movie/TV-Parameter, Mapping, Personen ausschließen, leere Antwort versus Fehler                      | Vorhandener Adapter: `tests/unit/services/title-search.spec.ts`; keine identische Mapping-Matrix im Flow wiederholen                     |
-| Auswahl ohne LLM/Treffersuche; Freitext mit ursprünglichem Wunsch und Fragekontext                         | Klärungsablauf gezielt prüfen; Titel/Jahr erhalten, Jahreskorrektur übernehmen, Folgefragen ermöglichen                                  |
-| Veraltete/doppelte Antwort, neuer Submit/Reset während Interpretation                                      | Flow mit kontrollierten asynchronen Grenzen; keine alte Übernahme oder reaktivierte Suche                                                |
-| Execute nur auf aktuellem freigegebenem Stand, doppelte/parallele Starts, ausdrückliche Fehlerwiederholung | Gemeinsame Ausführung/Reservierung; keine erneute LLM-Interpretation                                                                     |
-| Aktionen, Cookie/Reset, sichere Fehler, no-store, ungültige Antwort                                        | HTTP-Integration; interne Fallmatrix nicht vollständig duplizieren                                                                       |
-| Eingabeabsicht, Kriterien, Folgefrage und kompakte Ergebnisse                                              | Manueller Terminal-Durchstich, keine fixe Live-Trefferzahl                                                                               |
+| Zusicherung | Bisheriger Ansatz |
+| --- | --- |
+| Direktsuche, Klärung/Unsupported ohne Trefferaufruf | `tests/integration/tmdb/search-submission.spec.ts`, bestehende SEARCH-SUBMIT-INT-Kennungen nicht wiederverwenden |
+| Kriterienkopie, Jahr entfernen, übrige Kriterien erhalten | `tests/unit/services/search-submission.spec.ts` |
+| System-/Nutzerdaten trennen und Vorschläge validieren | `tests/unit/services/search-parser.spec.ts` |
+| Providerparameter, Mapping, Personen ausschließen, leer versus Fehler | `tests/unit/services/title-search.spec.ts` |
 
-Die alten Ablehnungsfälle für konkreten Medientyp/Jahr sind keine heutigen Sollregeln; sie müssen die vorhandenen Movie-/TV-Wege absichern. Frühere Nutzerentscheidung bleibt: keine zusätzlichen dedizierten Tests für `llm.ts` ohne neue Vereinbarung. Keine Schema-Primitivtests oder Coverage-Ziele pro Datei.
+Spätere Absicherung umfasst zusätzlich Fragekontext, Auswahl ohne LLM, Ablösung/Reset, Reservierung, Fehlerwiederholung und HTTP-Grenze, ohne dieselbe Fallmatrix überall zu wiederholen. Alte Ablehnungsfälle für konkreten Medientyp/Jahr sind keine aktuellen Sollregeln. Keine zusätzlichen dedizierten `llm.ts`-Tests ohne neue Vereinbarung.
 
-Aus dem Vergleich übernommen: eindeutiger Film/Serie, Titel allein, Titel/Jahr ohne Typ, Titelkorrektur und ausdrückliche Fortführung mit erhaltenen Filtern, ausdrücklicher Neustart ohne Einschränkungen, Jahr entfernen, Medientyp aufheben, Mehrdeutigkeit der Fortgeltung, fehlender Titel, Medienwort innerhalb des Titels und nicht unterstützte Bewertungsbedingung. Versuchserwartungen sind keine nachträgliche Produktregel. Neuer Submit erhält grundsätzlich bestätigte Kriterien; Reset entfernt sie. Sprachlich verlangtes Entfernen wird nur nach validierter Interpretation übernommen.
+Relevante Vergleichsfälle bleiben Orientierung: expliziter Film/Serie, Titel allein, Titel/Jahr ohne Typ, Titelkorrektur/Fortführung, ausdrückliches Entfernen bisheriger Einschränkungen, Jahr entfernen, Medientyp aufheben, Mehrdeutigkeit, fehlender Titel, Medienwort im Titel, nicht unterstützte Bewertung. Versuchserwartungen sind keine stillschweigend beschlossenen Produktregeln.
 
-## Nächste Schritte und offene Punkte
+## Offene Arbeit
 
-1. Nach Freigabe dieser Konsolidierung historische Notizen entfernen: `clarification-flow.md`, `cli-abnahme.md`, `cli-direkt.md`, `gemma-clarification-2026-11-21.md`, `http-submit.md`, `interaction-state-decisions.md`, `llm-search-preparation.md`, `llm-search-preparation-draft.md`, `session-request-decision.md`, `test-inventory.md`.
-2. `parser-comparison/` einschließlich seiner sechs Dateien zusammen mit `scripts/compare-search-parser.mjs` entfernen. Das Skript liest Candidate/Fallpaket direkt; nicht als kaputtes Restwerkzeug stehen lassen. Terminal-Client und reguläre Tests bleiben. Die Löschung erfolgt nicht durch diesen Dokumentationscommit.
-3. Code nach Zielstruktur umbauen, Importe und betroffene Tests nachziehen, Typecheck/Lint und angemessene Tests ausführen. Keine parallelen Koordinationsschichten behalten.
-4. Titel erneut durchstechen: allein, Film/Serie mit/ohne Jahr, gebundene Klärung samt Korrektur, ausdrückliches Execute, Ergebnisdarstellung; Findings in Regeln übernehmen.
-5. Nächste Suchwege jeweils erst gegen offizielle TMDb-Dokumentation und bei Unsicherheit mit Requests prüfen, dann einzeln durchstechen. Keine vollständige Matrix oder Suchinfrastruktur auf Vorrat.
+Die alten Durchstichsnotizen und das Vergleichsverzeichnis sind laut geprüftem Verzeichnisstand entfernt; Task 01 ergänzt nun bewusst die verbleibenden Dateien. Entfernung des zugehörigen Vergleichsskripts separat prüfen, nicht als erledigt behaupten. Terminal und reguläre Tests bleiben.
 
-Offen bleiben unabhängige Teilübernahme bei Modellklärung, Submit-Idempotenz/Ergebniswiederholung, optionale Eingrenzung nach leeren/vielen Ergebnissen samt aussagekräftiger Gesamtzählung sowie die konkrete Umsetzung zentraler Texte und kompakter Terminaldarstellung. Allgemeine Modellfragen enthalten zunächst Text; keine Auswahloptionen aus ihrem Wortlaut extrahieren. Mehrfachtreffer sind ein gültiges Suchergebnis, kein automatischer Pflichtklärungsgrund. Weitere Kriterien und Zugriffsschutz/Ressourcenlimits separat bearbeiten.
+Nächster Schritt: Task 01 umsetzen und manuell durchstechen; danach nächsten Suchweg recherchieren und wählen. Offen außerhalb des ersten Umfangs: unabhängige Teilübernahme bei Modellklärung, Submit-Idempotenz/Ergebniswiederholung, optionale Eingrenzung und Gesamtzählung. Auswahloptionen nicht aus freien LLM-Fragetexten ableiten. Mehrfachtreffer allein sind kein Pflichtklärungsgrund. Zugriffsschutz/Ressourcenlimits vor öffentlichem Betrieb.

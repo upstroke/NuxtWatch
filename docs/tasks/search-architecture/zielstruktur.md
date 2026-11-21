@@ -1,6 +1,6 @@
 # Zielstruktur der gemeinsamen Suche
 
-Stand: 21. November 2026. Beschlossenes Ziel nach dem Durchstich; Umbenennungen und Zusammenführungen sind noch umzusetzen. [Konzept mit Architekturbild und Matrix](../../sucharchitektur-konzept.md), [Arbeitsstand und nächste Schritte](README.md). Namen sollen Zuständigkeiten sichtbar machen; keine Dateien allein zur optischen Vollständigkeit anlegen.
+Stand: 21. November 2026. Beschlossenes Ziel, noch kein umgesetzter Strukturumbau. [Konzept](../../sucharchitektur-konzept.md), [Arbeitsstand](README.md), [aktiver Task 01](01-shared-search-matrix.md). Namen machen Zuständigkeiten sichtbar; keine Dateien allein zur optischen Vollständigkeit.
 
 ## Zielbaum
 
@@ -21,25 +21,38 @@ src/lib/
 scripts/search.mjs               # Explorativ ausgebauter Terminal-Wizard
 ```
 
-Der Baum zeigt den Suchbereich, nicht sämtliche Projektdateien. Runtime-Verträge und bestehende Provider-/Kartenverträge bleiben an ihren fachlich passenden Stellen.
+Der Baum zeigt den Suchbereich, nicht sämtliche Dateien. Runtime- und Provider-/Kartenverträge bleiben fachlich passend eingeordnet.
 
 ## Zuständigkeiten und Umbau
 
-| Ziel                               | Aufgabe                                                                                                                      | Ausgangspunkt / notwendige Änderung                                                                                                                                     |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `server/api/search/index.post.ts`  | Aktionen und Runtime an der Grenze validieren, Session zuordnen, Coordinator aufrufen, HTTP-Antwort abbilden                 | Bestehende `server/api/search.post.ts` verschieben; URL bleibt `POST /api/search`                                                                                       |
-| `server/services/search/flow.ts`   | Auftrag, Kriterienübernahme, Revision, Fragebindung, gemeinsame Ausführung und Reservierung koordinieren                     | `workflow.ts` umbenennen; benötigte Übernahme-/Ausführungsfunktionen aus `coordinator.ts` und `submit.ts` integrieren; keine parallelen Koordinationsschichten behalten |
-| `server/services/search/matrix.ts` | Vorhandene Suchmöglichkeiten und deren Hindernisse gegen denselben Stand bewerten; vollständige Kriterienabdeckung verlangen | Titelbezogene Entscheidung aus `coordinator.ts` ablösen; keine vollständige Kombinationsliste und keine duplizierten Fachregeln                                         |
-| `server/services/search/llm.ts`    | Gemeinsame Modellinterpretation für Submit und gebundenen Freitext; Ausgabe validieren                                       | `parser.ts` und vorhandenen Transport auf sinnvolle Zusammenführung prüfen; nötige Funktionen behalten, keine Parser je Suchweg                                         |
-| `server/services/search/texts.ts`  | Zentrale übersetzbare Anwendungstexte und Zuordnung fachlicher Frageanlässe                                                  | Bisher verstreute Texte bündeln; keine vorsorgliche Katalog-Infrastruktur; fachliche Fragenwahl bleibt in der Anwendung                                                 |
-| `server/services/tmdb/`            | Ausgewählten Weg auf Providerparameter abbilden, aufrufen, validieren und Treffer normalisieren                              | Bestehenden Titeladapter wiederverwenden; keine zusätzliche `search/title.ts`, solange sie nur weiterleitet                                                             |
-| `server/utils/search-session.ts`   | Sessionzuordnung und konkrete Ablage                                                                                         | Getrennt vom frameworkfreien Coordinator behalten                                                                                                                       |
-| `src/lib/schemas/search.ts`        | Zusammengehörige externe Kriterien-, Aktions-, Vorschlags- und Ergebnisverträge; Typen aus Zod ableiten                      | Vorhandene Suchverträge konsolidieren, ohne Runtime-/Provider-/Kartenverträge blind einzuziehen; interne Auftragstypen gehören zu `flow.ts`                             |
-| `src/lib/parser/instructions.ts`   | Versionierter Systemauftrag, getrennt von Nutzerdaten                                                                        | Behalten; keine erneute Format-/Thinking-Optimierung als Teil des Umbaus                                                                                                |
-| `scripts/search.mjs`               | HTTP-Client, gebundene Eingaben, Auswahl und kompakte Ergebnisse                                                             | Bestehenden Client behalten und nur für den nächsten Durchstich erweitern                                                                                               |
+| Ziel | Aufgabe | Änderung |
+| --- | --- | --- |
+| `server/api/search/index.post.ts` | Aktionen/Runtime validieren, Session zuordnen, Coordinator aufrufen, HTTP abbilden | `server/api/search.post.ts` verschieben; URL bleibt `POST /api/search` |
+| `server/services/search/flow.ts` | Auftrag, Kriterienübernahme, Revision, Fragebindung, Ausführung/Reservierung koordinieren | `workflow.ts` umbenennen, benötigte Koordination aus `coordinator.ts`/`submit.ts` integrieren; keine parallelen Schichten |
+| `server/services/search/matrix.ts` | Wege gegen denselben Kriterienstand bewerten; Hindernisse und vollständige Abdeckung | Entscheidung aus `coordinator.ts` ablösen; keine Kombinationsliste oder doppelten Fachregeln |
+| `server/services/search/llm.ts` | Submit/gebundene Antwort interpretieren, Ausgabe validieren | `parser.ts`/Transport sinnvoll zusammenführen; kein Parser je Weg |
+| `server/services/search/texts.ts` | Zentrale übersetzbare Texte und Fragezuordnung | Verstreute Texte bündeln, keine vorsorgliche i18n-Infrastruktur; Fragenwahl bleibt fachlich |
+| `server/services/tmdb/` | Ausgewählten Weg auf Parameter abbilden, aufrufen, validieren, normalisieren | Vorhandenen Titeladapter nutzen; keine zusätzliche `search/title.ts` als Wrapper |
+| `server/utils/search-session.ts` | Cookie-Zuordnung/Ablage | Vom frameworkfreien Coordinator getrennt behalten |
+| `src/lib/schemas/search.ts` | Zusammengehörige externe Suchverträge und Zod-abgeleitete Typen | Konsolidieren, keine blinde Übernahme von Runtime/Provider/Karten; interne Auftragstypen zu `flow.ts` |
+| `src/lib/parser/instructions.ts` | Versionierter Systemauftrag | Behalten, keine neue Format-/Thinking-Optimierung |
+| `scripts/search.mjs` | HTTP-Client, gebundene Eingabe, Auswahl, kompakte Ergebnisse | Nur bedarfsgerecht erweitern |
 
-Eine eigene `title.ts` oder ein `title/`-Ordner entsteht erst bei benötigter eigenständiger Titelfachlogik, nicht aufgrund des älteren Zielbaums. Wiederverwendbare Funktionen auslagern; keine generischen Helferschichten auf Vorrat. Unterschiedliche Jahresparameter gehören zur Providerabbildung, nicht in mehrere Parser.
+Eigene `title.ts`/`title/` erst bei benötigter eigenständiger Fachlogik. Wiederverwendung/DRY statt generischer Helferschichten. Unterschiedliche Jahresparameter gehören zur Providerabbildung, nicht zu mehreren Parsern.
+
+## Taskdokumentation
+
+```text
+docs/tasks/search-architecture/
+├── README.md
+├── zielstruktur.md
+└── 01-shared-search-matrix.md
+```
+
+Ein aktiver Task mit Umfang, Abnahmekriterien, Prüfprotokoll und Findings. Nächste Taskdatei erst für einen ausgewählten konkreten Anwendungsfall anlegen; beispielsweise Keyword ist möglich, nicht bereits beauftragt. Keine neue historische Notiz pro Umsetzungsschritt.
 
 ## Nachweis beim Umbau
 
-Importe, Aufrufer, Tests und Dokumentverweise nachziehen. Gleiches Verhalten erhalten, außer wo Konzeptänderungen ausdrücklich festgelegt sind. Geänderte Struktur ist erst nach Umsetzung und Checks Iststand. Keine neue Suchstrecke, neues Speichersystem oder vollständiger Terminal-Ausbau im bloßen Strukturumbau. Der erneute Titel-Durchstich prüft Matrix, Bindung, Execute und kompakte Darstellung; Findings fließen zurück ins Konzept.
+Produktionsimporte, Aufrufer und Dokumentverweise nachziehen. Automatisierte Tests sind in dieser explorativen Phase zurückgestellt: keine neuen/erweiterten/duplizierten Tests, kein Testrefactoring. Unveränderte Tests nicht pauschal löschen; durch Pfade/Verträge entstandene Inkompatibilitäten im Task dokumentieren. Nicht durch Ausschlüsse oder unnötige Produktionskompatibilität verstecken.
+
+Codeprüfung, manuelle Terminalfälle, Typecheck und Lint getrennt protokollieren. Nicht ausgeführte Tests und nicht reproduzierte Rennen bleiben offen; bei Checkfehlern Ursache nennen, keinen erfolgreichen Abschluss behaupten. Geänderte Struktur erst nach Umsetzung als Iststand führen. Keine neue Suchstrecke, Speicherlösung oder vollständiger Terminal-Ausbau als Teil des Strukturumbaus. Findings aus dem Durchstich aktualisieren Konzept und Matrix.
