@@ -1,29 +1,45 @@
 # Zielstruktur der gemeinsamen Suche
 
-Diese Übersicht hält fest, wo welche Entscheidung hingehört. Stand: 20. November 2026, erster Submit-Schnitt bis `d0acd57`. Die Titelsuche ist der erste Durchstich, nicht die Vorlage für getrennte Parser pro Suchstrecke. Siehe [Arbeitsstand](README.md), [Interaktionsentscheidungen](interaction-state-decisions.md), [Architekturkonzept](../../sucharchitektur-konzept.md) und [CLI-Abnahme](cli-abnahme.md).
+Stand: 21. November 2026. Beschlossenes Ziel nach dem Durchstich; Umbenennungen und Zusammenführungen sind noch umzusetzen. [Konzept mit Architekturbild und Matrix](../../sucharchitektur-konzept.md), [Arbeitsstand und nächste Schritte](README.md). Namen sollen Zuständigkeiten sichtbar machen; keine Dateien allein zur optischen Vollständigkeit anlegen.
 
-| Status                  | Pfad                                       | Zuständigkeit                                                                                                                                                                                                                                                                                                        |
-| ----------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Vorhanden               | `src/lib/parser/instructions.ts`           | Versionierte Systemanweisungen. Nutzerdaten bleiben getrennt.                                                                                                                                                                                                                                                        |
-| Vorhanden               | `server/services/search/llm.ts`            | Modellaufruf mit separater Systemanweisung und Nutzernachricht; keine Suchlogik. `LlmConfig` leitet sich vom Runtime-Vertrag ab.                                                                                                                                                                                     |
-| Vorhanden               | `server/services/search/parser.ts`         | Gemeinsamer Einstieg `parseSearchProposal`. Erzeugt und validiert streckenoffene Vorschläge. Der erste Vertrag erlaubt Titel, Medientyp und Jahr; daraus folgt kein eigener Titelparser.                                                                                                                             |
-| Vorhanden / zu ergänzen | `server/services/search/coordinator.ts`    | `submitSearch` wendet validierte Änderungen auf eine Kopie an. `decideSearch` bewertet die Titelsuche als ausführbar, klärungsbedürftig oder nicht unterstützt. Keine Speicherung und keine TMDb-Aufrufe. Konkrete Rückfragebindung fehlt noch.                                                                      |
-| Vorhanden / zu ergänzen | `server/services/search/workflow.ts`       | Frameworkfreier Suchablauf. Besitzt `SearchState` und den internen Auftragstyp. `openSearchRequest` eröffnet und ersetzt Aufträge mit Revision 1. `submitForSession` prüft Aktualität, übernimmt geänderte Kriterien samt Revision vor der Suche und gibt reguläre Ergebnisse mit `requestId` und `revision` zurück. |
-| Vorhanden               | `server/services/search/submit.ts`         | `searchSubmission` führt bewertete, unterstützte direkte Suchen aus. `submitAndSearch` bleibt kombinierter Einstieg ohne Session-Lebenszyklus. Keine Cookie-/Storage-Zugriffe.                                                                                                                                       |
-| Vorhanden / zu ergänzen | `server/api/search.post.ts`                | HTTP-Einstieg für `submit` und `reset`: Eingaben und Runtime-Konfiguration validieren, Session zuordnen, Abhängigkeiten bereitstellen, Suchablauf aufrufen und Fehler abbilden. `clarify` und `execute` fehlen noch.                                                                                                 |
-| Vorhanden               | `server/utils/search-session.ts`           | Cookie-Zuordnung, prozesslokale Ablage, Ablaufzeit und Kapazitätsgrenze. Speichert den fachlichen Zustand, entscheidet aber nicht über Auftragseröffnung, Ablösung oder Revision.                                                                                                                                    |
-| Vorhanden / zu ergänzen | `src/lib/schemas/search-request.ts`        | Externer HTTP-Eingabevertrag für `submit` und `reset`; keine Client-Ersatzkriterien. Spätere Aktionsverträge hier ergänzen.                                                                                                                                                                                          |
-| Vorhanden               | `src/lib/schemas/runtime-config.ts`        | TMDb- und LLM-Runtime-Verträge mit abgeleiteten Typen. Validierung an der jeweiligen Runtime-Grenze.                                                                                                                                                                                                                 |
-| Vorhanden / zu ergänzen | `server/services/tmdb/`                    | Transport, Provider-Aufrufe und Treffer-Mapping. Direkte Titelsuche über `/search/multi` vorhanden; spezifische Film-/TV-Wege bleiben zu ergänzen. Der Adapter entscheidet nicht, was der Nutzer gemeint hat.                                                                                                        |
-| Vorhanden               | `src/lib/schemas/ui/search-result-card.ts` | Normalisierte Karten für Film- und Serientreffer; kein Modellvorschlags- oder HTTP-Eingabevertrag.                                                                                                                                                                                                                   |
-| Vorhanden / zu ergänzen | `scripts/search.mjs`                       | Interaktiver HTTP-Client mit Cookie-Mitnahme und serverseitigem Reset. Allgemeiner Freitext ist `submit`; gebundene Antworten und Auswahllisten fehlen noch.                                                                                                                                                         |
+## Zielbaum
 
-## Grenzen für die Weiterarbeit
+```text
+server/
+├── api/search/index.post.ts       # Gemeinsamer HTTP-Einstieg
+├── services/
+│   ├── search/
+│   │   ├── flow.ts                # Ein gemeinsamer Coordinator
+│   │   ├── matrix.ts              # Fähigkeiten und Hindernisse
+│   │   ├── llm.ts                 # Gemeinsame Interpretation samt Validierung
+│   │   └── texts.ts               # Zentrale Anwendungstexte/Fragezuordnung
+│   └── tmdb/                     # Transport, Titeladapter und Mapping
+└── utils/search-session.ts       # Cookie, Ablage, Lebensdauer
+src/lib/
+├── schemas/search.ts             # Zusammengehörige externe Suchverträge
+└── parser/instructions.ts        # Versionierter Systemauftrag
+scripts/search.mjs               # Explorativ ausgebauter Terminal-Wizard
+```
 
-- HTTP-Routen behandeln Transport und Grenzvalidierung; fachliche Übergänge liegen im Suchbereich. Session-/Storage-Anbindung bleibt davon getrennt. Interne Zustandstypen gehören zum besitzenden Fachmodul, nicht automatisch in `src/lib/schemas`. Externe Verträge und daraus abgeleitete Typen folgen [Typing](../../typing.md).
-- Der erste Submit-Schnitt nutzt explizite Funktionen. Eine State-Machine-Implementierung ist möglich, aber keine Bibliothek oder generische Infrastruktur beschlossen.
-- Gemeinsame Methoden sind der Standard. Eigene Methoden kommen erst hinzu, wenn tatsächlich unterschiedliches Verhalten sie erfordert. Film und Serie brauchen keinen eigenen Parser; unterschiedliche Jahresparameter gehören zur TMDb-Ausführung.
-- Kriterien, HTTP-Verträge und Modellvorschläge bleiben getrennt. Gemeinsame fachliche Werte nicht pro Schicht neu definieren. Ein gültiger Modellvorschlag ist weder eine Bestätigung noch ein ausführbarer Suchauftrag.
-- Direkt ausführbare Suchen können bei `submit` starten. Geplant bleibt: Nach einer Rückfrage übernimmt `clarify` nur die Antwort; erst das ausdrückliche `execute` startet die Suche. Beide Aktionen sind noch nicht implementiert.
-- Bestätigte Kriterien, offene Klärung und laufende Requests bleiben getrennt. Die aktuelle In-Memory-Ablage ist keine dauerhafte oder instanzübergreifende Session-Lösung. Zusätzliche Dateien, Stores oder Datenbanken nicht vorsorglich anlegen.
-- Discovery, Genre-Katalog, Jahresbereiche und Keyword-Auflösung sind spätere Anwendungsfälle, keine vorab festgelegten Parser oder Methoden. Geplante Pfade und konzeptionelle Diagramme sind kein Iststand.
+Der Baum zeigt den Suchbereich, nicht sämtliche Projektdateien. Runtime-Verträge und bestehende Provider-/Kartenverträge bleiben an ihren fachlich passenden Stellen.
+
+## Zuständigkeiten und Umbau
+
+| Ziel | Aufgabe | Ausgangspunkt / notwendige Änderung |
+| --- | --- | --- |
+| `server/api/search/index.post.ts` | Aktionen und Runtime an der Grenze validieren, Session zuordnen, Coordinator aufrufen, HTTP-Antwort abbilden | Bestehende `server/api/search.post.ts` verschieben; URL bleibt `POST /api/search` |
+| `server/services/search/flow.ts` | Auftrag, Kriterienübernahme, Revision, Fragebindung, gemeinsame Ausführung und Reservierung koordinieren | `workflow.ts` umbenennen; benötigte Übernahme-/Ausführungsfunktionen aus `coordinator.ts` und `submit.ts` integrieren; keine parallelen Koordinationsschichten behalten |
+| `server/services/search/matrix.ts` | Vorhandene Suchmöglichkeiten und deren Hindernisse gegen denselben Stand bewerten; vollständige Kriterienabdeckung verlangen | Titelbezogene Entscheidung aus `coordinator.ts` ablösen; keine vollständige Kombinationsliste und keine duplizierten Fachregeln |
+| `server/services/search/llm.ts` | Gemeinsame Modellinterpretation für Submit und gebundenen Freitext; Ausgabe validieren | `parser.ts` und vorhandenen Transport auf sinnvolle Zusammenführung prüfen; nötige Funktionen behalten, keine Parser je Suchweg |
+| `server/services/search/texts.ts` | Zentrale übersetzbare Anwendungstexte und Zuordnung fachlicher Frageanlässe | Bisher verstreute Texte bündeln; keine vorsorgliche Katalog-Infrastruktur; fachliche Fragenwahl bleibt in der Anwendung |
+| `server/services/tmdb/` | Ausgewählten Weg auf Providerparameter abbilden, aufrufen, validieren und Treffer normalisieren | Bestehenden Titeladapter wiederverwenden; keine zusätzliche `search/title.ts`, solange sie nur weiterleitet |
+| `server/utils/search-session.ts` | Sessionzuordnung und konkrete Ablage | Getrennt vom frameworkfreien Coordinator behalten |
+| `src/lib/schemas/search.ts` | Zusammengehörige externe Kriterien-, Aktions-, Vorschlags- und Ergebnisverträge; Typen aus Zod ableiten | Vorhandene Suchverträge konsolidieren, ohne Runtime-/Provider-/Kartenverträge blind einzuziehen; interne Auftragstypen gehören zu `flow.ts` |
+| `src/lib/parser/instructions.ts` | Versionierter Systemauftrag, getrennt von Nutzerdaten | Behalten; keine erneute Format-/Thinking-Optimierung als Teil des Umbaus |
+| `scripts/search.mjs` | HTTP-Client, gebundene Eingaben, Auswahl und kompakte Ergebnisse | Bestehenden Client behalten und nur für den nächsten Durchstich erweitern |
+
+Eine eigene `title.ts` oder ein `title/`-Ordner entsteht erst bei benötigter eigenständiger Titelfachlogik, nicht aufgrund des älteren Zielbaums. Wiederverwendbare Funktionen auslagern; keine generischen Helferschichten auf Vorrat. Unterschiedliche Jahresparameter gehören zur Providerabbildung, nicht in mehrere Parser.
+
+## Nachweis beim Umbau
+
+Importe, Aufrufer, Tests und Dokumentverweise nachziehen. Gleiches Verhalten erhalten, außer wo Konzeptänderungen ausdrücklich festgelegt sind. Geänderte Struktur ist erst nach Umsetzung und Checks Iststand. Keine neue Suchstrecke, neues Speichersystem oder vollständiger Terminal-Ausbau im bloßen Strukturumbau. Der erneute Titel-Durchstich prüft Matrix, Bindung, Execute und kompakte Darstellung; Findings fließen zurück ins Konzept.
