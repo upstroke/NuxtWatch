@@ -1,6 +1,7 @@
 /** Generates and validates proposals without applying criteria or executing searches. */
 import { z } from 'zod';
 import { PARSER_INSTRUCTIONS } from '@lib/parser/instructions';
+import { CLARIFICATION_INSTRUCTIONS } from '@lib/parser/clarification-instructions';
 import {
   searchTitleSchema as title, searchMediaTypeSchema as mediaType, searchYearSchema as year,
 } from '@lib/schemas/search-criteria';
@@ -36,7 +37,9 @@ export async function parseSearchProposal(
 ): Promise<SearchProposal> {
   const clarification = input.clarification;
   const text = await generate(config, {
-    system: PARSER_INSTRUCTIONS,
+    system: clarification
+      ? PARSER_INSTRUCTIONS + '\n\n' + CLARIFICATION_INSTRUCTIONS
+      : PARSER_INSTRUCTIONS,
     userContent: JSON.stringify({
       context: {
         currentFilters: input.currentFilters,
