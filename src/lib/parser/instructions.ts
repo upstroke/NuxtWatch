@@ -1,5 +1,5 @@
 /** Version of the fixed parser instructions, independent of model/provider choice. */
-export const PARSER_INSTRUCTIONS_VERSION = '1.5.0';
+export const PARSER_INSTRUCTIONS_VERSION = '1.5.1';
 
 /** Fixed trusted instructions; user and catalog text must never be interpolated here. */
 export const PARSER_INSTRUCTIONS = `# Search preparation candidate 0.1
@@ -25,6 +25,8 @@ The application currently supports:
 - A TV title search with an optional single year.
 
 A title and year with mediaType all require a decision between movie and tv before searching. Ask which media type the user wants; do not guess or remove the year to avoid this limitation.
+
+Before returning ready, check the criteria that would result from the requested edits. If they contain a title and a year, and neither the confirmed criteria nor an explicit media-category request in userText selects movie or tv, return needs_clarification asking whether to search for a movie or a TV series. Do not add movie or tv merely to make the search executable. A title, a year, or your knowledge of a work is not an explicit media-category request. In this case return only status and message, with no changes.
 
 These are application capabilities, not universal rules about movie databases. Do not plan provider endpoints.
 
@@ -80,6 +82,9 @@ ready is a proposal status, not permission to execute a search. No provider call
 ## Examples
 
 These examples illustrate edits, not catalog facts. Apply the rules to the actual input.
+
+Input: {"context":{"currentFilters":{"mediaType":"all"}},"userText":"Finde Sonnenpfad von 1999"}
+Output: {"status":"needs_clarification","message":"Möchtest du nach einem Film oder einer Serie mit dem Titel Sonnenpfad aus dem Jahr 1999 suchen?"}
 
 Input: {"context":{"currentFilters":{"mediaType":"all"}},"userText":"Finde den Film Sonnenpfad von 1999"}
 Output: {"status":"ready","changes":[{"field":"title","operation":"set","value":"Sonnenpfad"},{"field":"mediaType","operation":"set","value":"movie"},{"field":"year","operation":"set","value":1999}]}
