@@ -20,11 +20,11 @@ Anwendung: Kontext und Bindungen verwalten, Vorschlag validieren und übernehmen
 
 Jeweils `/reset`, dann „Finde Morgenbogen von 1999“, anschließend die Medientypfrage beantworten:
 
-| Antwort | Gezeigte erfolgreiche Läufe | Übernommene Kriterien |
-| --- | --- | --- |
-| ich meine den Film | 2 | Morgenbogen, movie, 1999 |
-| Film | 1 | Morgenbogen, movie, 1999 |
-| Die Serie bitte | 1 | Morgenbogen, tv, 1999 |
+| Antwort            | Gezeigte erfolgreiche Läufe | Übernommene Kriterien    |
+| ------------------ | --------------------------- | ------------------------ |
+| ich meine den Film | 2                           | Morgenbogen, movie, 1999 |
+| Film               | 1                           | Morgenbogen, movie, 1999 |
+| Die Serie bitte    | 1                           | Morgenbogen, tv, 1999    |
 
 Insgesamt vier erfolgreiche Durchläufe in den geposteten Ausgaben. Alle melden `ready`, ohne erneute Titelrückfrage und ohne automatische Suche. `/execute` wurde in diesen Durchläufen nicht geprüft. Es sind nicht drei Wiederholungen pro Variante dokumentiert.
 
