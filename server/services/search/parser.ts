@@ -50,32 +50,15 @@ export async function parseSearchProposal(
       mediaTypes: mediaType.options,
       yearRange: { min: 1, max: 9999 },
     },
+    ...(clarification
+      ? {
+          originalUserText: clarification.originalUserText,
+          clarificationTurns: clarification.turns,
+          openQuestion: { message: clarification.question },
+        }
+      : {}),
   };
-  const userContent = clarification
-    ? [
-        'Confirmed search criteria (context.currentFilters):',
-        JSON.stringify(context.currentFilters),
-        '',
-        'Supported edits and values (context.capabilities):',
-        JSON.stringify(context.capabilities),
-        '',
-        'Original unresolved search request:',
-        clarification.originalUserText,
-        ...clarification.turns.flatMap((turn, index) => [
-          '',
-          `Earlier clarification turn ${index + 1} - question:`,
-          turn.question,
-          `Earlier clarification turn ${index + 1} - answer:`,
-          turn.answer,
-        ]),
-        '',
-        'Current clarification question:',
-        clarification.question,
-        '',
-        'Latest answer (userText):',
-        input.userText,
-      ].join('\n')
-    : JSON.stringify({ context, userText: input.userText });
+  const userContent = JSON.stringify({ context, userText: input.userText });
   const text = await generate(config, {
     system: clarification
       ? PARSER_INSTRUCTIONS + '\n\n' + CLARIFICATION_INSTRUCTIONS
