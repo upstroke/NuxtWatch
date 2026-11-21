@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
     const input = request.data;
     const llm = input.answer.type === 'text' ? getLlm() : undefined;
     context.touch();
-    let result: Awaited<ReturnType<typeof clarifySearchText>>;
+    let result: Awaited<ReturnType<typeof clarifySearchText>> | ReturnType<typeof clarifySearch>;
     try {
       result = llm
         ? await clarifySearchText(session, input, llm, context.isCurrent, randomUUID)
