@@ -41,24 +41,24 @@ Ein gemeinsames Kriterienobjekt beschreibt den Suchwunsch, nicht den Endpunkt. K
 
 ### Fähigkeiten der aktuellen Titelwege
 
-| Eigenschaft | Multi | Movie | TV |
-| --- | --- | --- | --- |
-| Titelbegriff erforderlich | Ja | Ja | Ja |
-| Durchsuchte Inhalte | Filme, Serien, Personen | Filme, keine Serien | Serien, keine Filme |
-| Einzeljahr als Suchparameter | Nein | `primary_release_year` | `first_air_date_year` |
+| Eigenschaft                  | Multi                   | Movie                  | TV                    |
+| ---------------------------- | ----------------------- | ---------------------- | --------------------- |
+| Titelbegriff erforderlich    | Ja                      | Ja                     | Ja                    |
+| Durchsuchte Inhalte          | Filme, Serien, Personen | Filme, keine Serien    | Serien, keine Filme   |
+| Einzeljahr als Suchparameter | Nein                    | `primary_release_year` | `first_air_date_year` |
 
 Multi-Personentreffer werden nicht zu Titelkarten. Medientyp nicht festgelegt bedeutet Filme und Serien; intern kann dies weiterhin `all` heißen. `include_adult=true`, Locale und Pagination sind Ausführungsoptionen, keine zusätzlich erforderlichen Nutzerkriterien. Keine Adult-basierte Ausfilterung von Film-/Serientreffern.
 
 ### Ausschlussregeln für die aktuell gewählten direkten Wege
 
-| Bedingung | Hindernis | Konsequenz |
-| --- | --- | --- |
-| Titel fehlt oder ist leer | Alle Titelwege benötigen einen Titel | Nur bei gemeinter Titelstrecke Titel klären; andere Suchabsichten nicht zur Titelsuche umdeuten |
-| Medientyp nicht festgelegt | Movie allein durchsucht keine Serien; TV allein keine Filme | Beide Einzelwege decken den uneingeschränkten Umfang nicht ab; Multi bleibt ohne Jahresfilter möglich |
-| Nur Filme gewünscht | TV durchsucht keine Filme; Multi würde zusätzliche Medientypfilterung benötigen | Direkten Movie-Weg verwenden |
-| Nur Serien gewünscht | Movie durchsucht keine Serien; Multi würde zusätzliche Medientypfilterung benötigen | Direkten TV-Weg verwenden |
-| Einzeljahr vorhanden | Multi hat keinen Jahresparameter | Jahr niemals weglassen; typspezifischen Weg prüfen |
-| Bestätigtes Kriterium nicht abgedeckt | Suchwunsch nicht vollständig ausführbar | Klären oder begründet als nicht unterstützt melden |
+| Bedingung                             | Hindernis                                                                           | Konsequenz                                                                                            |
+| ------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Titel fehlt oder ist leer             | Alle Titelwege benötigen einen Titel                                                | Nur bei gemeinter Titelstrecke Titel klären; andere Suchabsichten nicht zur Titelsuche umdeuten       |
+| Medientyp nicht festgelegt            | Movie allein durchsucht keine Serien; TV allein keine Filme                         | Beide Einzelwege decken den uneingeschränkten Umfang nicht ab; Multi bleibt ohne Jahresfilter möglich |
+| Nur Filme gewünscht                   | TV durchsucht keine Filme; Multi würde zusätzliche Medientypfilterung benötigen     | Direkten Movie-Weg verwenden                                                                          |
+| Nur Serien gewünscht                  | Movie durchsucht keine Serien; Multi würde zusätzliche Medientypfilterung benötigen | Direkten TV-Weg verwenden                                                                             |
+| Einzeljahr vorhanden                  | Multi hat keinen Jahresparameter                                                    | Jahr niemals weglassen; typspezifischen Weg prüfen                                                    |
+| Bestätigtes Kriterium nicht abgedeckt | Suchwunsch nicht vollständig ausführbar                                             | Klären oder begründet als nicht unterstützt melden                                                    |
 
 Folge für Titel plus Jahr ohne Medientyp: Medientyp klären. Dies ist unsere aktuelle Produktentscheidung gegen Zusammenführung zweier Ergebnislisten und gegen eigene Jahres-Nachfilterung, keine grundsätzliche Unmöglichkeit der API. Titel allein ist ohne Medientypfrage über Multi ausführbar. Discover ist kein Ersatz für freien Titelabgleich. Weitere Suchstrecken erhalten ihre Regeln erst anhand ihrer belegten Fähigkeiten.
 
