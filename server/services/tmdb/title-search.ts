@@ -32,11 +32,12 @@ export async function searchTitles(
 
   const raw = await http.get(path, query);
   // Normalize endpoint-specific responses into the shared validated result union.
-  const response = options?.mediaType === 'movie'
-    ? TmdbMovieSearchResponseSchema.safeParse(raw)
-    : options?.mediaType === 'tv'
-      ? TmdbTvSearchResponseSchema.safeParse(raw)
-      : schema.safeParse(raw);
+  const response =
+    options?.mediaType === 'movie'
+      ? TmdbMovieSearchResponseSchema.safeParse(raw)
+      : options?.mediaType === 'tv'
+        ? TmdbTvSearchResponseSchema.safeParse(raw)
+        : schema.safeParse(raw);
   if (!response.success) {
     throw createTmdbError('INVALID_RESPONSE');
   }

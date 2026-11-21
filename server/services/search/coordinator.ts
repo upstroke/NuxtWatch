@@ -11,7 +11,11 @@ type SearchDecision =
 export function decideSearch(criteria: SearchCriteria): SearchDecision {
   const title = criteria.title?.trim();
   if (!title) {
-    return { status: 'needs_clarification', field: 'title', message: 'Welchen Titel möchtest du suchen?' };
+    return {
+      status: 'needs_clarification',
+      field: 'title',
+      message: 'Welchen Titel möchtest du suchen?',
+    };
   }
   if (criteria.year !== undefined && criteria.mediaType === 'all') {
     return { status: 'needs_clarification', field: 'mediaType', options: ['movie', 'tv'] };
@@ -19,15 +23,21 @@ export function decideSearch(criteria: SearchCriteria): SearchDecision {
   return { status: 'ready', path: 'title', criteria: { ...criteria, title } };
 }
 export async function submitSearch(
-  config: LlmConfig, input: ParserInput, parse: typeof parseSearchProposal = parseSearchProposal,
+  config: LlmConfig,
+  input: ParserInput,
+  parse: typeof parseSearchProposal = parseSearchProposal,
 ) {
   const proposal = await parse(config, input);
   const criteria = { ...input.currentFilters };
   if (proposal.status !== 'ready') return { criteria, decision: proposal };
   for (const change of proposal.changes ?? []) {
     switch (change.field) {
-      case 'title': criteria.title = change.value; break;
-      case 'mediaType': criteria.mediaType = change.value; break;
+      case 'title':
+        criteria.title = change.value;
+        break;
+      case 'mediaType':
+        criteria.mediaType = change.value;
+        break;
       case 'year':
         if (change.value === null) delete criteria.year;
         else criteria.year = change.value;

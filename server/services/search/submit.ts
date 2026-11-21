@@ -43,9 +43,10 @@ export async function searchSubmission(
   }
 
   const confirmed = decision.criteria;
-  const options = confirmed.mediaType === 'all'
-    ? undefined
-    : { mediaType: confirmed.mediaType, year: confirmed.year };
+  const options =
+    confirmed.mediaType === 'all'
+      ? undefined
+      : { mediaType: confirmed.mediaType, year: confirmed.year };
   const results = await searchTitles(http, confirmed.title, options);
   return { status: 'completed' as const, criteria: confirmed, results };
 }

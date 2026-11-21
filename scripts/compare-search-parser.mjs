@@ -46,9 +46,14 @@ async function moduleUrl(path) {
     } else {
       target = import.meta.resolve(name);
     }
-    edits.push([node.moduleSpecifier.getStart(ast), node.moduleSpecifier.end, JSON.stringify(target)]);
+    edits.push([
+      node.moduleSpecifier.getStart(ast),
+      node.moduleSpecifier.end,
+      JSON.stringify(target),
+    ]);
   }
-  for (const [start, end, value] of edits.reverse()) code = code.slice(0, start) + value + code.slice(end);
+  for (const [start, end, value] of edits.reverse())
+    code = code.slice(0, start) + value + code.slice(end);
   const url = `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`;
   modules.set(path, url);
   return url;
@@ -70,7 +75,11 @@ function literalExport(source, name) {
 function stable(value) {
   if (Array.isArray(value)) return value.map(stable);
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stable(value[key])]));
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((key) => [key, stable(value[key])]),
+    );
   }
   return value;
 }
@@ -90,7 +99,8 @@ function assess(proposal, item) {
   const result = {
     statusAllowed: expected.allowedStatuses.includes(proposal.status),
     candidatePreferredStatusMatched: expected.candidatePreferredStatus
-      ? proposal.status === expected.candidatePreferredStatus : null,
+      ? proposal.status === expected.candidatePreferredStatus
+      : null,
     manualReviewRequired: true,
   };
   if (proposal.status !== 'ready') return result;
@@ -99,49 +109,65 @@ function assess(proposal, item) {
   const after = apply(before, changes);
   result.criteriaAfter = after;
   result.criteriaMatch = Array.isArray(expected.changes)
-    ? equal(after, apply(before, expected.changes)) : null;
-  result.preservedFieldsMatch = (expected.preservedFields ?? []).every(
-    (field) => equal(after[field], before[field]),
+    ? equal(after, apply(before, expected.changes))
+    : null;
+  result.preservedFieldsMatch = (expected.preservedFields ?? []).every((field) =>
+    equal(after[field], before[field]),
   );
   result.redundantEdits = changes.filter((change) => equal(apply(before, [change]), before));
   return result;
 }
 
 async function main() {
-  const { values } = parseArgs({ options: {
-    run: { type: 'boolean', default: false },
-    smoke: { type: 'boolean', default: false },
-    help: { type: 'boolean', default: false },
-    'model-label': { type: 'string' },
-    temperature: { type: 'string' },
-    'max-output-tokens': { type: 'string', default: '256' },
-    'timeout-ms': { type: 'string', default: '120000' },
-  } });
+  const { values } = parseArgs({
+    options: {
+      run: { type: 'boolean', default: false },
+      smoke: { type: 'boolean', default: false },
+      help: { type: 'boolean', default: false },
+      'model-label': { type: 'string' },
+      temperature: { type: 'string' },
+      'max-output-tokens': { type: 'string', default: '256' },
+      'timeout-ms': { type: 'string', default: '120000' },
+    },
+  });
   if (values.help) {
-    console.log('node scripts/compare-search-parser.mjs [--smoke] [--run --model-label LABEL] [--temperature NUMBER] [--max-output-tokens NUMBER] [--timeout-ms NUMBER]');
+    console.log(
+      'node scripts/compare-search-parser.mjs [--smoke] [--run --model-label LABEL] [--temperature NUMBER] [--max-output-tokens NUMBER] [--timeout-ms NUMBER]',
+    );
     return;
   }
   const maxOutputTokens = Number(values['max-output-tokens']);
   const timeoutMs = Number(values['timeout-ms']);
   const temperature = values.temperature === undefined ? undefined : Number(values.temperature);
-  if (!Number.isInteger(maxOutputTokens) || maxOutputTokens < 1 ||
-      !Number.isInteger(timeoutMs) || timeoutMs < 1 ||
-      (temperature !== undefined && (!Number.isFinite(temperature) || temperature < 0))) {
+  if (
+    !Number.isInteger(maxOutputTokens) ||
+    maxOutputTokens < 1 ||
+    !Number.isInteger(timeoutMs) ||
+    timeoutMs < 1 ||
+    (temperature !== undefined && (!Number.isFinite(temperature) || temperature < 0))
+  ) {
     throw new Error('Invalid token limit, timeout or temperature.');
   }
   const fixtureText = await readFile(resolve(root, folder, 'cases-0.1.json'), 'utf8');
   const fixture = JSON.parse(fixtureText);
-  if (fixture.version !== 'search-preparation-comparison-0.1' ||
-      fixture.candidate !== 'candidate-0.1.md' || fixture.baseline.commit !== 'd9f93fc' ||
-      fixture.baseline.path !== 'src/lib/parser/instructions.ts' ||
-      fixture.baseline.export !== 'PARSER_INSTRUCTIONS' || fixture.baseline.version !== '1.4.0' ||
-      fixture.repetitions !== 3 || fixture.cases.length !== 14 ||
-      new Set(fixture.cases.map((item) => item.id)).size !== 14) {
+  if (
+    fixture.version !== 'search-preparation-comparison-0.1' ||
+    fixture.candidate !== 'candidate-0.1.md' ||
+    fixture.baseline.commit !== 'd9f93fc' ||
+    fixture.baseline.path !== 'src/lib/parser/instructions.ts' ||
+    fixture.baseline.export !== 'PARSER_INSTRUCTIONS' ||
+    fixture.baseline.version !== '1.4.0' ||
+    fixture.repetitions !== 3 ||
+    fixture.cases.length !== 14 ||
+    new Set(fixture.cases.map((item) => item.id)).size !== 14
+  ) {
     throw new Error('Unexpected fixture package; review and version the runner before use.');
   }
-  const baselineSource = execFileSync('git', [
-    'show', `${fixture.baseline.commit}:${fixture.baseline.path}`,
-  ], { cwd: root, encoding: 'utf8' });
+  const baselineSource = execFileSync(
+    'git',
+    ['show', `${fixture.baseline.commit}:${fixture.baseline.path}`],
+    { cwd: root, encoding: 'utf8' },
+  );
   if (literalExport(baselineSource, 'PARSER_INSTRUCTIONS_VERSION') !== fixture.baseline.version) {
     throw new Error('Baseline version mismatch.');
   }
@@ -151,32 +177,54 @@ async function main() {
   };
   prompts.C = prompts.B;
   const { parseSearchProposal } = await import(await moduleUrl('server/services/search/parser.ts'));
-  const { searchCriteriaSchema } = await import(await moduleUrl('src/lib/schemas/search-criteria.ts'));
-  const { LlmRuntimeConfigSchema } = await import(await moduleUrl('src/lib/schemas/runtime-config.ts'));
+  const { searchCriteriaSchema } = await import(
+    await moduleUrl('src/lib/schemas/search-criteria.ts')
+  );
+  const { LlmRuntimeConfigSchema } = await import(
+    await moduleUrl('src/lib/schemas/runtime-config.ts')
+  );
   const dummy = { provider: 'comparison', baseUrl: 'http://localhost', model: 'offline' };
-  const validate = (text, input) => parseSearchProposal(dummy, {
-    currentFilters: input.context.currentFilters, userText: input.userText,
-  }, async () => text);
+  const validate = (text, input) =>
+    parseSearchProposal(
+      dummy,
+      {
+        currentFilters: input.context.currentFilters,
+        userText: input.userText,
+      },
+      async () => text,
+    );
 
   for (const item of fixture.cases) {
     searchCriteriaSchema.parse(item.input.context.currentFilters);
-    if (typeof item.input.userText !== 'string' || !item.input.userText.trim() ||
-        item.input.context.openQuestion !== null ||
-        !Array.isArray(item.expected.allowedStatuses) || !item.expected.allowedStatuses.length) {
+    if (
+      typeof item.input.userText !== 'string' ||
+      !item.input.userText.trim() ||
+      item.input.context.openQuestion !== null ||
+      !Array.isArray(item.expected.allowedStatuses) ||
+      !item.expected.allowedStatuses.length
+    ) {
       throw new Error(`Invalid fixture: ${item.id}`);
     }
     if (item.expected.changes) {
-      await validate(JSON.stringify({ status: 'ready', changes: item.expected.changes }), item.input);
+      await validate(
+        JSON.stringify({ status: 'ready', changes: item.expected.changes }),
+        item.input,
+      );
     }
-    await parseSearchProposal(dummy, {
-      currentFilters: item.input.context.currentFilters, userText: item.input.userText,
-    }, async (_config, generated) => {
-      const actual = JSON.parse(generated.userContent);
-      if (!equal(actual.context.capabilities, fixture.capabilities)) {
-        throw new Error('Fixture capabilities differ from the current parser.');
-      }
-      return '{"status":"ready","changes":[]}';
-    });
+    await parseSearchProposal(
+      dummy,
+      {
+        currentFilters: item.input.context.currentFilters,
+        userText: item.input.userText,
+      },
+      async (_config, generated) => {
+        const actual = JSON.parse(generated.userContent);
+        if (!equal(actual.context.capabilities, fixture.capabilities)) {
+          throw new Error('Fixture capabilities differ from the current parser.');
+        }
+        return '{"status":"ready","changes":[]}';
+      },
+    );
   }
 
   const plan = [];
@@ -193,8 +241,12 @@ async function main() {
           context.previousTurn = structuredClone(item.input.context.previousTurn);
           context.openQuestion = item.input.context.openQuestion;
         }
-        plan.push({ id: item.id, variant, repetition: repeat + 1,
-          input: { context, userText: item.input.userText } });
+        plan.push({
+          id: item.id,
+          variant,
+          repetition: repeat + 1,
+          input: { context, userText: item.input.userText },
+        });
       }
     }
   }
@@ -208,30 +260,52 @@ async function main() {
       model: process.env.NUXT_LLM_MODEL,
     });
     const url = new URL(config.baseUrl);
-    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password ||
-        url.search || url.hash || !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
+    if (
+      !['http:', 'https:'].includes(url.protocol) ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
+    ) {
       throw new Error('Only a loopback LLM URL without credentials, query or fragment is allowed.');
     }
-    if (!values['model-label']?.trim()) throw new Error('--model-label must document model and quantization.');
-    provider = createOpenAICompatible({ name: config.provider, baseURL: config.baseUrl,
+    if (!values['model-label']?.trim())
+      throw new Error('--model-label must document model and quantization.');
+    provider = createOpenAICompatible({
+      name: config.provider,
+      baseURL: config.baseUrl,
       fetch: (url, init) => fetch(url, { ...init, redirect: 'error' }),
     });
   }
   const outputRoot = resolve(root, 'test-results/parser-comparison');
   await mkdir(outputRoot, { recursive: true });
-  const output = await mkdtemp(resolve(outputRoot, values.run
-    ? (values.smoke ? 'smoke-' : 'comparison-') : 'dry-run-'));
-  const save = (name, value) => writeFile(resolve(output, name), JSON.stringify(value, null, 2) + '\n');
+  const output = await mkdtemp(
+    resolve(outputRoot, values.run ? (values.smoke ? 'smoke-' : 'comparison-') : 'dry-run-'),
+  );
+  const save = (name, value) =>
+    writeFile(resolve(output, name), JSON.stringify(value, null, 2) + '\n');
   const metadata = {
-    startedAt: new Date().toISOString(), mode: values.run ? (values.smoke ? 'smoke' : 'comparison') : 'dry-run',
-    node: process.version, gitHead: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
+    startedAt: new Date().toISOString(),
+    mode: values.run ? (values.smoke ? 'smoke' : 'comparison') : 'dry-run',
+    node: process.version,
+    gitHead: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
     gitStatus: execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }),
     scriptSha256: hash(await readFile(fileURLToPath(import.meta.url), 'utf8')),
-    fixtureSha256: hash(fixtureText), sourceSha256: sources,
-    promptSha256: Object.fromEntries(Object.entries(prompts).map(([key, text]) => [key, hash(text)])),
-    config: config ?? null, modelLabel: values['model-label'] ?? null,
-    settings: { maxOutputTokens, temperature: temperature ?? null, maxRetries: 0, timeoutMs,
-      unspecified: 'SDK/provider/server defaults; verify and record server settings separately.' },
+    fixtureSha256: hash(fixtureText),
+    sourceSha256: sources,
+    promptSha256: Object.fromEntries(
+      Object.entries(prompts).map(([key, text]) => [key, hash(text)]),
+    ),
+    config: config ?? null,
+    modelLabel: values['model-label'] ?? null,
+    settings: {
+      maxOutputTokens,
+      temperature: temperature ?? null,
+      maxRetries: 0,
+      timeoutMs,
+      unspecified: 'SDK/provider/server defaults; verify and record server settings separately.',
+    },
     plannedCalls: selected.length,
   };
   await save('metadata.json', metadata);
@@ -251,17 +325,25 @@ async function main() {
     let result;
     try {
       result = await generateText({
-        model: provider.chatModel(config.model), system: prompts[step.variant],
+        model: provider.chatModel(config.model),
+        system: prompts[step.variant],
         messages: [{ role: 'user', content: JSON.stringify(step.input) }],
-        maxOutputTokens, maxRetries: 0, abortSignal: AbortSignal.timeout(timeoutMs),
+        maxOutputTokens,
+        maxRetries: 0,
+        abortSignal: AbortSignal.timeout(timeoutMs),
         ...(temperature === undefined ? {} : { temperature }),
       });
     } catch (error) {
       record.transportError = { name: error instanceof Error ? error.name : 'UnknownError' };
       record.durationMs = Date.now() - started;
       await appendFile(resolve(output, 'responses.jsonl'), JSON.stringify(record) + '\n');
-      await save('summary.json', { completed, invalid, planned: selected.length, aborted: true,
-        reason: 'Transport/SDK failure; see local model server logs. No automatic retry.' });
+      await save('summary.json', {
+        completed,
+        invalid,
+        planned: selected.length,
+        aborted: true,
+        reason: 'Transport/SDK failure; see local model server logs. No automatic retry.',
+      });
       console.error(`Stopped after transport/SDK failure. ${output}`);
       process.exitCode = 1;
       return;
@@ -278,7 +360,10 @@ async function main() {
       try {
         record.proposal = await validate(result.text, step.input);
         record.contractValid = true;
-        record.assessment = assess(record.proposal, fixture.cases.find((item) => item.id === step.id));
+        record.assessment = assess(
+          record.proposal,
+          fixture.cases.find((item) => item.id === step.id),
+        );
       } catch (error) {
         record.contractValid = false;
         record.contractIssues = error instanceof Error ? error.message : 'Invalid proposal';
@@ -290,9 +375,17 @@ async function main() {
     if (!record.contractValid || record.truncated) invalid += 1;
     completed += 1;
     await appendFile(resolve(output, 'responses.jsonl'), JSON.stringify(record) + '\n');
-    await save('summary.json', { completed, invalid, planned: selected.length, aborted: false,
-      finished: completed === selected.length, manualReviewRequired: true });
-    console.log(`${completed}/${selected.length} ${step.id} ${step.variant} contract=${record.contractValid} truncated=${record.truncated}`);
+    await save('summary.json', {
+      completed,
+      invalid,
+      planned: selected.length,
+      aborted: false,
+      finished: completed === selected.length,
+      manualReviewRequired: true,
+    });
+    console.log(
+      `${completed}/${selected.length} ${step.id} ${step.variant} contract=${record.contractValid} truncated=${record.truncated}`,
+    );
   }
   console.log(`Finished; semantic review is still required. ${output}`);
   if (invalid) process.exitCode = 2;

@@ -28,28 +28,61 @@ export function openSearchRequest(state: SearchState, requestId: string): Search
   return request;
 }
 function questionText(question: SearchQuestion): string {
-  return question.kind === 'free_text' ? question.message : 'Möchtest du einen Film oder eine Serie suchen?';
+  return question.kind === 'free_text'
+    ? question.message
+    : 'Möchtest du einen Film oder eine Serie suchen?';
 }
-function bindQuestion(request: SearchRequest, decision: Outcome['decision'], createId: () => string): SearchQuestion | undefined {
+function bindQuestion(
+  request: SearchRequest,
+  decision: Outcome['decision'],
+  createId: () => string,
+): SearchQuestion | undefined {
   if (decision.status !== 'needs_clarification') return undefined;
-  const binding = { requestId: request.requestId, revision: request.revision, questionId: createId() };
+  const binding = {
+    requestId: request.requestId,
+    revision: request.revision,
+    questionId: createId(),
+  };
   if ('field' in decision && decision.field === 'mediaType') {
-    return { ...binding, kind: 'select_media_type', field: 'mediaType', options: [...decision.options] };
+    return {
+      ...binding,
+      kind: 'select_media_type',
+      field: 'mediaType',
+      options: [...decision.options],
+    };
   }
   return {
-    ...binding, kind: 'free_text', source: 'field' in decision ? 'application' : 'llm',
+    ...binding,
+    kind: 'free_text',
+    source: 'field' in decision ? 'application' : 'llm',
     message: decision.message,
   };
 }
-function matchesQuestion(state: SearchState, input: SearchClarifyRequest, isCurrent: () => boolean) {
+function matchesQuestion(
+  state: SearchState,
+  input: SearchClarifyRequest,
+  isCurrent: () => boolean,
+) {
   const request = state.currentRequest;
   const question = request?.question;
-  return !!(isCurrent() && request && !request.clarifying && question &&
-    request.requestId === input.requestId && request.revision === input.revision &&
-    question.requestId === input.requestId && question.revision === input.revision &&
-    question.questionId === input.questionId);
+  return !!(
+    isCurrent() &&
+    request &&
+    !request.clarifying &&
+    question &&
+    request.requestId === input.requestId &&
+    request.revision === input.revision &&
+    question.requestId === input.requestId &&
+    question.revision === input.revision &&
+    question.questionId === input.questionId
+  );
 }
-function commitOutcome(state: SearchState, request: SearchRequest, outcome: Outcome, createId: () => string) {
+function commitOutcome(
+  state: SearchState,
+  request: SearchRequest,
+  outcome: Outcome,
+  createId: () => string,
+) {
   state.criteria = { ...outcome.criteria };
   request.decision = outcome.decision;
   request.revision += 1;
@@ -57,33 +90,51 @@ function commitOutcome(state: SearchState, request: SearchRequest, outcome: Outc
 }
 function clarificationResponse(state: SearchState, request: SearchRequest) {
   return {
-    status: 'clarified' as const, requestId: request.requestId, revision: request.revision,
-    criteria: { ...state.criteria }, decision: request.decision!,
+    status: 'clarified' as const,
+    requestId: request.requestId,
+    revision: request.revision,
+    criteria: { ...state.criteria },
+    decision: request.decision!,
     ...(request.question ? { question: request.question } : {}),
   };
 }
 
 /** Explicit offered selections need no language interpretation. */
-export function clarifySearch(state: SearchState, input: SearchClarifyRequest, isCurrent: () => boolean) {
+export function clarifySearch(
+  state: SearchState,
+  input: SearchClarifyRequest,
+  isCurrent: () => boolean,
+) {
   if (!matchesQuestion(state, input, isCurrent)) {
     return { status: 'rejected' as const, reason: 'stale_clarification' as const };
   }
   const request = state.currentRequest!;
   const question = request.question!;
-  if (input.answer.type !== 'selection' || question.kind !== 'select_media_type' ||
-    !question.options.includes(input.answer.value)) {
+  if (
+    input.answer.type !== 'selection' ||
+    question.kind !== 'select_media_type' ||
+    !question.options.includes(input.answer.value)
+  ) {
     return { status: 'rejected' as const, reason: 'selection_not_offered' as const };
   }
   const criteria = { ...state.criteria, mediaType: input.answer.value };
   request.turns.push({ question: questionText(question), answer: input.answer.value });
-  commitOutcome(state, request, { criteria, decision: decideSearch(criteria) }, () => question.questionId);
+  commitOutcome(
+    state,
+    request,
+    { criteria, decision: decideSearch(criteria) },
+    () => question.questionId,
+  );
   return clarificationResponse(state, request);
 }
 
 /** Freely typed answers always go to the LLM with the bound dialogue. Never executes. */
 export async function clarifySearchText(
-  state: SearchState, input: SearchClarifyRequest, config: LlmConfig,
-  isCurrent: () => boolean, createId: () => string,
+  state: SearchState,
+  input: SearchClarifyRequest,
+  config: LlmConfig,
+  isCurrent: () => boolean,
+  createId: () => string,
 ) {
   if (!matchesQuestion(state, input, isCurrent) || input.answer.type !== 'text') {
     return { status: 'rejected' as const, reason: 'stale_clarification' as const };
@@ -92,21 +143,29 @@ export async function clarifySearchText(
   const question = request.question!;
   const revision = request.revision;
   const answer = input.answer.text;
-  const active = () => isCurrent() && state.currentRequest === request &&
-    request.revision === revision && request.question === question;
+  const active = () =>
+    isCurrent() &&
+    state.currentRequest === request &&
+    request.revision === revision &&
+    request.question === question;
   request.clarifying = true;
   try {
     const outcome = await submitSearch(config, {
-      currentFilters: { ...state.criteria }, userText: answer,
+      currentFilters: { ...state.criteria },
+      userText: answer,
       clarification: {
         originalUserText: request.originalUserText,
-        turns: request.turns.map((turn) => ({ ...turn })), question: questionText(question),
+        turns: request.turns.map((turn) => ({ ...turn })),
+        question: questionText(question),
       },
     });
     if (!active()) return { status: 'rejected' as const, reason: 'stale_clarification' as const };
     request.turns.push({ question: questionText(question), answer });
     commitOutcome(state, request, outcome, createId);
-    if (!request.question) { request.originalUserText = ''; request.turns = []; }
+    if (!request.question) {
+      request.originalUserText = '';
+      request.turns = [];
+    }
     return clarificationResponse(state, request);
   } catch (error) {
     if (!active()) return { status: 'rejected' as const, reason: 'stale_clarification' as const };
@@ -117,10 +176,14 @@ export async function clarifySearchText(
 }
 
 async function executeCurrentRequest(
-  state: SearchState, request: SearchRequest, http: Pick<TmdbHttpClient, 'get'>, isSessionCurrent: () => boolean,
+  state: SearchState,
+  request: SearchRequest,
+  http: Pick<TmdbHttpClient, 'get'>,
+  isSessionCurrent: () => boolean,
 ) {
   const revision = request.revision;
-  if (!isSessionCurrent() || state.currentRequest !== request) return { status: 'superseded' as const };
+  if (!isSessionCurrent() || state.currentRequest !== request)
+    return { status: 'superseded' as const };
   if (!request.decision || request.question || request.clarifying) {
     return { status: 'rejected' as const, reason: 'request_not_ready' as const };
   }
@@ -129,11 +192,23 @@ async function executeCurrentRequest(
   }
   const criteria = { ...state.criteria };
   if (request.decision.status !== 'ready') {
-    return { status: 'not_executed' as const, requestId: request.requestId, revision, criteria, decision: request.decision };
+    return {
+      status: 'not_executed' as const,
+      requestId: request.requestId,
+      revision,
+      criteria,
+      decision: request.decision,
+    };
   }
   const decision = decideSearchExecution(criteria);
   if (decision.status !== 'ready') {
-    return { status: 'not_executed' as const, requestId: request.requestId, revision, criteria, decision };
+    return {
+      status: 'not_executed' as const,
+      requestId: request.requestId,
+      revision,
+      criteria,
+      decision,
+    };
   }
   const execution: SearchExecution = { revision, status: 'running' };
   request.execution = execution;
@@ -153,31 +228,51 @@ async function executeCurrentRequest(
   }
 }
 export async function executeSearch(
-  state: SearchState, input: SearchExecuteRequest, http: Pick<TmdbHttpClient, 'get'>, isSessionCurrent: () => boolean,
+  state: SearchState,
+  input: SearchExecuteRequest,
+  http: Pick<TmdbHttpClient, 'get'>,
+  isSessionCurrent: () => boolean,
 ) {
   const request = state.currentRequest;
-  if (!isSessionCurrent() || !request || request.requestId !== input.requestId || request.revision !== input.revision) {
+  if (
+    !isSessionCurrent() ||
+    !request ||
+    request.requestId !== input.requestId ||
+    request.revision !== input.revision
+  ) {
     return { status: 'rejected' as const, reason: 'stale_execution' as const };
   }
   return executeCurrentRequest(state, request, http, isSessionCurrent);
 }
 export async function submitForSession(
-  state: SearchState, requestId: string, userText: string, config: LlmConfig,
-  http: Pick<TmdbHttpClient, 'get'>, isSessionCurrent: () => boolean, createQuestionId: () => string,
+  state: SearchState,
+  requestId: string,
+  userText: string,
+  config: LlmConfig,
+  http: Pick<TmdbHttpClient, 'get'>,
+  isSessionCurrent: () => boolean,
+  createQuestionId: () => string,
 ) {
   const request = openSearchRequest(state, requestId);
   request.originalUserText = userText;
   const outcome = await submitSearch(config, { currentFilters: { ...state.criteria }, userText });
-  if (!isSessionCurrent() || state.currentRequest !== request) return { status: 'superseded' as const };
+  if (!isSessionCurrent() || state.currentRequest !== request)
+    return { status: 'superseded' as const };
   const criteria = outcome.criteria;
-  const changed = state.criteria.title !== criteria.title || state.criteria.mediaType !== criteria.mediaType || state.criteria.year !== criteria.year;
+  const changed =
+    state.criteria.title !== criteria.title ||
+    state.criteria.mediaType !== criteria.mediaType ||
+    state.criteria.year !== criteria.year;
   if (changed || outcome.decision.status === 'needs_clarification') {
     commitOutcome(state, request, outcome, createQuestionId);
   } else request.decision = outcome.decision;
   if (request.question) {
     return {
-      status: 'not_executed' as const, ...outcome, requestId: request.requestId,
-      revision: request.revision, question: request.question,
+      status: 'not_executed' as const,
+      ...outcome,
+      requestId: request.requestId,
+      revision: request.revision,
+      question: request.question,
     };
   }
   request.originalUserText = '';

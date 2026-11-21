@@ -45,10 +45,10 @@ Zusätzlich zu den bisherigen capabilities und currentFilters bekommt C höchste
 ```json
 {
   "context": {
-    "currentFilters": {"title": "Nordfenster", "mediaType": "tv", "year": 2005},
+    "currentFilters": { "title": "Nordfenster", "mediaType": "tv", "year": 2005 },
     "previousTurn": {
       "userText": "Finde die Serie Nordfenster von 2005",
-      "feedback": {"kind": "completed"}
+      "feedback": { "kind": "completed" }
     },
     "openQuestion": null
   },
@@ -74,32 +74,32 @@ Die folgenden Bewertungsfälle verwenden andere synthetische Titel. Sie werden n
 
 Kurzschrift: T = Titel, M = Medientyp, J = Jahr. Jede Zeile ist ein unabhängiger Ausgangszustand, keine verdeckte Fortsetzung der vorigen Zeile. Bei Folgeeingaben werden previousTurn und feedback vor dem Lauf pro Fall ausdrücklich fixiert. Für V05, V06 und V10 lautet die vorherige Nutzereingabe: Finde die Serie Hafenlicht von 2005; feedback completed.
 
-| ID | Ausgangslage und aktuelle Eingabe | Erwarteter Vorschlag / unzulässiges Verhalten |
-| --- | --- | --- |
-| V01 | Reset; Finde den Film Morgenbogen von 1999 | T setzen, M movie, J 1999; Medienangabe nicht auslassen. |
-| V02 | Reset; Finde die Serie Hafenlicht von 2005 | T setzen, M tv, J 2005. |
-| V03 | Reset; Finde Morgenbogen | Nur T setzen; all erhalten, kein J erfinden. |
-| V04 | Reset; Finde Hafenlicht von 2005 | B/C: konkrete Frage Film oder Serie; keine geratenen Medien und kein stilles Entfernen des Jahres. A kann ready mit T/J liefern, worauf die bestehende Fachlogik fragt; diese Ebenen getrennt bewerten. |
-| V05 | Hafenlicht, tv, 2005; Nein, ich meinte Morgenbogen | Nur T ändern; M und J erhalten. |
-| V06 | Hafenlicht, tv, 2005; Gleiche Bedingungen, aber Morgenbogen | Nur T ändern. |
-| V07 | Hafenlicht, tv, 2005; Neue Suche, ohne die bisherigen Einschränkungen: Morgenbogen | T ändern, M all, J null. |
-| V08 | Morgenbogen, movie, 1999; Ohne Jahresbeschränkung | Nur J null. |
-| V09 | Morgenbogen, movie, ohne Jahr; Suche Filme und Serien | Nur M all. |
-| V10 | Hafenlicht, tv, 2005; Und was findest du zu Morgenbogen? | Für diesen bewusst mehrdeutigen Fall gezielte Frage zur Fortgeltung von M/J; nicht willkürlich nur M zurücksetzen. |
-| V11 | tv, 2005, kein Titel; vorher: Für diese Suche nur Serien aus 2005; aktuell: Suche unter diesen Bedingungen Morgenbogen | T setzen, M/J erhalten. Vorheriges feedback not_executed; nichts als ausgeführt darstellen. |
-| V12 | Reset; Nur Filme von 1999 | B/C: nach Titel fragen. Kein erfundener Titel. A kann die unterstützten M/J-Edits liefern; fehlender Titel wird von der bestehenden Fachlogik nicht als strukturierte Frage behandelt. |
-| V13 | Reset; Finde den Titel Der letzte Film | Nur T setzen; das Wort Film im Titel nicht als M movie interpretieren. |
-| V14 | Reset; Finde Morgenbogen, aber nur mit mindestens acht Bewertungssternen | Unsupported-Wunsch benennen, nicht als reine Titeländerung unterschlagen. |
+| ID  | Ausgangslage und aktuelle Eingabe                                                                                      | Erwarteter Vorschlag / unzulässiges Verhalten                                                                                                                                                           |
+| --- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| V01 | Reset; Finde den Film Morgenbogen von 1999                                                                             | T setzen, M movie, J 1999; Medienangabe nicht auslassen.                                                                                                                                                |
+| V02 | Reset; Finde die Serie Hafenlicht von 2005                                                                             | T setzen, M tv, J 2005.                                                                                                                                                                                 |
+| V03 | Reset; Finde Morgenbogen                                                                                               | Nur T setzen; all erhalten, kein J erfinden.                                                                                                                                                            |
+| V04 | Reset; Finde Hafenlicht von 2005                                                                                       | B/C: konkrete Frage Film oder Serie; keine geratenen Medien und kein stilles Entfernen des Jahres. A kann ready mit T/J liefern, worauf die bestehende Fachlogik fragt; diese Ebenen getrennt bewerten. |
+| V05 | Hafenlicht, tv, 2005; Nein, ich meinte Morgenbogen                                                                     | Nur T ändern; M und J erhalten.                                                                                                                                                                         |
+| V06 | Hafenlicht, tv, 2005; Gleiche Bedingungen, aber Morgenbogen                                                            | Nur T ändern.                                                                                                                                                                                           |
+| V07 | Hafenlicht, tv, 2005; Neue Suche, ohne die bisherigen Einschränkungen: Morgenbogen                                     | T ändern, M all, J null.                                                                                                                                                                                |
+| V08 | Morgenbogen, movie, 1999; Ohne Jahresbeschränkung                                                                      | Nur J null.                                                                                                                                                                                             |
+| V09 | Morgenbogen, movie, ohne Jahr; Suche Filme und Serien                                                                  | Nur M all.                                                                                                                                                                                              |
+| V10 | Hafenlicht, tv, 2005; Und was findest du zu Morgenbogen?                                                               | Für diesen bewusst mehrdeutigen Fall gezielte Frage zur Fortgeltung von M/J; nicht willkürlich nur M zurücksetzen.                                                                                      |
+| V11 | tv, 2005, kein Titel; vorher: Für diese Suche nur Serien aus 2005; aktuell: Suche unter diesen Bedingungen Morgenbogen | T setzen, M/J erhalten. Vorheriges feedback not_executed; nichts als ausgeführt darstellen.                                                                                                             |
+| V12 | Reset; Nur Filme von 1999                                                                                              | B/C: nach Titel fragen. Kein erfundener Titel. A kann die unterstützten M/J-Edits liefern; fehlender Titel wird von der bestehenden Fachlogik nicht als strukturierte Frage behandelt.                  |
+| V13 | Reset; Finde den Titel Der letzte Film                                                                                 | Nur T setzen; das Wort Film im Titel nicht als M movie interpretieren.                                                                                                                                  |
+| V14 | Reset; Finde Morgenbogen, aber nur mit mindestens acht Bewertungssternen                                               | Unsupported-Wunsch benennen, nicht als reine Titeländerung unterschlagen.                                                                                                                               |
 
 Für Fälle ohne gesondert aufgeführten Vorgänger enthält die Versuchseingabe keinen vorherigen Austausch; bestehende Kriterien sind trotzdem vorgegeben. Reset bedeutet currentFilters mit M all, ohne T/J, previousTurn und openQuestion null. Alle Varianten sehen identische aktuelle Eingaben, Kriterien und Fähigkeiten; ausschließlich C erhält den zusätzlich festgelegten Kontext. Offene-Frage-Fälle sind eine gesonderte Erweiterung vor dem Vergleich, kein bereits abgedeckter Freitext-Clarify-Test.
 
 ## Varianten und Durchführung
 
-| Variante | Prompt | Kontext |
-| --- | --- | --- |
-| A | Bestehender Prompt 1.4.0 aus d9f93fc | Bisheriger Parserkontext |
-| B | Vollständiger neuer Kandidat aus Aufgabenbeschreibung, Antwortvertrag und denselben vier Beispielen | Wie A |
-| C | Identischer Kandidat wie B | Zusätzlich previousTurn und openQuestion |
+| Variante | Prompt                                                                                              | Kontext                                  |
+| -------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| A        | Bestehender Prompt 1.4.0 aus d9f93fc                                                                | Bisheriger Parserkontext                 |
+| B        | Vollständiger neuer Kandidat aus Aufgabenbeschreibung, Antwortvertrag und denselben vier Beispielen | Wie A                                    |
+| C        | Identischer Kandidat wie B                                                                          | Zusätzlich previousTurn und openQuestion |
 
 A gegen B untersucht die geänderte Aufgabenbeschreibung, B gegen C den Zusatzkontext. Die Aussagen bleiben auf diese Varianten begrenzt; insbesondere ist A gegen B kein Test allein der Beispiele.
 

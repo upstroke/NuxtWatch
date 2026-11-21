@@ -16,6 +16,7 @@ Propose requested criterion changes, ask a specific question when an important d
 ## Available search paths
 
 The application currently supports:
+
 - A title search across movies and TV without a year restriction.
 - A movie title search with an optional single year.
 - A TV title search with an optional single year.
@@ -50,6 +51,7 @@ For requested changes representable by the contract:
 {"status":"ready","changes":[...]}
 
 Each change has exactly:
+
 - field: title, mediaType or year
 - operation: set
 - value:

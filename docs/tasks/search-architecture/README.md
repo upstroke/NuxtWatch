@@ -43,12 +43,12 @@ Diese Übersicht beschreibt den aktuellen Iststand und ersetzt abweichende älte
 
 Seit `97e3a07` sind folgende Titelwege implementiert:
 
-| Kriterien | Ausführung |
-| --- | --- |
-| Titel, `all`, ohne Jahr | `/search/multi` |
-| Titel, `movie`, optional Jahr | `/search/movie`, optional `primary_release_year` |
-| Titel, `tv`, optional Jahr | `/search/tv`, optional `first_air_date_year=2005` |
-| Titel, `all`, mit Jahr | Medientyp klären, keine Treffersuche |
+| Kriterien                     | Ausführung                                        |
+| ----------------------------- | ------------------------------------------------- |
+| Titel, `all`, ohne Jahr       | `/search/multi`                                   |
+| Titel, `movie`, optional Jahr | `/search/movie`, optional `primary_release_year`  |
+| Titel, `tv`, optional Jahr    | `/search/tv`, optional `first_air_date_year=2005` |
+| Titel, `all`, mit Jahr        | Medientyp klären, keine Treffersuche              |
 
 Alle drei Titelsuchwege verwenden `include_adult=true`, validieren Providerantworten und liefern das gemeinsame Trefferkartenformat. Multi Search lässt Personentreffer aus. `6f40f09` korrigiert die `prefer-const`-Meldung im Suchdienst. Die Begrenzung bei `all` plus Jahr ist eine Implementierungsentscheidung, keine universelle fachliche Notwendigkeit. Keine Zusammenführung zweier Titellisten.
 

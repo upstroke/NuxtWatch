@@ -24,11 +24,7 @@ const tv = z.object({
 
 export const TmdbTitleSearchResponseSchema = z.object({
   results: z.array(
-    z.discriminatedUnion('media_type', [
-      movie,
-      tv,
-      z.object({ media_type: z.literal('person') }),
-    ]),
+    z.discriminatedUnion('media_type', [movie, tv, z.object({ media_type: z.literal('person') })]),
   ),
 });
 

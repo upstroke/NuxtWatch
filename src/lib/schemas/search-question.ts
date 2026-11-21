@@ -18,7 +18,8 @@ export const textQuestionSchema = questionBindingSchema.extend({
   message: z.string().trim().min(1),
 });
 export const searchQuestionSchema = z.discriminatedUnion('kind', [
-  mediaTypeQuestionSchema, textQuestionSchema,
+  mediaTypeQuestionSchema,
+  textQuestionSchema,
 ]);
 export type MediaTypeQuestion = z.infer<typeof mediaTypeQuestionSchema>;
 export type SearchQuestion = z.infer<typeof searchQuestionSchema>;

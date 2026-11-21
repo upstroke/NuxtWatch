@@ -6,12 +6,12 @@ Stand: 20. November 2026. Vereinbarte Untersuchungsrichtung, keine bereits imple
 
 Die manuellen Versuche mit dem lokal verwendeten Modell `qwen3-coder-30b-a3b-instruct` zeigen:
 
-| Prompt | Beobachtung | Aussagegrenze |
-| --- | --- | --- |
-| `1.2.1`, `830ddfb` | Im getesteten Filmfall wurden Titel und Jahr übernommen, die ausdrücklich genannte Medienart aber ausgelassen. | Die rohe Modellantwort enthielt keine Änderung auf `movie`. Die Kriterienübernahme war für diesen Aufruf nicht die Stelle des Verlusts. |
-| `1.3.0`, `98b2f70` | Fokussierter Regeltext mit vier Beispielen: Film mit Jahr, Serie mit Jahr, Titel ohne Medienangabe und Rückfragefall mit Titel/Jahr wurden erfolgreich beobachtet. | Regeltext, Vertragsbeschreibung und Beispiele wurden gleichzeitig geändert. Der Erfolg lässt sich nicht allein den Beispielen zuschreiben. |
-| `1.4.0`, `d9f93fc` | Regeltext aus `1.2.1` plus dieselben vier Beispiele: Film mit Jahr und anschließender Wechsel zu einer Serie mit anderem Jahr funktionierten. | Spricht für einen Nutzen der Beispiele auch mit dem längeren Regeltext; kein allgemeiner Zuverlässigkeitsnachweis. |
-| `1.4.0`, weitere Folgeeingabe | Bei einem weiteren Titel ohne ausdrückliche Medien-/Jahresangabe wechselte `tv` auf `all`, das bisherige Jahr blieb erhalten; die Anwendung fragte nach dem Medientyp. | Beobachtetes Verhalten, keine beschlossene Regel für einen Themenwechsel. |
+| Prompt                        | Beobachtung                                                                                                                                                            | Aussagegrenze                                                                                                                              |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `1.2.1`, `830ddfb`            | Im getesteten Filmfall wurden Titel und Jahr übernommen, die ausdrücklich genannte Medienart aber ausgelassen.                                                         | Die rohe Modellantwort enthielt keine Änderung auf `movie`. Die Kriterienübernahme war für diesen Aufruf nicht die Stelle des Verlusts.    |
+| `1.3.0`, `98b2f70`            | Fokussierter Regeltext mit vier Beispielen: Film mit Jahr, Serie mit Jahr, Titel ohne Medienangabe und Rückfragefall mit Titel/Jahr wurden erfolgreich beobachtet.     | Regeltext, Vertragsbeschreibung und Beispiele wurden gleichzeitig geändert. Der Erfolg lässt sich nicht allein den Beispielen zuschreiben. |
+| `1.4.0`, `d9f93fc`            | Regeltext aus `1.2.1` plus dieselben vier Beispiele: Film mit Jahr und anschließender Wechsel zu einer Serie mit anderem Jahr funktionierten.                          | Spricht für einen Nutzen der Beispiele auch mit dem längeren Regeltext; kein allgemeiner Zuverlässigkeitsnachweis.                         |
+| `1.4.0`, weitere Folgeeingabe | Bei einem weiteren Titel ohne ausdrückliche Medien-/Jahresangabe wechselte `tv` auf `all`, das bisherige Jahr blieb erhalten; die Anwendung fragte nach dem Medientyp. | Beobachtetes Verhalten, keine beschlossene Regel für einen Themenwechsel.                                                                  |
 
 Frühe Wiederholungen vor dem lokalen Update zählen nicht als Beleg gegen die neue Promptfassung. Später wurden Commit und neue Regel lokal geprüft und erneut getestet. Rohlogs und reale Gesprächsverläufe werden hier nicht dauerhaft abgelegt; dokumentiert werden nur die für die Entwicklung nötigen Befunde.
 
@@ -40,13 +40,13 @@ Das LLM interpretiert Sprache und Gesprächsbezug. Die Anwendung validiert Vorsc
 
 ## Aktuelle Fähigkeiten als Grundlage, nicht als universelle Fachregel
 
-| Kriterien | Aktuelles Verhalten |
-| --- | --- |
-| Titel, `all`, ohne Jahr | Multi Search |
-| Titel, `movie`, optional einzelnes Jahr | Movie Search |
-| Titel, `tv`, optional einzelnes Jahr | TV Search |
-| Titel, `all`, mit Jahr | Gebundene Medientyp-Frage; noch keine Treffersuche |
-| Kein Titel | Aktuelle Titelstrecke nicht ausführbar; derzeit `missing_title`, kein allgemeiner Titel-Frageablauf implementiert |
+| Kriterien                               | Aktuelles Verhalten                                                                                               |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Titel, `all`, ohne Jahr                 | Multi Search                                                                                                      |
+| Titel, `movie`, optional einzelnes Jahr | Movie Search                                                                                                      |
+| Titel, `tv`, optional einzelnes Jahr    | TV Search                                                                                                         |
+| Titel, `all`, mit Jahr                  | Gebundene Medientyp-Frage; noch keine Treffersuche                                                                |
+| Kein Titel                              | Aktuelle Titelstrecke nicht ausführbar; derzeit `missing_title`, kein allgemeiner Titel-Frageablauf implementiert |
 
 Die Frage bei `all` plus Jahr ist eine bewusste Implementierungsgrenze des aktuellen Suchumfangs, keine grundsätzliche fachliche Notwendigkeit. Eine Zusammenführung getrennter Movie-/TV-Titellisten wird nicht eingeführt. `all` bleibt im Parserkontext und als erlaubter Wert erhalten; der Vorschlag, es aus dem Kontext zu entfernen, wurde verworfen.
 

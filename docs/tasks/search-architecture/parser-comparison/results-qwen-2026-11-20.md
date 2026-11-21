@@ -16,12 +16,12 @@ Stand: 20. November 2026, Tagesabschluss. Grundlage: vom Nutzer lokal ausgeführ
 
 Dry-run erfolgreich gemeldet. Der separate Smoke-Test V01/A lieferte korrekt Morgenbogen, movie, 1999; Vertrag gültig, nicht abgeschnitten. Er zählt nicht zum vollständigen Lauf.
 
-| Messung | A | B | C |
-| --- | ---: | ---: | ---: |
-| Abgeschlossene Aufrufe | 42 | 42 | 42 |
-| Vertragsgültige Antworten | 38 | 42 | 42 |
-| Ungültige Antworten | 4 | 0 | 0 |
-| Wegen Tokenlimit abgeschnitten | 0 | 0 | 0 |
+| Messung                        |   A |   B |   C |
+| ------------------------------ | --: | --: | --: |
+| Abgeschlossene Aufrufe         |  42 |  42 |  42 |
+| Vertragsgültige Antworten      |  38 |  42 |  42 |
+| Ungültige Antworten            |   4 |   0 |   0 |
+| Wegen Tokenlimit abgeschnitten |   0 |   0 |   0 |
 
 Insgesamt 126/126 abgeschlossen, kein Abbruch. Vertragsgültigkeit ist keine semantische Erfolgsquote.
 

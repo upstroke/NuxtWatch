@@ -22,7 +22,9 @@ export const searchExecuteRequestSchema = z.strictObject({
   ...questionBindingSchema.pick({ requestId: true, revision: true }).shape,
 });
 export const searchRequestSchema = z.discriminatedUnion('action', [
-  searchSubmitRequestSchema, searchClarifyRequestSchema, searchExecuteRequestSchema,
+  searchSubmitRequestSchema,
+  searchClarifyRequestSchema,
+  searchExecuteRequestSchema,
   z.strictObject({ action: z.literal('reset') }),
 ]);
 export type SearchSubmitRequest = z.infer<typeof searchSubmitRequestSchema>;

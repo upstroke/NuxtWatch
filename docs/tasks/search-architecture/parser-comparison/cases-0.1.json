@@ -1,83 +1,274 @@
 {
   "version": "search-preparation-comparison-0.1",
   "candidate": "candidate-0.1.md",
-  "baseline": {"commit": "d9f93fc", "path": "src/lib/parser/instructions.ts", "export": "PARSER_INSTRUCTIONS", "version": "1.4.0"},
+  "baseline": {
+    "commit": "d9f93fc",
+    "path": "src/lib/parser/instructions.ts",
+    "export": "PARSER_INSTRUCTIONS",
+    "version": "1.4.0"
+  },
   "repetitions": 3,
   "capabilities": {
-    "changes": {"title": ["set"], "mediaType": ["set"], "year": ["set"]},
+    "changes": { "title": ["set"], "mediaType": ["set"], "year": ["set"] },
     "mediaTypes": ["all", "movie", "tv"],
-    "yearRange": {"min": 1, "max": 9999}
+    "yearRange": { "min": 1, "max": 9999 }
   },
   "cases": [
     {
       "id": "V01",
-      "input": {"context": {"currentFilters": {"mediaType": "all"}, "previousTurn": null, "openQuestion": null}, "userText": "Finde den Film Morgenbogen von 1999"},
-      "expected": {"allowedStatuses": ["ready"], "changes": [{"field": "title", "operation": "set", "value": "Morgenbogen"}, {"field": "mediaType", "operation": "set", "value": "movie"}, {"field": "year", "operation": "set", "value": 1999}]}
+      "input": {
+        "context": {
+          "currentFilters": { "mediaType": "all" },
+          "previousTurn": null,
+          "openQuestion": null
+        },
+        "userText": "Finde den Film Morgenbogen von 1999"
+      },
+      "expected": {
+        "allowedStatuses": ["ready"],
+        "changes": [
+          { "field": "title", "operation": "set", "value": "Morgenbogen" },
+          { "field": "mediaType", "operation": "set", "value": "movie" },
+          { "field": "year", "operation": "set", "value": 1999 }
+        ]
+      }
     },
     {
       "id": "V02",
-      "input": {"context": {"currentFilters": {"mediaType": "all"}, "previousTurn": null, "openQuestion": null}, "userText": "Finde die Serie Hafenlicht von 2005"},
-      "expected": {"allowedStatuses": ["ready"], "changes": [{"field": "title", "operation": "set", "value": "Hafenlicht"}, {"field": "mediaType", "operation": "set", "value": "tv"}, {"field": "year", "operation": "set", "value": 2005}]}
+      "input": {
+        "context": {
+          "currentFilters": { "mediaType": "all" },
+          "previousTurn": null,
+          "openQuestion": null
+        },
+        "userText": "Finde die Serie Hafenlicht von 2005"
+      },
+      "expected": {
+        "allowedStatuses": ["ready"],
+        "changes": [
+          { "field": "title", "operation": "set", "value": "Hafenlicht" },
+          { "field": "mediaType", "operation": "set", "value": "tv" },
+          { "field": "year", "operation": "set", "value": 2005 }
+        ]
+      }
     },
     {
       "id": "V03",
-      "input": {"context": {"currentFilters": {"mediaType": "all"}, "previousTurn": null, "openQuestion": null}, "userText": "Finde Morgenbogen"},
-      "expected": {"allowedStatuses": ["ready"], "changes": [{"field": "title", "operation": "set", "value": "Morgenbogen"}], "preservedFields": ["mediaType", "year"]}
+      "input": {
+        "context": {
+          "currentFilters": { "mediaType": "all" },
+          "previousTurn": null,
+          "openQuestion": null
+        },
+        "userText": "Finde Morgenbogen"
+      },
+      "expected": {
+        "allowedStatuses": ["ready"],
+        "changes": [{ "field": "title", "operation": "set", "value": "Morgenbogen" }],
+        "preservedFields": ["mediaType", "year"]
+      }
     },
     {
       "id": "V04",
-      "input": {"context": {"currentFilters": {"mediaType": "all"}, "previousTurn": null, "openQuestion": null}, "userText": "Finde Hafenlicht von 2005"},
-      "expected": {"allowedStatuses": ["ready", "needs_clarification"], "changes": [{"field": "title", "operation": "set", "value": "Hafenlicht"}, {"field": "year", "operation": "set", "value": 2005}], "preservedFields": ["mediaType"], "messageMeaning": "Gezielt fragen, ob ein Film oder eine Serie gesucht wird; kein Jahr verwerfen und keinen Medientyp raten.", "candidatePreferredStatus": "needs_clarification", "integrationNote": "ready mit Titel und Jahr kann zur bestehenden serverseitigen Medientyp-Frage führen; bei Modellklärung bleiben beide Angaben unappliziert."}
+      "input": {
+        "context": {
+          "currentFilters": { "mediaType": "all" },
+          "previousTurn": null,
+          "openQuestion": null
+        },
+        "userText": "Finde Hafenlicht von 2005"
+      },
+      "expected": {
+        "allowedStatuses": ["ready", "needs_clarification"],
+        "changes": [
+          { "field": "title", "operation": "set", "value": "Hafenlicht" },
+          { "field": "year", "operation": "set", "value": 2005 }
+        ],
+        "preservedFields": ["mediaType"],
+        "messageMeaning": "Gezielt fragen, ob ein Film oder eine Serie gesucht wird; kein Jahr verwerfen und keinen Medientyp raten.",
+        "candidatePreferredStatus": "needs_clarification",
+        "integrationNote": "ready mit Titel und Jahr kann zur bestehenden serverseitigen Medientyp-Frage führen; bei Modellklärung bleiben beide Angaben unappliziert."
+      }
     },
     {
       "id": "V05",
-      "input": {"context": {"currentFilters": {"title": "Hafenlicht", "mediaType": "tv", "year": 2005}, "previousTurn": {"userText": "Finde die Serie Hafenlicht von 2005", "feedback": {"kind": "completed"}}, "openQuestion": null}, "userText": "Nein, ich meinte Morgenbogen"},
-      "expected": {"allowedStatuses": ["ready"], "changes": [{"field": "title", "operation": "set", "value": "Morgenbogen"}], "preservedFields": ["mediaType", "year"]}
+      "input": {
+        "context": {
+          "currentFilters": { "title": "Hafenlicht", "mediaType": "tv", "year": 2005 },
+          "previousTurn": {
+            "userText": "Finde die Serie Hafenlicht von 2005",
+            "feedback": { "kind": "completed" }
+          },
+          "openQuestion": null
+        },
+        "userText": "Nein, ich meinte Morgenbogen"
+      },
+      "expected": {
+        "allowedStatuses": ["ready"],
+        "changes": [{ "field": "title", "operation": "set", "value": "Morgenbogen" }],
+        "preservedFields": ["mediaType", "year"]
+      }
     },
     {
       "id": "V06",
-      "input": {"context": {"currentFilters": {"title": "Hafenlicht", "mediaType": "tv", "year": 2005}, "previousTurn": {"userText": "Finde die Serie Hafenlicht von 2005", "feedback": {"kind": "completed"}}, "openQuestion": null}, "userText": "Gleiche Bedingungen, aber Morgenbogen"},
-      "expected": {"allowedStatuses": ["ready"], "changes": [{"field": "title", "operation": "set", "value": "Morgenbogen"}], "preservedFields": ["mediaType", "year"]}
+      "input": {
+        "context": {
+          "currentFilters": { "title": "Hafenlicht", "mediaType": "tv", "year": 2005 },
+          "previousTurn": {
+            "userText": "Finde die Serie Hafenlicht von 2005",
+            "feedback": { "kind": "completed" }
+          },
+          "openQuestion": null
+        },
+        "userText": "Gleiche Bedingungen, aber Morgenbogen"
+      },
+      "expected": {
+        "allowedStatuses": ["ready"],
+        "changes": [{ "field": "title", "operation": "set", "value": "Morgenbogen" }],
+        "preservedFields": ["mediaType", "year"]
+      }
     },
     {
       "id": "V07",
-      "input": {"context": {"currentFilters": {"title": "Hafenlicht", "mediaType": "tv", "year": 2005}, "previousTurn": null, "openQuestion": null}, "userText": "Neue Suche, ohne die bisherigen Einschränkungen: Morgenbogen"},
-      "expected": {"allowedStatuses": ["ready"], "changes": [{"field": "title", "operation": "set", "value": "Morgenbogen"}, {"field": "mediaType", "operation": "set", "value": "all"}, {"field": "year", "operation": "set", "value": null}]}
+      "input": {
+        "context": {
+          "currentFilters": { "title": "Hafenlicht", "mediaType": "tv", "year": 2005 },
+          "previousTurn": null,
+          "openQuestion": null
+        },
+        "userText": "Neue Suche, ohne die bisherigen Einschränkungen: Morgenbogen"
+      },
+      "expected": {
+        "allowedStatuses": ["ready"],
+        "changes": [
+          { "field": "title", "operation": "set", "value": "Morgenbogen" },
+          { "field": "mediaType", "operation": "set", "value": "all" },
+          { "field": "year", "operation": "set", "value": null }
+        ]
+      }
     },
     {
       "id": "V08",
-      "input": {"context": {"currentFilters": {"title": "Morgenbogen", "mediaType": "movie", "year": 1999}, "previousTurn": null, "openQuestion": null}, "userText": "Ohne Jahresbeschränkung"},
-      "expected": {"allowedStatuses": ["ready"], "changes": [{"field": "year", "operation": "set", "value": null}], "preservedFields": ["title", "mediaType"]}
+      "input": {
+        "context": {
+          "currentFilters": { "title": "Morgenbogen", "mediaType": "movie", "year": 1999 },
+          "previousTurn": null,
+          "openQuestion": null
+        },
+        "userText": "Ohne Jahresbeschränkung"
+      },
+      "expected": {
+        "allowedStatuses": ["ready"],
+        "changes": [{ "field": "year", "operation": "set", "value": null }],
+        "preservedFields": ["title", "mediaType"]
+      }
     },
     {
       "id": "V09",
-      "input": {"context": {"currentFilters": {"title": "Morgenbogen", "mediaType": "movie"}, "previousTurn": null, "openQuestion": null}, "userText": "Suche Filme und Serien"},
-      "expected": {"allowedStatuses": ["ready"], "changes": [{"field": "mediaType", "operation": "set", "value": "all"}], "preservedFields": ["title", "year"]}
+      "input": {
+        "context": {
+          "currentFilters": { "title": "Morgenbogen", "mediaType": "movie" },
+          "previousTurn": null,
+          "openQuestion": null
+        },
+        "userText": "Suche Filme und Serien"
+      },
+      "expected": {
+        "allowedStatuses": ["ready"],
+        "changes": [{ "field": "mediaType", "operation": "set", "value": "all" }],
+        "preservedFields": ["title", "year"]
+      }
     },
     {
       "id": "V10",
-      "input": {"context": {"currentFilters": {"title": "Hafenlicht", "mediaType": "tv", "year": 2005}, "previousTurn": {"userText": "Finde die Serie Hafenlicht von 2005", "feedback": {"kind": "completed"}}, "openQuestion": null}, "userText": "Und was findest du zu Morgenbogen?"},
-      "expected": {"allowedStatuses": ["needs_clarification"], "messageMeaning": "Gezielt fragen, ob Serie und Jahr 2005 weiterhin gelten sollen. Keine willkürliche Auswahl einer Fortführungs- oder Neustartlesart.", "integrationNote": "Vorab gewählte Versuchserwartung bei Mehrdeutigkeit, keine bereits implementierte allgemeine Neustartregel."}
+      "input": {
+        "context": {
+          "currentFilters": { "title": "Hafenlicht", "mediaType": "tv", "year": 2005 },
+          "previousTurn": {
+            "userText": "Finde die Serie Hafenlicht von 2005",
+            "feedback": { "kind": "completed" }
+          },
+          "openQuestion": null
+        },
+        "userText": "Und was findest du zu Morgenbogen?"
+      },
+      "expected": {
+        "allowedStatuses": ["needs_clarification"],
+        "messageMeaning": "Gezielt fragen, ob Serie und Jahr 2005 weiterhin gelten sollen. Keine willkürliche Auswahl einer Fortführungs- oder Neustartlesart.",
+        "integrationNote": "Vorab gewählte Versuchserwartung bei Mehrdeutigkeit, keine bereits implementierte allgemeine Neustartregel."
+      }
     },
     {
       "id": "V11",
-      "input": {"context": {"currentFilters": {"mediaType": "tv", "year": 2005}, "previousTurn": {"userText": "Für diese Suche nur Serien aus 2005", "feedback": {"kind": "not_executed"}}, "openQuestion": null}, "userText": "Suche unter diesen Bedingungen Morgenbogen"},
-      "expected": {"allowedStatuses": ["ready"], "changes": [{"field": "title", "operation": "set", "value": "Morgenbogen"}], "preservedFields": ["mediaType", "year"]}
+      "input": {
+        "context": {
+          "currentFilters": { "mediaType": "tv", "year": 2005 },
+          "previousTurn": {
+            "userText": "Für diese Suche nur Serien aus 2005",
+            "feedback": { "kind": "not_executed" }
+          },
+          "openQuestion": null
+        },
+        "userText": "Suche unter diesen Bedingungen Morgenbogen"
+      },
+      "expected": {
+        "allowedStatuses": ["ready"],
+        "changes": [{ "field": "title", "operation": "set", "value": "Morgenbogen" }],
+        "preservedFields": ["mediaType", "year"]
+      }
     },
     {
       "id": "V12",
-      "input": {"context": {"currentFilters": {"mediaType": "all"}, "previousTurn": null, "openQuestion": null}, "userText": "Nur Filme von 1999"},
-      "expected": {"allowedStatuses": ["ready", "needs_clarification"], "changes": [{"field": "mediaType", "operation": "set", "value": "movie"}, {"field": "year", "operation": "set", "value": 1999}], "preservedFields": ["title"], "messageMeaning": "Gezielt nach dem gesuchten Titel fragen; keinen Titel erfinden.", "candidatePreferredStatus": "needs_clarification", "integrationNote": "ready mit Medientyp und Jahr ist eine korrekte Teilinterpretation ohne ausführbare Titelsuche. Modellklärung übernimmt dagegen keine Kriterien. Kein produktiver Titel-Frageablauf wird eingeführt."}
+      "input": {
+        "context": {
+          "currentFilters": { "mediaType": "all" },
+          "previousTurn": null,
+          "openQuestion": null
+        },
+        "userText": "Nur Filme von 1999"
+      },
+      "expected": {
+        "allowedStatuses": ["ready", "needs_clarification"],
+        "changes": [
+          { "field": "mediaType", "operation": "set", "value": "movie" },
+          { "field": "year", "operation": "set", "value": 1999 }
+        ],
+        "preservedFields": ["title"],
+        "messageMeaning": "Gezielt nach dem gesuchten Titel fragen; keinen Titel erfinden.",
+        "candidatePreferredStatus": "needs_clarification",
+        "integrationNote": "ready mit Medientyp und Jahr ist eine korrekte Teilinterpretation ohne ausführbare Titelsuche. Modellklärung übernimmt dagegen keine Kriterien. Kein produktiver Titel-Frageablauf wird eingeführt."
+      }
     },
     {
       "id": "V13",
-      "input": {"context": {"currentFilters": {"mediaType": "all"}, "previousTurn": null, "openQuestion": null}, "userText": "Finde den Titel Der letzte Film"},
-      "expected": {"allowedStatuses": ["ready"], "changes": [{"field": "title", "operation": "set", "value": "Der letzte Film"}], "preservedFields": ["mediaType", "year"]}
+      "input": {
+        "context": {
+          "currentFilters": { "mediaType": "all" },
+          "previousTurn": null,
+          "openQuestion": null
+        },
+        "userText": "Finde den Titel Der letzte Film"
+      },
+      "expected": {
+        "allowedStatuses": ["ready"],
+        "changes": [{ "field": "title", "operation": "set", "value": "Der letzte Film" }],
+        "preservedFields": ["mediaType", "year"]
+      }
     },
     {
       "id": "V14",
-      "input": {"context": {"currentFilters": {"mediaType": "all"}, "previousTurn": null, "openQuestion": null}, "userText": "Finde Morgenbogen, aber nur mit mindestens acht Bewertungssternen"},
-      "expected": {"allowedStatuses": ["unsupported"], "messageMeaning": "Erklären, dass die gewünschte Bewertungsbeschränkung nicht unterstützt wird; sie nicht stillschweigend weglassen oder als ausgeführt darstellen."}
+      "input": {
+        "context": {
+          "currentFilters": { "mediaType": "all" },
+          "previousTurn": null,
+          "openQuestion": null
+        },
+        "userText": "Finde Morgenbogen, aber nur mit mindestens acht Bewertungssternen"
+      },
+      "expected": {
+        "allowedStatuses": ["unsupported"],
+        "messageMeaning": "Erklären, dass die gewünschte Bewertungsbeschränkung nicht unterstützt wird; sie nicht stillschweigend weglassen oder als ausgeführt darstellen."
+      }
     }
   ]
 }
