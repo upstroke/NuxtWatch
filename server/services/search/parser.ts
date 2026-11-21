@@ -43,28 +43,44 @@ export async function parseSearchProposal(
   generate: typeof generateLlmText = generateLlmText,
 ): Promise<SearchProposal> {
   const clarification = input.clarification;
+  const context = {
+    currentFilters: input.currentFilters,
+    capabilities: {
+      changes: { title: ['set'], mediaType: ['set'], year: ['set'] },
+      mediaTypes: mediaType.options,
+      yearRange: { min: 1, max: 9999 },
+    },
+  };
+  const userContent = clarification
+    ? [
+        'Confirmed search criteria (context.currentFilters):',
+        JSON.stringify(context.currentFilters),
+        '',
+        'Supported edits and values (context.capabilities):',
+        JSON.stringify(context.capabilities),
+        '',
+        'Original unresolved search request:',
+        clarification.originalUserText,
+        ...clarification.turns.flatMap((turn, index) => [
+          '',
+          `Earlier clarification turn ${index + 1} - question:`,
+          turn.question,
+          `Earlier clarification turn ${index + 1} - answer:`,
+          turn.answer,
+        ]),
+        '',
+        'Current clarification question:',
+        clarification.question,
+        '',
+        'Latest answer (userText):',
+        input.userText,
+      ].join('\n')
+    : JSON.stringify({ context, userText: input.userText });
   const text = await generate(config, {
     system: clarification
       ? PARSER_INSTRUCTIONS + '\n\n' + CLARIFICATION_INSTRUCTIONS
       : PARSER_INSTRUCTIONS,
-    userContent: JSON.stringify({
-      context: {
-        currentFilters: input.currentFilters,
-        capabilities: {
-          changes: { title: ['set'], mediaType: ['set'], year: ['set'] },
-          mediaTypes: mediaType.options,
-          yearRange: { min: 1, max: 9999 },
-        },
-        ...(clarification
-          ? {
-              originalUserText: clarification.originalUserText,
-              clarificationTurns: clarification.turns,
-              openQuestion: { message: clarification.question },
-            }
-          : {}),
-      },
-      userText: input.userText,
-    }),
+    userContent,
   });
   return proposal.parse(JSON.parse(text));
 }
