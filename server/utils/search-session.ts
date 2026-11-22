@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { createError, getCookie, getRequestURL, setCookie } from 'h3';
 import type { H3Event } from 'h3';
 import type { SearchState } from '../services/search/flow';
+import { searchTexts } from '../services/search/texts';
 
 type SearchSession = SearchState & {
   expiresAt: number;
@@ -28,12 +29,12 @@ export function getSearchSession(event: H3Event, reset = false) {
     key = undefined;
     session = undefined;
   } else if (key && !session) {
-    throw createError({ statusCode: 410, statusMessage: 'Search session expired; reset required' });
+    throw createError({ statusCode: 410, statusMessage: searchTexts.session.expired });
   }
 
   if (!session) {
     if (sessions.size >= capacity) {
-      throw createError({ statusCode: 503, statusMessage: 'Search session capacity reached' });
+      throw createError({ statusCode: 503, statusMessage: searchTexts.session.capacityReached });
     }
     key = randomBytes(32).toString('hex');
     session = { criteria: { mediaType: 'all' }, expiresAt: now + lifetime };

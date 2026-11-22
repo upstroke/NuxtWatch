@@ -4,4 +4,17 @@ export const searchTexts = {
     titleRequired: 'Welchen Titel möchtest du suchen?',
     mediaTypeRequiredForYear: 'Möchtest du einen Film oder eine Serie suchen?',
   },
+  http: {
+    invalidResponse: 'Invalid search response',
+    processingFailed: 'Search processing failed',
+    executionNotApplicable: 'Search execution not applicable',
+    requestSuperseded: 'Search request replaced or session expired',
+    invalidRequest: 'Invalid search request',
+    configurationUnavailable: 'Search configuration unavailable',
+    clarificationNotApplicable: 'Clarification no longer applicable',
+  },
+  session: {
+    expired: 'Search session expired; reset required',
+    capacityReached: 'Search session capacity reached',
+  },
 } as const;

@@ -8,6 +8,7 @@ import {
   executeSearch,
   submitForSession,
 } from '@server/services/search/flow';
+import { searchTexts } from '@server/services/search/texts';
 import { createTmdbHttpClient } from '@server/services/tmdb/http';
 import { isTmdbError, toTmdbHttpError } from '@server/services/tmdb/errors';
 import { getTmdbConfig } from '@server/utils/tmdb';
@@ -16,12 +17,12 @@ import { getSearchSession } from '@server/utils/search-session';
 function parseSearchResponse(value: unknown) {
   const response = searchResponseSchema.safeParse(value);
   if (!response.success)
-    throw createError({ statusCode: 500, statusMessage: 'Invalid search response' });
+    throw createError({ statusCode: 500, statusMessage: searchTexts.http.invalidResponse });
   return response.data;
 }
 function throwSearchHttpError(error: unknown): never {
   if (isTmdbError(error)) throw createError(toTmdbHttpError(error));
-  throw createError({ statusCode: 502, statusMessage: 'Search processing failed' });
+  throw createError({ statusCode: 502, statusMessage: searchTexts.http.processingFailed });
 }
 function executionResponse(
   result:
@@ -29,11 +30,11 @@ function executionResponse(
     | Awaited<ReturnType<typeof submitForSession>>,
 ) {
   if (result.status === 'rejected')
-    throw createError({ statusCode: 409, statusMessage: 'Search execution not applicable' });
+    throw createError({ statusCode: 409, statusMessage: searchTexts.http.executionNotApplicable });
   if (result.status === 'superseded')
     throw createError({
       statusCode: 409,
-      statusMessage: 'Search request replaced or session expired',
+      statusMessage: searchTexts.http.requestSuperseded,
     });
   return parseSearchResponse(result);
 }
@@ -41,7 +42,7 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, 'Cache-Control', 'no-store');
   const request = searchRequestSchema.safeParse(await readBody(event));
   if (!request.success)
-    throw createError({ statusCode: 400, statusMessage: 'Invalid search request' });
+    throw createError({ statusCode: 400, statusMessage: searchTexts.http.invalidRequest });
   const context = getSearchSession(event, request.data.action === 'reset');
   const session = context.session;
   if (request.data.action === 'reset')
@@ -50,7 +51,10 @@ export default defineEventHandler(async (event) => {
   const getLlm = () => {
     const config = LlmRuntimeConfigSchema.safeParse(useRuntimeConfig(event).llm);
     if (!config.success)
-      throw createError({ statusCode: 503, statusMessage: 'Search configuration unavailable' });
+      throw createError({
+        statusCode: 503,
+        statusMessage: searchTexts.http.configurationUnavailable,
+      });
     return config.data;
   };
   if (request.data.action === 'clarify') {
@@ -66,7 +70,10 @@ export default defineEventHandler(async (event) => {
       throwSearchHttpError(error);
     }
     if (result.status === 'rejected')
-      throw createError({ statusCode: 409, statusMessage: 'Clarification no longer applicable' });
+      throw createError({
+        statusCode: 409,
+        statusMessage: searchTexts.http.clarificationNotApplicable,
+      });
     context.touch();
     return parseSearchResponse(result);
   }
@@ -74,7 +81,10 @@ export default defineEventHandler(async (event) => {
   try {
     tmdb = getTmdbConfig(event);
   } catch {
-    throw createError({ statusCode: 503, statusMessage: 'Search configuration unavailable' });
+    throw createError({
+      statusCode: 503,
+      statusMessage: searchTexts.http.configurationUnavailable,
+    });
   }
   const http = createTmdbHttpClient(tmdb, (url, options): Promise<unknown> =>
     $fetch<unknown>(url, { ...options, redirect: 'error' }),
