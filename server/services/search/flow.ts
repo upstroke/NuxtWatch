@@ -65,11 +65,7 @@ function decideSearch(criteria: SearchCriteria): SearchDecision {
   const evaluations = evaluateSearchPaths(criteria);
   const title = criteria.title?.trim();
 
-  if (
-    evaluations.every((evaluation) =>
-      evaluation.obstacles.includes('title_required'),
-    )
-  ) {
+  if (evaluations.every((evaluation) => evaluation.obstacles.includes('title_required'))) {
     return {
       status: 'needs_clarification',
       field: 'title',
@@ -77,10 +73,7 @@ function decideSearch(criteria: SearchCriteria): SearchDecision {
     };
   }
 
-  if (
-    title &&
-    evaluations.some((evaluation) => evaluation.obstacles.length === 0)
-  ) {
+  if (title && evaluations.some((evaluation) => evaluation.obstacles.length === 0)) {
     return {
       status: 'ready',
       path: 'title',
@@ -96,10 +89,7 @@ function decideSearch(criteria: SearchCriteria): SearchDecision {
 }
 
 /** Validated proposals only change a copy, never the active session directly. */
-async function interpretSearch(
-  config: LlmConfig,
-  input: ParserInput,
-): Promise<SearchOutcome> {
+async function interpretSearch(config: LlmConfig, input: ParserInput): Promise<SearchOutcome> {
   const proposal = await parseSearchProposal(config, input);
   const criteria = { ...input.currentFilters };
 
@@ -125,11 +115,7 @@ async function interpretSearch(
   return { criteria, decision: decideSearch(criteria) };
 }
 
-function openSearchRequest(
-  state: SearchState,
-  requestId: string,
-  userText: string,
-): SearchRequest {
+function openSearchRequest(state: SearchState, requestId: string, userText: string): SearchRequest {
   const request: SearchRequest = {
     requestId,
     revision: 1,
@@ -214,10 +200,7 @@ function commitOutcome(
   }
 }
 
-function clarificationResponse(
-  state: SearchState,
-  request: SearchRequest,
-) {
+function clarificationResponse(state: SearchState, request: SearchRequest) {
   return {
     status: 'clarified' as const,
     requestId: request.requestId,
@@ -283,10 +266,7 @@ export async function clarifySearchText(
   isCurrent: IsCurrent,
   createId: CreateId,
 ) {
-  if (
-    !matchesQuestion(state, input, isCurrent) ||
-    input.answer.type !== 'text'
-  ) {
+  if (!matchesQuestion(state, input, isCurrent) || input.answer.type !== 'text') {
     return {
       status: 'rejected' as const,
       reason: 'stale_clarification' as const,
@@ -355,9 +335,7 @@ async function executeCurrentRequest(
   const revision = request.revision;
 
   const active = () =>
-    isSessionCurrent() &&
-    state.currentRequest === request &&
-    request.revision === revision;
+    isSessionCurrent() && state.currentRequest === request && request.revision === revision;
 
   if (!active()) return { status: 'superseded' as const };
 
@@ -368,10 +346,7 @@ async function executeCurrentRequest(
     };
   }
 
-  if (
-    request.execution?.revision === revision &&
-    request.execution.status !== 'failed'
-  ) {
+  if (request.execution?.revision === revision && request.execution.status !== 'failed') {
     return {
       status: 'rejected' as const,
       reason: 'execution_already_reserved' as const,
@@ -472,8 +447,7 @@ export async function submitForSession(
 ) {
   const request = openSearchRequest(state, requestId, userText);
 
-  const active = () =>
-    isSessionCurrent() && state.currentRequest === request;
+  const active = () => isSessionCurrent() && state.currentRequest === request;
 
   let outcome: SearchOutcome;
 

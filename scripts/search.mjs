@@ -91,9 +91,7 @@ const responseSchema = z.discriminatedUnion('status', [
 
 function displayResults(results, totalResults) {
   console.log(
-    totalResults === null
-      ? terminalTexts.totalUnavailable
-      : terminalTexts.totalCount(totalResults),
+    totalResults === null ? terminalTexts.totalUnavailable : terminalTexts.totalCount(totalResults),
   );
   if (results.length === 0) {
     console.log(terminalTexts.noResults);

@@ -59,16 +59,16 @@ Commit b1e3a8f erhöht die Parser-Instruktionen auf 1.5.3: neue Suchformulierung
 
 Nutzerlauf am 22. November gegen localhost:3000, Bericht search-flow-audit-report.json, testedCommit b1e3a8fa92e37e76835ff0487b6c5114ccfc37f2. Korrigierter Audit: acht bestanden, null fehlgeschlagen, null blockiert; overall passed_with_explicit_limits. Bericht in der Unterhaltung geprüft, nicht mit dieser Änderung ins Repository übernommen.
 
-| Fall | Beobachtung |
-| --- | --- |
-| B01 | Neuer Submit ersetzt offene Frage; alte Antwort abgelehnt, aktuelle Frage nutzbar. |
-| B02 | Falsche Frage-ID abgelehnt; richtige Bindung bleibt nutzbar. |
-| B03 | Doppelte Antwort und alte Execute-Revision abgelehnt; aktuelle Revision ausführbar. |
-| B04 | Reset nach Klärung invalidiert alte Bindungen und vorbereitetes Execute. |
-| B05 | Neuer Dark-Submit erhält bestätigtes movie, liefert completed mit neuer requestId; alter Dune-Execute liefert 409. |
-| B06 | Wiederholtes Execute nach Erfolg liefert 409. |
-| B07 | Gleichzeitig abgesendete Execute-Anfragen liefern einmal completed und einmal 409. Keine instrumentierte Aufrufzahl-/Überlappungsgarantie. |
-| B08 | Ausdrücklich Filme und Serien plus Jahr verlangt Medienauswahl. |
+| Fall | Beobachtung                                                                                                                                |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| B01  | Neuer Submit ersetzt offene Frage; alte Antwort abgelehnt, aktuelle Frage nutzbar.                                                         |
+| B02  | Falsche Frage-ID abgelehnt; richtige Bindung bleibt nutzbar.                                                                               |
+| B03  | Doppelte Antwort und alte Execute-Revision abgelehnt; aktuelle Revision ausführbar.                                                        |
+| B04  | Reset nach Klärung invalidiert alte Bindungen und vorbereitetes Execute.                                                                   |
+| B05  | Neuer Dark-Submit erhält bestätigtes movie, liefert completed mit neuer requestId; alter Dune-Execute liefert 409.                         |
+| B06  | Wiederholtes Execute nach Erfolg liefert 409.                                                                                              |
+| B07  | Gleichzeitig abgesendete Execute-Anfragen liefern einmal completed und einmal 409. Keine instrumentierte Aufrufzahl-/Überlappungsgarantie. |
+| B08  | Ausdrücklich Filme und Serien plus Jahr verlangt Medienauswahl.                                                                            |
 
 B05 verwendete zunächst die falsche Hilfserwartung einer neuen Medienfrage. Das eigenständige Skript wurde korrigiert, bevor der erfolgreiche Gesamtlauf erfolgte. Alte grüne Ergebnisse werden nicht rückwirkend als Kriterienerhaltsnachweis verwendet.
 
@@ -88,21 +88,21 @@ D01 im vorgelegten Bericht bestanden. D02 zunächst 410 beim Folgeauftrag mit ve
 
 ### Projektchecks
 
-| Check | Aktueller Nachweis |
-| --- | --- |
-| Typecheck | Vom Nutzer am 22. November um 17:30 CET erneut nach der Bereinigung bis e111ef6 als in Ordnung bestätigt; frühere Bestätigung 17:15 CET. Keine eigenen Befehlsläufe oder erfundenen Ausgabe-/Testzahlen. |
-| Lint | Dieselbe erneute Nutzerbestätigung nach der Bereinigung bis e111ef6. |
-| Bestehende Projekttests | Kein aktueller Lauf bestätigt; letzte historische grüne Rückmeldung 08:29 CET nach 794788f nicht auf spätere Änderungen übertragen. |
+| Check                   | Aktueller Nachweis                                                                                                                                                                                       |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Typecheck               | Vom Nutzer am 22. November um 17:30 CET erneut nach der Bereinigung bis e111ef6 als in Ordnung bestätigt; frühere Bestätigung 17:15 CET. Keine eigenen Befehlsläufe oder erfundenen Ausgabe-/Testzahlen. |
+| Lint                    | Dieselbe erneute Nutzerbestätigung nach der Bereinigung bis e111ef6.                                                                                                                                     |
+| Bestehende Projekttests | Kein aktueller Lauf bestätigt; letzte historische grüne Rückmeldung 08:29 CET nach 794788f nicht auf spätere Änderungen übertragen.                                                                      |
 
 ### Gezielte Altbestandsbereinigung
 
 Am 22. November ausdrücklich beauftragt; Änderungen vor Ausführung einzeln bestätigt. Kein allgemeiner Testumbau und kein Ersatz für den noch offenen Testbestandsaudit.
 
-| Commit | Änderung |
-| --- | --- |
+| Commit  | Änderung                                                                                                                                                                                                                          |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | c63b80d | Chat-Re-Export aus src/lib/schemas/index.ts entfernt; createTmdbSpikeError-Alias aus server/utils/tmdb.ts entfernt; tests/unit/utils/tmdb.spec.ts auf direkten createTmdbError-Import und entsprechenden Fabrikaufruf umgestellt. |
-| 2f54361 | tests/unit/schemas/chat.spec.ts mit den zwei Tests des ausgemusterten ChatIntent-Vertrags entfernt. |
-| e111ef6 | src/lib/schemas/chat.ts mit altem ChatIntent-Vertrag und zugehörigen Teilschemas/Typen entfernt. |
+| 2f54361 | tests/unit/schemas/chat.spec.ts mit den zwei Tests des ausgemusterten ChatIntent-Vertrags entfernt.                                                                                                                               |
+| e111ef6 | src/lib/schemas/chat.ts mit altem ChatIntent-Vertrag und zugehörigen Teilschemas/Typen entfernt.                                                                                                                                  |
 
 getTmdbConfig(), fetchWeeklyTrending(), der TmdbRequest-Typexport sowie sämtliche Trending-Testfälle und deren fachliche Erwartungen bleiben erhalten. Aktuelle Suchverträge, Matrix, Flow und Suchlogik wurden nicht geändert. Keine automatische Ersetzung des alten Chat-Vertrags durch schemas/search; unterschiedliche Verträge nicht gleichgesetzt. Kein neuer Projekttestlauf aufgrund dieser Commits behauptet. Typecheck/Lint anschließend vom Nutzer erfolgreich bestätigt.
 
@@ -124,19 +124,19 @@ Bekannte Architekturgrenzen: konkrete Matrix-Wegkennung wird nicht bis zur Ausf�
 
 ## Abnahmekriterien und aktuelles Prüfprotokoll
 
-| ID | Kriterium | Stand/Beleg und Grenze |
-| --- | --- | --- |
-| AC1 | Zielstruktur, keine alten Schichten/Importe, Testlücken erfasst | Suchproduktionspfade statisch ohne blockierenden Befund; konkrete Altbestände bereinigt. Projektweiter Vollscan ausdrücklich nicht im Abschlussumfang, nicht durchgeführt. Testbestandsaudit offen. |
-| AC2 | Wege gegen gleichen Stand, bestätigte Kriterien/Umfang erhalten, keine mehrfachen Fachregeln | Code geprüft, Kriterienerhaltsfehler mit 1.5.3 nachgetestet; keine allgemeine Garantie semantischer LLM-Zuverlässigkeit. |
-| AC3 | Titel allein/all über Multi, keine optionale Typ-/Jahresfrage | Normale Terminalfälle vom Nutzer bestätigt und Codeweg geprüft; keine nicht protokollierten Einzelresultate erfinden. |
-| AC4 | Movie/TV, Jahr über primary_release_year/first_air_date_year | Titeladapterparameter statisch geprüft; normale Typ-/Jahreswege manuell bestätigt. |
-| AC5 | Titel/Jahr/all erzeugt gebundene zentrale Anwendungsfrage, auch ausdrücklich beide Medien | Terminal/B08/R02/R03 und Code; keine instrumentierte vollständige Provideraufrufzählung. |
-| AC6 | Auswahl ohne LLM, Freitext mit Kontext, Kriterien erhalten/ausdrücklich korrigiert | Strukturierter Pfad und Kriterienerhalt geprüft; select 1-Freitext außerhalb vereinbarten Umfangs; kein umfassender Freitextnachweis. |
-| AC7 | Clarify sucht nicht, Execute nutzt bestätigten Stand ohne erneutes LLM | Flow/HTTP-Code und Hauptaudit; kein umfassendes internes Aufrufmonitoring. |
-| AC8 | Altantworten unschädlich, reservierte Revision nicht doppelt starten | Bindungs-/Wiederholungs-/Parallelitäts-HTTP-Fälle und LLM-Verzögerung nachgewiesen bzw. Nutzerbestätigung; exakte Trefferaufrufzahl/Providerverzögerung/Browserrennen offen. |
-| AC9 | Gründe und Formulierung getrennt, message bis CLI/Klärungskontext, keine doppelte Medienfrage/i18n auf Vorrat | Statische Textzuordnungsprüfung im Suchpfad abgeschlossen, ohne blockierenden Befund. |
-| AC10 | Kompakte Treffer und getrennte Seiten-/Gesamtzahl, unbekannt nicht null, Zustände unterscheidbar | Anzeige/Adapter statisch geprüft, erfolgreiche Tabellen und HTTP-Zahlen beobachtet; kontrollierter Zählungsausfall/alle Leer-/Fehler-/Altresultatzustände nicht vollständig live geprüft. |
-| AC11 | Aktuelle Check-/manuelle Nachweise einzeln dokumentiert, Testausbau zurückgestellt | Typecheck/Lint nach Bereinigung erneut vom Nutzer bestätigt, Terminal-/HTTP-Nachweise erfasst; gezielte Altbestandsausnahme dokumentiert. Testbestandsaudit und aktueller Projekttestlauf offen. |
+| ID   | Kriterium                                                                                                     | Stand/Beleg und Grenze                                                                                                                                                                              |
+| ---- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC1  | Zielstruktur, keine alten Schichten/Importe, Testlücken erfasst                                               | Suchproduktionspfade statisch ohne blockierenden Befund; konkrete Altbestände bereinigt. Projektweiter Vollscan ausdrücklich nicht im Abschlussumfang, nicht durchgeführt. Testbestandsaudit offen. |
+| AC2  | Wege gegen gleichen Stand, bestätigte Kriterien/Umfang erhalten, keine mehrfachen Fachregeln                  | Code geprüft, Kriterienerhaltsfehler mit 1.5.3 nachgetestet; keine allgemeine Garantie semantischer LLM-Zuverlässigkeit.                                                                            |
+| AC3  | Titel allein/all über Multi, keine optionale Typ-/Jahresfrage                                                 | Normale Terminalfälle vom Nutzer bestätigt und Codeweg geprüft; keine nicht protokollierten Einzelresultate erfinden.                                                                               |
+| AC4  | Movie/TV, Jahr über primary_release_year/first_air_date_year                                                  | Titeladapterparameter statisch geprüft; normale Typ-/Jahreswege manuell bestätigt.                                                                                                                  |
+| AC5  | Titel/Jahr/all erzeugt gebundene zentrale Anwendungsfrage, auch ausdrücklich beide Medien                     | Terminal/B08/R02/R03 und Code; keine instrumentierte vollständige Provideraufrufzählung.                                                                                                            |
+| AC6  | Auswahl ohne LLM, Freitext mit Kontext, Kriterien erhalten/ausdrücklich korrigiert                            | Strukturierter Pfad und Kriterienerhalt geprüft; select 1-Freitext außerhalb vereinbarten Umfangs; kein umfassender Freitextnachweis.                                                               |
+| AC7  | Clarify sucht nicht, Execute nutzt bestätigten Stand ohne erneutes LLM                                        | Flow/HTTP-Code und Hauptaudit; kein umfassendes internes Aufrufmonitoring.                                                                                                                          |
+| AC8  | Altantworten unschädlich, reservierte Revision nicht doppelt starten                                          | Bindungs-/Wiederholungs-/Parallelitäts-HTTP-Fälle und LLM-Verzögerung nachgewiesen bzw. Nutzerbestätigung; exakte Trefferaufrufzahl/Providerverzögerung/Browserrennen offen.                        |
+| AC9  | Gründe und Formulierung getrennt, message bis CLI/Klärungskontext, keine doppelte Medienfrage/i18n auf Vorrat | Statische Textzuordnungsprüfung im Suchpfad abgeschlossen, ohne blockierenden Befund.                                                                                                               |
+| AC10 | Kompakte Treffer und getrennte Seiten-/Gesamtzahl, unbekannt nicht null, Zustände unterscheidbar              | Anzeige/Adapter statisch geprüft, erfolgreiche Tabellen und HTTP-Zahlen beobachtet; kontrollierter Zählungsausfall/alle Leer-/Fehler-/Altresultatzustände nicht vollständig live geprüft.           |
+| AC11 | Aktuelle Check-/manuelle Nachweise einzeln dokumentiert, Testausbau zurückgestellt                            | Typecheck/Lint nach Bereinigung erneut vom Nutzer bestätigt, Terminal-/HTTP-Nachweise erfasst; gezielte Altbestandsausnahme dokumentiert. Testbestandsaudit und aktueller Projekttestlauf offen.    |
 
 ## Gesamtzählung und historische Nachweise
 

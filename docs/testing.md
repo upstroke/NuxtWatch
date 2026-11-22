@@ -37,12 +37,12 @@ For the current exploratory slices, the planned technical checks are `pnpm typec
 
 ## Boundaries and locations
 
-| Scope | Location | Runner | Focus |
-| --- | --- | --- | --- |
-| Unit | `tests/unit` (`schemas`, `services`, `utils`) | Vitest | Cohesive validation, service, mapper, parameter, error or utility behavior |
-| Controlled integration | `tests/integration/tmdb` for TMDb | Vitest | Real internal flow with controlled outbound transport |
-| HTTP integration | `tests/integration/http` | Playwright | HTTP requests to a running Nuxt server |
-| Browser end-to-end | `tests/e2e` | Playwright | User journeys; do not expand browser coverage for now |
+| Scope                  | Location                                      | Runner     | Focus                                                                      |
+| ---------------------- | --------------------------------------------- | ---------- | -------------------------------------------------------------------------- |
+| Unit                   | `tests/unit` (`schemas`, `services`, `utils`) | Vitest     | Cohesive validation, service, mapper, parameter, error or utility behavior |
+| Controlled integration | `tests/integration/tmdb` for TMDb             | Vitest     | Real internal flow with controlled outbound transport                      |
+| HTTP integration       | `tests/integration/http`                      | Playwright | HTTP requests to a running Nuxt server                                     |
+| Browser end-to-end     | `tests/e2e`                                   | Playwright | User journeys; do not expand browser coverage for now                      |
 
 - Keep `src/lib` and `server/services` framework-free. H3 helpers belong in `server/utils`, thin Nitro handlers in `server/api`: validate, delegate, map errors, respond.
 - Inject external transports. Unit tests do not access the real network. Controlled integrations mock outbound TMDb transport, not internal modules. Never mock the module under test.

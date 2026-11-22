@@ -72,7 +72,9 @@ export async function searchTitles(
   if (path === '/search/multi' && totalResults !== null) {
     try {
       // The same query and adult setting; both calls use the default first page/language.
-      const personCount = TmdbSearchCountSchema.safeParse(await http.get('/search/person', { ...query }));
+      const personCount = TmdbSearchCountSchema.safeParse(
+        await http.get('/search/person', { ...query }),
+      );
       if (!personCount.success) {
         totalResults = null;
       } else {

@@ -2,10 +2,7 @@
 import type { SearchCriteria } from '@lib/schemas/search';
 
 export type SearchPath = 'multi' | 'movie' | 'tv';
-export type SearchObstacle =
-  | 'title_required'
-  | 'media_scope_not_covered'
-  | 'year_not_supported';
+export type SearchObstacle = 'title_required' | 'media_scope_not_covered' | 'year_not_supported';
 
 type SearchCapability = {
   path: SearchPath;

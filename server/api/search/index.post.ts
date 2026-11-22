@@ -25,9 +25,7 @@ function throwSearchHttpError(error: unknown): never {
   throw createError({ statusCode: 502, statusMessage: searchTexts.http.processingFailed });
 }
 function executionResponse(
-  result:
-    | Awaited<ReturnType<typeof executeSearch>>
-    | Awaited<ReturnType<typeof submitForSession>>,
+  result: Awaited<ReturnType<typeof executeSearch>> | Awaited<ReturnType<typeof submitForSession>>,
 ) {
   if (result.status === 'rejected')
     throw createError({ statusCode: 409, statusMessage: searchTexts.http.executionNotApplicable });

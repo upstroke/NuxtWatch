@@ -42,22 +42,22 @@ Regeln nicht mehrfach in Prompt, Matrix und Adapter implementieren. Fähigkeiten
 
 Ein gemeinsames Kriterienobjekt beschreibt den Wunsch, nicht den Endpunkt. Kein globaler Titelzwang. Aktuell: Titel, Medientyp und Einzeljahr; weitere Kriterien erst mit ihrem Durchstich. Kein bestätigtes Kriterium oder gewünschter Umfang darf stillschweigend entfallen. Nur vollständige Abdeckung erlaubt Ausführung.
 
-| Eigenschaft | Multi | Movie | TV |
-| --- | --- | --- | --- |
-| Titelbegriff erforderlich | Ja | Ja | Ja |
-| Inhalte | Filme, Serien, Personen | Filme | Serien |
-| Einzeljahr | Kein Jahresparameter | `primary_release_year` | `first_air_date_year` |
+| Eigenschaft               | Multi                   | Movie                  | TV                    |
+| ------------------------- | ----------------------- | ---------------------- | --------------------- |
+| Titelbegriff erforderlich | Ja                      | Ja                     | Ja                    |
+| Inhalte                   | Filme, Serien, Personen | Filme                  | Serien                |
+| Einzeljahr                | Kein Jahresparameter    | `primary_release_year` | `first_air_date_year` |
 
 Personen aus Multi werden nicht zu Titelkarten. Nicht genannter Medientyp und ausdrücklich gewünschte Filme und Serien bedeuten `all`. Bereits bestätigte Kriterien bleiben erhalten, sofern nicht ausdrücklich geändert. `include_adult=true`, Locale und Pagination sind Ausführungsoptionen, keine Pflichtkriterien. Keine Adult-basierte Ausfilterung.
 
-| Bedingung | Hindernis | Konsequenz |
-| --- | --- | --- |
-| Titel fehlt/leer | Alle aktuellen Titelwege benötigen Titel | Bei gemeinter Titelstrecke Titel klären, andere Absichten nicht umdeuten |
-| `all`, ohne Jahr | Movie oder TV allein deckt Umfang nicht ab | Multi |
-| `movie`, optional Jahr | Andere Wege passen nicht zum direkten Umfang | Movie |
-| `tv`, optional Jahr | Andere Wege passen nicht zum direkten Umfang | TV |
-| Titel + Jahr + `all` | Multi unterstützt Jahr nicht; Einzelwege decken nicht beide Typen ab | Verpflichtend Film oder Serie auswählen lassen; keine Treffersuche |
-| Bestätigtes Kriterium nicht abgedeckt | Wunsch nicht vollständig ausführbar | Klären oder begründet nicht unterstützt melden |
+| Bedingung                             | Hindernis                                                            | Konsequenz                                                               |
+| ------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Titel fehlt/leer                      | Alle aktuellen Titelwege benötigen Titel                             | Bei gemeinter Titelstrecke Titel klären, andere Absichten nicht umdeuten |
+| `all`, ohne Jahr                      | Movie oder TV allein deckt Umfang nicht ab                           | Multi                                                                    |
+| `movie`, optional Jahr                | Andere Wege passen nicht zum direkten Umfang                         | Movie                                                                    |
+| `tv`, optional Jahr                   | Andere Wege passen nicht zum direkten Umfang                         | TV                                                                       |
+| Titel + Jahr + `all`                  | Multi unterstützt Jahr nicht; Einzelwege decken nicht beide Typen ab | Verpflichtend Film oder Serie auswählen lassen; keine Treffersuche       |
+| Bestätigtes Kriterium nicht abgedeckt | Wunsch nicht vollständig ausführbar                                  | Klären oder begründet nicht unterstützt melden                           |
 
 Titel + Jahr + `all` gilt ausdrücklich auch für „Filme und Serien“ mit Jahresangabe. `all` ist dabei nur ein noch zu klärender Zwischenstand: Vor Ausführung muss die Nutzerauswahl zu `movie` oder `tv` wechseln. Titel und Jahr erhalten; weder Typ erraten noch Jahr entfernen. Matrix erkennt fehlende Abdeckung, Flow öffnet die gebundene Medienfrage. LLM liefert darstellbare Kriterien, statt diese Anwendungsfrage vorwegzunehmen.
 
