@@ -54,6 +54,7 @@ export const questionBindingSchema = z.strictObject({
 export const mediaTypeQuestionSchema = questionBindingSchema.extend({
   kind: z.literal('select_media_type'),
   field: z.literal('mediaType'),
+  message,
   options: z.array(searchMediaTypeSchema.exclude(['all'])).min(1),
 });
 export const textQuestionSchema = questionBindingSchema.extend({

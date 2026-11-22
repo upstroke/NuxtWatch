@@ -2,7 +2,8 @@
 export const searchTexts = {
   clarification: {
     titleRequired: 'Welchen Titel möchtest du suchen?',
-    mediaTypeRequiredForYear: 'Möchtest du einen Film oder eine Serie suchen?',
+    mediaTypeRequiredForYear:
+      'Bei einer Titelsuche mit Jahresangabe musst du zwischen Film und Serie wählen. Möchtest du nach einem Film oder einer Serie suchen?',
   },
   http: {
     invalidResponse: 'Invalid search response',

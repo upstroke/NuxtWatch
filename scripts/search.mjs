@@ -20,7 +20,6 @@ const terminalTexts = {
   criteria: 'Server-Kriterien:',
   reset: 'Neuer serverseitiger Suchkontext begonnen.',
   notExecuted: 'Nicht ausgeführt. Serverentscheidung:',
-  mediaTypeQuestion: 'Anwendungsfrage: Film oder Serie?',
   mediaTypes: { movie: 'Film', tv: 'Serie' },
   selection: (number, label) => `${number}: ${label} (/select ${number})`,
   freeTextHelp: 'Freier Antworttext wird vom LLM interpretiert.',
@@ -46,6 +45,7 @@ const questionSchema = z.discriminatedUnion('kind', [
     ...questionBinding,
     kind: z.literal('select_media_type'),
     field: z.literal('mediaType'),
+    message: z.string().trim().min(1),
     options: z.array(z.enum(['movie', 'tv'])).min(1),
   }),
   z.object({
@@ -220,7 +220,7 @@ async function main() {
           console.log(JSON.stringify(result.data.decision, null, 2));
           const question = result.data.question;
           if (question?.kind === 'select_media_type') {
-            console.log(terminalTexts.mediaTypeQuestion);
+            console.log(terminalTexts.question('application', question.message));
             question.options.forEach((value, index) =>
               console.log(terminalTexts.selection(index + 1, terminalTexts.mediaTypes[value])),
             );

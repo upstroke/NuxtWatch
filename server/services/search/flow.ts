@@ -142,9 +142,7 @@ function openSearchRequest(
 }
 
 function questionText(question: SearchQuestion): string {
-  return question.kind === 'free_text'
-    ? question.message
-    : searchTexts.clarification.mediaTypeRequiredForYear;
+  return question.message;
 }
 
 function bindQuestion(
@@ -165,6 +163,7 @@ function bindQuestion(
       ...binding,
       kind: 'select_media_type',
       field: 'mediaType',
+      message: searchTexts.clarification.mediaTypeRequiredForYear,
       options: [...decision.options],
     };
   }
