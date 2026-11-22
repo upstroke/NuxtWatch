@@ -36,11 +36,11 @@ pnpm lint
 pnpm typecheck
 ```
 
-On 22 November 2026, the user confirmed passing tests, lint and typecheck, plus coverage above 80%, on the working state including `d6e071c`. The local live HTTP audit reported eight passed, zero failed and zero blocked cases. This closes the agreed shared-search/title slice, not production readiness, exhaustive model reliability, or all race/failure scenarios. Evidence, attribution and limits are recorded in [Task 01](docs/tasks/search-architecture/01-shared-search-matrix.md). The locally supplied audit script and raw reports are not committed.
+On 22 November 2026, the user confirmed passing tests, lint and typecheck, plus coverage above 80%, on the working state including `d6e071c`. The local live HTTP audit reported eight passed, zero failed and zero blocked cases. This closes the agreed shared-search/title slice, not production readiness, exhaustive model reliability, or all race/failure scenarios. Evidence, attribution, structure and limits are recorded in the [search concept](docs/sucharchitektur-konzept.md). The locally supplied audit script and raw reports are not committed.
 
 ## Documentation and origin
 
-See [AGENTS.md](AGENTS.md), the [search concept](docs/sucharchitektur-konzept.md), [implementation status](docs/tasks/search-architecture/README.md), and [verified TMDb requests](docs/tmdb-search-examples.md).
+See [AGENTS.md](AGENTS.md), the [search concept](docs/sucharchitektur-konzept.md), and [verified TMDb requests](docs/tmdb-search-examples.md). The concept is the permanent reference for search architecture and its verification status; historical task details remain accessible through its fixed Git link.
 
 The repository originated from the NextWatch `v0.0.1` Spike source snapshot (`e835d5a7813859ef708c1826963ede62601874a4`), without its original Git history. Broader search criteria and the web wizard remain separate future work.
 

@@ -6,7 +6,7 @@ NuxtWatch is a controlled search application. The LLM proposes structured filter
 
 ## Search design
 
-- Follow the [search concept](docs/sucharchitektur-konzept.md) and [target structure](docs/tasks/search-architecture/zielstruktur.md). Implementation status, verification evidence and limits belong in the [active task documentation](docs/tasks/search-architecture/README.md), not in duplicated progress reports here.
+- Follow the [search concept](docs/sucharchitektur-konzept.md), which contains the permanent structure, implementation scope, verification summary and architecture limits. Keep shared rules there rather than duplicating them in completed task folders or progress reports here. Record evidence for future work in its explicitly agreed task documentation.
 - Verify each intended search against TMDb before designing the shared search object: record the endpoint, parameters, relevant response fields, and any filtering the application must perform. Never record credentials.
 - Derive one shared search object from verified use cases. Keep criterion-specific resolution and provider request mapping separate. Do not guess provider IDs or silently drop unsupported criteria.
 - Keep responsibilities distinct: the LLM interprets and proposes; the matrix evaluates full criteria/scope coverage; the flow applies validated changes, binds questions and reserves execution; adapters map provider requests; HTTP and sessions handle transport and ownership. Interfaces must not introduce a second search-rule matrix.
