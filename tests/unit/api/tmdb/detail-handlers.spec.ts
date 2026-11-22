@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+/** Tests detail handlers with fresh transport and runtime mocks for each case. */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getRouterParam, setResponseHeader } from 'h3';
 import movieDetailHandler from '@server/api/tmdb/movie/[id].get';
 import tvDetailHandler from '@server/api/tmdb/tv/[id].get';
@@ -6,7 +7,7 @@ import { createNuxtHandlerMocks } from '@test-mocks/nuxt-handler';
 import { movieDetailRawFixture as movieRaw } from '@tests/fixtures/tmdb/detail-movie.raw';
 import { tvDetailRawFixture as tvRaw } from '@tests/fixtures/tmdb/detail-tv.raw';
 
-const mocks = createNuxtHandlerMocks();
+let mocks: ReturnType<typeof createNuxtHandlerMocks>;
 const getRouterParamMock = vi.mocked(getRouterParam);
 const setResponseHeaderMock = vi.mocked(setResponseHeader);
 
@@ -29,9 +30,14 @@ const createEvent = () =>
 
 beforeEach(() => {
   vi.unstubAllGlobals();
+  mocks = createNuxtHandlerMocks();
   mocks.install();
   getRouterParamMock.mockReset();
   setResponseHeaderMock.mockClear();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe('TMDb detail route handlers', () => {
