@@ -3,6 +3,40 @@ import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import { z } from 'zod';
 
+// Terminal presentation only; no server imports or cataloging of free model messages.
+const terminalTexts = {
+  connected: (endpoint) => `Suche über ${endpoint}`,
+  commands: 'Befehle: /reset, /execute, /submit TEXT, /exit. Bei Auswahlfragen: /select NUMMER.',
+  inputHelp: 'Bei offener Frage ist normaler Text eine clarify-Antwort; sonst ein neuer submit.',
+  prompts: { answer: 'Antwort> ', search: 'Suche> ' },
+  invalidServerUrl: 'Expected an HTTP(S) server URL without embedded credentials.',
+  executionUnavailable: 'Keine bestätigte ausführbare Klärung vorhanden.',
+  selectionRequired: 'Bitte eine angebotene Auswahl mit /select NUMMER wählen.',
+  unknownCommand: 'Unbekannter Befehl.',
+  httpFailure: (status) =>
+    `HTTP ${status}: Anfrage fehlgeschlagen. Kein automatischer Folgeaufruf.`,
+  bindingUnavailable: 'Bindung nicht mehr nutzbar. /reset oder /submit TEXT verwenden.',
+  unexpectedResponse: 'Unerwartete Antwort; /reset oder /submit TEXT verwenden.',
+  criteria: 'Server-Kriterien:',
+  reset: 'Neuer serverseitiger Suchkontext begonnen.',
+  notExecuted: 'Nicht ausgeführt. Serverentscheidung:',
+  mediaTypeQuestion: 'Anwendungsfrage: Film oder Serie?',
+  mediaTypes: { movie: 'Film', tv: 'Serie' },
+  selection: (number, label) => `${number}: ${label} (/select ${number})`,
+  freeTextHelp: 'Freier Antworttext wird vom LLM interpretiert.',
+  question: (source, message) => `Frage (${source}): ${message}`,
+  executeHelp: 'Kriterien bestätigt. Mit /execute ausdrücklich suchen.',
+  noFollowUp: 'Kein automatischer Folgeaufruf.',
+  requestFailure:
+    'Anfrage oder Antwort fehlgeschlagen. Serverstand unklar; keine automatische Wiederholung. /reset oder /submit TEXT verwenden.',
+  startupFailure: 'CLI konnte nicht gestartet werden.',
+  noResults: 'Suche erfolgreich: keine Treffer in dieser Antwort.',
+  resultCount: (count) =>
+    `Suche erfolgreich: ${count} Treffer in dieser Antwort (keine Gesamtzahl).`,
+  columns: { title: 'Titel', mediaType: 'Typ', date: 'Datum', id: 'TMDb-ID' },
+  missingDate: '—',
+};
+
 const binding = { requestId: z.string().min(1), revision: z.number().int().min(1) };
 const questionBinding = { ...binding, questionId: z.string().min(1) };
 const questionSchema = z.discriminatedUnion('kind', [
@@ -54,16 +88,16 @@ const responseSchema = z.discriminatedUnion('status', [
 
 function displayResults(results) {
   if (results.length === 0) {
-    console.log('Suche erfolgreich: keine Treffer in dieser Antwort.');
+    console.log(terminalTexts.noResults);
     return;
   }
-  console.log(`Suche erfolgreich: ${results.length} Treffer in dieser Antwort (keine Gesamtzahl).`);
+  console.log(terminalTexts.resultCount(results.length));
   console.table(
     results.map((result) => ({
-      Titel: result.title,
-      Typ: result.mediaType === 'movie' ? 'Film' : 'Serie',
-      Datum: result.date ?? '—',
-      'TMDb-ID': result.id,
+      [terminalTexts.columns.title]: result.title,
+      [terminalTexts.columns.mediaType]: terminalTexts.mediaTypes[result.mediaType],
+      [terminalTexts.columns.date]: result.date ?? terminalTexts.missingDate,
+      [terminalTexts.columns.id]: result.id,
     })),
   );
 }
@@ -71,18 +105,22 @@ function displayResults(results) {
 async function main() {
   const baseUrl = new URL(process.argv[2] ?? 'http://localhost:3000');
   if (!['http:', 'https:'].includes(baseUrl.protocol) || baseUrl.username || baseUrl.password)
-    throw new Error('Expected an HTTP(S) server URL without embedded credentials.');
+    throw new Error(terminalTexts.invalidServerUrl);
   const endpoint = new URL('/api/search', baseUrl);
   const terminal = createInterface({ input: stdin, output: stdout });
   let cookie;
   let current;
   terminal.on('SIGINT', () => terminal.close());
-  console.log(`Suche über ${endpoint.href}`);
-  console.log('Befehle: /reset, /execute, /submit TEXT, /exit. Bei Auswahlfragen: /select NUMMER.');
-  console.log('Bei offener Frage ist normaler Text eine clarify-Antwort; sonst ein neuer submit.');
+  console.log(terminalTexts.connected(endpoint.href));
+  console.log(terminalTexts.commands);
+  console.log(terminalTexts.inputHelp);
   try {
     while (!terminal.closed) {
-      const text = (await terminal.question(current?.question ? 'Antwort> ' : 'Suche> ')).trim();
+      const text = (
+        await terminal.question(
+          current?.question ? terminalTexts.prompts.answer : terminalTexts.prompts.search,
+        )
+      ).trim();
       if (!text) continue;
       if (text === '/exit') break;
       let body;
@@ -94,7 +132,7 @@ async function main() {
           current.status !== 'clarified' ||
           current.decision.status !== 'ready'
         ) {
-          console.error('Keine bestätigte ausführbare Klärung vorhanden.');
+          console.error(terminalTexts.executionUnavailable);
           continue;
         }
         body = { action: 'execute', requestId: current.requestId, revision: current.revision };
@@ -110,7 +148,7 @@ async function main() {
           index < 1 ||
           index > question.options.length
         ) {
-          console.error('Bitte eine angebotene Auswahl mit /select NUMMER wählen.');
+          console.error(terminalTexts.selectionRequired);
           continue;
         }
         body = {
@@ -121,7 +159,7 @@ async function main() {
           answer: { type: 'selection', value: question.options[index - 1] },
         };
       } else if (text.startsWith('/')) {
-        console.error('Unbekannter Befehl.');
+        console.error(terminalTexts.unknownCommand);
         continue;
       } else if (current?.question) {
         const question = current.question;
@@ -150,50 +188,44 @@ async function main() {
           if (pair?.startsWith('nuxtwatch-search=')) cookie = pair;
         }
         if (!response.ok) {
-          console.error(
-            `HTTP ${response.status}: Anfrage fehlgeschlagen. Kein automatischer Folgeaufruf.`,
-          );
+          console.error(terminalTexts.httpFailure(response.status));
           if ([409, 410].includes(response.status)) {
             current = undefined;
-            console.error('Bindung nicht mehr nutzbar. /reset oder /submit TEXT verwenden.');
+            console.error(terminalTexts.bindingUnavailable);
           }
           continue;
         }
         const result = responseSchema.safeParse(await response.json());
         if (!result.success) {
           current = undefined;
-          console.error('Unerwartete Antwort; /reset oder /submit TEXT verwenden.');
+          console.error(terminalTexts.unexpectedResponse);
           continue;
         }
         current = result.data.status === 'reset' ? undefined : result.data;
-        console.log('Server-Kriterien:');
+        console.log(terminalTexts.criteria);
         console.log(JSON.stringify(result.data.criteria, null, 2));
-        if (result.data.status === 'reset')
-          console.log('Neuer serverseitiger Suchkontext begonnen.');
+        if (result.data.status === 'reset') console.log(terminalTexts.reset);
         else if (result.data.status === 'completed') {
           displayResults(result.data.results);
         } else {
-          console.log('Nicht ausgeführt. Serverentscheidung:');
+          console.log(terminalTexts.notExecuted);
           console.log(JSON.stringify(result.data.decision, null, 2));
           const question = result.data.question;
           if (question?.kind === 'select_media_type') {
-            console.log('Anwendungsfrage: Film oder Serie?');
+            console.log(terminalTexts.mediaTypeQuestion);
             question.options.forEach((value, index) =>
-              console.log(
-                `${index + 1}: ${value === 'movie' ? 'Film' : 'Serie'} (/select ${index + 1})`,
-              ),
+              console.log(terminalTexts.selection(index + 1, terminalTexts.mediaTypes[value])),
             );
-            console.log('Freier Antworttext wird vom LLM interpretiert.');
-          } else if (question) console.log(`Frage (${question.source}): ${question.message}`);
+            console.log(terminalTexts.freeTextHelp);
+          } else if (question)
+            console.log(terminalTexts.question(question.source, question.message));
           else if (result.data.status === 'clarified' && result.data.decision.status === 'ready')
-            console.log('Kriterien bestätigt. Mit /execute ausdrücklich suchen.');
-          console.log('Kein automatischer Folgeaufruf.');
+            console.log(terminalTexts.executeHelp);
+          console.log(terminalTexts.noFollowUp);
         }
       } catch {
         current = undefined;
-        console.error(
-          'Anfrage oder Antwort fehlgeschlagen. Serverstand unklar; keine automatische Wiederholung. /reset oder /submit TEXT verwenden.',
-        );
+        console.error(terminalTexts.requestFailure);
       }
     }
   } finally {
@@ -201,6 +233,6 @@ async function main() {
   }
 }
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : 'CLI konnte nicht gestartet werden.');
+  console.error(error instanceof Error ? error.message : terminalTexts.startupFailure);
   process.exitCode = 1;
 });
