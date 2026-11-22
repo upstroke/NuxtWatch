@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fetchWeeklyTrending, createTmdbSpikeError } from '@server/utils/tmdb';
+import { fetchWeeklyTrending } from '@server/utils/tmdb';
+import { createTmdbError } from '@server/services/tmdb/errors';
 import { weeklyTrendingFixture } from '@tests/fixtures/tmdb/trending.raw';
 
 const config = {
@@ -60,7 +61,7 @@ describe('TMDb trending connection spike', () => {
   it('sanitizes upstream errors without retrying', async () => {
     const request = vi.fn().mockRejectedValue(new Error(config.apiReadAccessToken));
     await expect(fetchWeeklyTrending(config, request)).rejects.toEqual(
-      createTmdbSpikeError('UPSTREAM_FAILED'),
+      createTmdbError('UPSTREAM_FAILED'),
     );
     expect(request).toHaveBeenCalledTimes(1);
   });

@@ -1,27 +1,14 @@
 # Typing
 
-This document is the single source of truth for TypeScript typing conventions in NextWatch.
-
-## Principles
-
-- Zod schemas are the source of truth for validated external data contracts and runtime validation.
-- TypeScript provides compile-time structure and developer tooling; it does not validate data at runtime.
-- Do not duplicate a type that can be derived from an existing Zod contract.
-- Do not create a Zod schema, interface or type alias for every internal function or implementation detail.
+This document defines TypeScript and runtime-validation conventions for NuxtWatch. TypeScript checks structure at compile time; it does not validate runtime data.
 
 ## Type checking
 
-Run `pnpm typecheck` to check TypeScript and Vue single-file components.
-The exact versions of TypeScript and `vue-tsc` are pinned in
-[`package.json`](../package.json).
+Run `pnpm typecheck` to check TypeScript and Vue single-file components. TypeScript, `vue-tsc`, and Zod versions are pinned in [`package.json`](../package.json).
 
 ## Zod contracts
 
-Use the Zod 4 API for new and updated schemas. The exact version is pinned in
-[`package.json`](../package.json). Prefer `z.iso.date()` for ISO date strings
-over the deprecated `z.string().date()` method.
-
-For every external structure, define exactly one Zod schema in `src/lib/schemas` and derive its TypeScript type from that schema:
+Use Zod 4 for external or untrusted data. Prefer `z.iso.date()` over the deprecated `z.string().date()`. Define one authoritative schema per external contract in `src/lib/schemas` and derive its TypeScript type instead of redeclaring the fields:
 
 ```ts
 export const TmdbRuntimeConfigSchema = z.object({
@@ -32,49 +19,30 @@ export const TmdbRuntimeConfigSchema = z.object({
 export type TmdbRuntimeConfig = z.infer<typeof TmdbRuntimeConfigSchema>;
 ```
 
-Follow these rules:
+- Parse once at the actual boundary (for example, HTTP requests, LLM output, TMDb responses, or runtime configuration). Code consuming validated data imports the derived type, not the schema. A semantic alias may reference a derived type without redefining it. Derive related field keys and dependent types from existing contracts.
+- Schemas validate shape and contract-level constraints, and normalize values when required by the contract. Stateful and domain decisions belong in the application. For example, the schema checks the shape of `revision` and `questionId`; the search flow checks that the revision is current and the question belongs to the open clarification.
+- For deciding which validation behavior to test, see [Testing](testing.md).
 
-- Do not create a separate manual `interface` or `type` for a structure that already has a Zod schema.
-- Derive public domain types with `z.infer<typeof Schema>`.
-- Services and UI code import the derived type, not the schema.
-- Only boundaries call `.parse()` or `.safeParse()`: TMDb responses, query parameters, runtime configuration, and other external input.
-- A semantic type alias may reference a derived type, for example `type TmdbConfig = TmdbRuntimeConfig`, but must not redefine its fields.
-- Derive related field keys and dependent types from existing contracts instead of maintaining parallel lists or duplicate data-contract definitions.
+## Internal functions and assertions
 
-## Internal functions
-
-For functions without a Zod contract, type only the parameters TypeScript cannot infer from context. Prefer inferred return types; add an explicit return type only for a public contract or when inference is unclear.
-
-Use a named `type` or `interface` only when a structure is reused, forms a public contract, or needs a distinct name. Do not create Zod schemas, interfaces or type aliases for every internal function.
-
-When a function accepts or returns an object or another function, define the required structure at the relevant boundary. Reuse an existing type, derive it from an existing contract, or define it directly in the function signature when it is used only locally.
-
-## Type assertions
-
-Do not use `as` to suppress type errors or as a substitute for validation.
-
-- Use Zod for external or untrusted data.
-- Use a type predicate only after a real runtime check.
-- Use `as` only when TypeScript cannot derive information that has already been established by a real check.
+- Prefer the simplest type that makes the behavior clear or prevents a concrete mistake. Keep meaningful distinctions, such as a search being ready or needing clarification. Use a plain array for clarification options unless fixed length, order, or read-only access is part of the contract.
+- Do not create a schema, interface, or type alias for every internal function. Let TypeScript infer types where context is sufficient. Prefer inferred return types unless an explicit public contract or clearer annotation is needed. Reuse or derive a type where possible; define a local shape inline when used only locally.
+- Never use `as` to suppress a type error or replace validation. Use a type predicate only after a real runtime check, and an assertion only when TypeScript cannot infer information already established by such a check.
 
 ## Shared type locations
 
-Store reusable TypeScript types in a dedicated, topic-based location.
+| Type                          | Location                                                         | Rule                                                                               |
+| ----------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Zod contract and derived type | `src/lib/schemas` or relevant domain module for the derived type | Keep the type associated with its schema                                           |
+| Cross-module type             | `src/types/<topic>.ts` (e.g. `src/types/search.ts`)              | Only when independent modules need the same domain type and none naturally owns it |
+| Feature or domain type        | Near its feature or domain                                       | Keep it close to its use                                                           |
+| Local function type           | In the function’s file                                           | Do not centralize one-off types                                                    |
+| Injected dependency type      | At the boundary defining it                                      | Keep it with its consumer or provider                                              |
 
-| Type                             | Location                                           | Rule                                                              |
-| -------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------- |
-| Zod contract                     | `src/lib/schemas`                                  | One schema per external structure; derive its type with `z.infer` |
-| Derived contract type            | Beside its schema or in the relevant domain module | Keep it directly associated with its contract                     |
-| Cross-module type                | `src/types/<topic>.ts`                             | Use only for types shared by independent modules                  |
-| Feature- or domain-specific type | Near its feature or domain                         | Keep it close to its use                                          |
-| Local function type              | In the function's file                             | Do not centralize a type used by one function                     |
-| Injected dependency type         | In the module defining the boundary                | Keep the contract with its consumer or provider                   |
+Follow DRY (Don't Repeat Yourself): define each contract once. Sharing a type is not a reason to move it away from the module that owns it.
 
-Do not create a central catch-all `types.ts` or an automatic barrel export for types. Imports should point to the specific type file.
-
-Prefer `type` for reusable TypeScript types. Use `interface` only when declaration merging or interface extension is intentionally required.
+Do not create a catch-all `types.ts` or an automatic type barrel. Import from the specific defining file. Prefer `type` for reusable types; use `interface` for intentional declaration merging or extension.
 
 ## Related documentation
 
-- [Testing](testing.md): test boundaries, fixtures, mocks and test locations.
-- [Service boundaries and ADR 001](work/specs/architecture/001-service-boundaries.md): architecture decisions for API and state code.
+- [Testing](testing.md)
