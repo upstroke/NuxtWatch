@@ -129,6 +129,8 @@ export const searchResponseSchema = z.discriminatedUnion('status', [
     ...requestBinding.shape,
     criteria: searchCriteriaSchema,
     results: z.array(SearchResultCardSchema),
+    // null means unavailable, never zero or the unfiltered multi total.
+    totalResults: z.number().int().nonnegative().nullable(),
   }),
   z.strictObject({
     status: z.literal('not_executed'),

@@ -30,9 +30,11 @@ const terminalTexts = {
   requestFailure:
     'Anfrage oder Antwort fehlgeschlagen. Serverstand unklar; keine automatische Wiederholung. /reset oder /submit TEXT verwenden.',
   startupFailure: 'CLI konnte nicht gestartet werden.',
-  noResults: 'Suche erfolgreich: keine Treffer in dieser Antwort.',
+  noResults: 'Suche erfolgreich: keine Titel auf der ersten Ergebnisseite angezeigt.',
   resultCount: (count) =>
-    `Suche erfolgreich: ${count} Treffer in dieser Antwort (keine Gesamtzahl).`,
+    `Suche erfolgreich: ${count} Titel aus der ersten Ergebnisseite angezeigt.`,
+  totalCount: (count) => `${count.toLocaleString('de-DE')} Titel insgesamt gefunden.`,
+  totalUnavailable: 'Gesamtzahl derzeit nicht verfügbar.',
   columns: { title: 'Titel', mediaType: 'Typ', date: 'Datum', id: 'TMDb-ID' },
   missingDate: '—',
 };
@@ -68,6 +70,7 @@ const responseSchema = z.discriminatedUnion('status', [
     ...binding,
     criteria,
     results: z.array(resultCardSchema),
+    totalResults: z.number().int().nonnegative().nullable(),
   }),
   z.object({
     status: z.literal('not_executed'),
@@ -86,7 +89,12 @@ const responseSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('reset'), criteria }),
 ]);
 
-function displayResults(results) {
+function displayResults(results, totalResults) {
+  console.log(
+    totalResults === null
+      ? terminalTexts.totalUnavailable
+      : terminalTexts.totalCount(totalResults),
+  );
   if (results.length === 0) {
     console.log(terminalTexts.noResults);
     return;
@@ -206,7 +214,7 @@ async function main() {
         console.log(JSON.stringify(result.data.criteria, null, 2));
         if (result.data.status === 'reset') console.log(terminalTexts.reset);
         else if (result.data.status === 'completed') {
-          displayResults(result.data.results);
+          displayResults(result.data.results, result.data.totalResults);
         } else {
           console.log(terminalTexts.notExecuted);
           console.log(JSON.stringify(result.data.decision, null, 2));

@@ -1,4 +1,5 @@
-/** Fetches TMDb title matches and maps mixed or single-media results to search cards. */
+/** Fetches the first title page and its available movie/TV total. */
+import { z } from 'zod';
 import type { SearchCriteria } from '@lib/schemas/search';
 import {
   TmdbMovieSearchResponseSchema,
@@ -9,7 +10,15 @@ import type { SearchResultCard } from '@lib/schemas/ui/search-result-card';
 import { createTmdbError } from './errors';
 import type { TmdbHttpClient } from './http';
 
-/** Searches the first page, applying a year only through a specific media endpoint. */
+const countSchema = z.object({ total_results: z.number().int().nonnegative() });
+
+/**
+ * Returns a page object rather than the former card array.
+ * Existing array-based adapter tests require separately approved adaptation;
+ * they have not been migrated or removed for this feature.
+ * Multi totals subtract a separate person count (empirically checked, not an API guarantee).
+ * Count failures must never discard otherwise valid title cards.
+ */
 export async function searchTitles(
   http: Pick<TmdbHttpClient, 'get'>,
   title: string,
@@ -17,10 +26,9 @@ export async function searchTitles(
     mediaType: Exclude<SearchCriteria['mediaType'], 'all'>;
     year?: SearchCriteria['year'];
   },
-): Promise<SearchResultCard[]> {
+): Promise<{ results: SearchResultCard[]; totalResults: number | null }> {
   const query: Record<string, string> = { query: title, include_adult: 'true' };
   let path = '/search/multi';
-  const schema = TmdbTitleSearchResponseSchema;
 
   if (options?.mediaType === 'movie') {
     path = '/search/movie';
@@ -31,20 +39,19 @@ export async function searchTitles(
   }
 
   const raw = await http.get(path, query);
-  // Normalize endpoint-specific responses into the shared validated result union.
   const response =
     options?.mediaType === 'movie'
       ? TmdbMovieSearchResponseSchema.safeParse(raw)
       : options?.mediaType === 'tv'
         ? TmdbTvSearchResponseSchema.safeParse(raw)
-        : schema.safeParse(raw);
-  if (!response.success) {
-    throw createTmdbError('INVALID_RESPONSE');
-  }
+        : TmdbTitleSearchResponseSchema.safeParse(raw);
+  if (!response.success) throw createTmdbError('INVALID_RESPONSE');
 
   const cards: SearchResultCard[] = [];
+  let peopleOnPage = 0;
   for (const result of response.data.results) {
     if (result.media_type === 'person') {
+      peopleOnPage += 1;
       continue;
     }
 
@@ -60,5 +67,27 @@ export async function searchTitles(
     });
   }
 
-  return cards;
+  const providerCount = countSchema.safeParse(raw);
+  let totalResults: number | null =
+    providerCount.success && providerCount.data.total_results >= response.data.results.length
+      ? providerCount.data.total_results
+      : null;
+
+  if (path === '/search/multi' && totalResults !== null) {
+    try {
+      // The same query and adult setting; both calls use the default first page/language.
+      const personCount = countSchema.safeParse(await http.get('/search/person', { ...query }));
+      if (!personCount.success) {
+        totalResults = null;
+      } else {
+        const people = personCount.data.total_results;
+        const titles = totalResults - people;
+        totalResults = people >= peopleOnPage && titles >= cards.length ? titles : null;
+      }
+    } catch {
+      totalResults = null;
+    }
+  }
+
+  return { results: cards, totalResults };
 }

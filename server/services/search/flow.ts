@@ -416,7 +416,7 @@ async function executeCurrentRequest(
   request.execution = execution;
 
   try {
-    const results = await searchTitles(http, confirmed.title, options);
+    const { results, totalResults } = await searchTitles(http, confirmed.title, options);
     execution.status = 'completed';
 
     if (!active()) return { status: 'superseded' as const };
@@ -426,6 +426,7 @@ async function executeCurrentRequest(
       ...binding,
       criteria: confirmed,
       results,
+      totalResults,
     };
   } catch (error) {
     execution.status = 'failed';
