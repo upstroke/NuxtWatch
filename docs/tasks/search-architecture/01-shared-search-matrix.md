@@ -1,6 +1,6 @@
 # Task 01 – Gemeinsame Suchmatrix und Ablaufsteuerung
 
-Status: implementiert und im vereinbarten Terminal-/HTTP-Prüfumfang erfolgreich geprüft; Abschlussaudit noch offen. Stand: 22. November 2026, Rückmeldungen bis 17:21 CET. Codebezug `b1e3a8fa92e37e76835ff0487b6c5114ccfc37f2`, Branch `feat/shared-search-architecture`. Keine vollständige Produktions-, Race- oder Ausfallabnahme.
+Status: implementiert und im vereinbarten Terminal-/HTTP-Prüfumfang erfolgreich geprüft; Abschlussaudit noch offen. Stand: 22. November 2026, Rückmeldungen bis 17:30 CET. Aktueller Codebezug nach Bereinigung `e111ef60150d391cf074fbb4bd57bf94dfa93b09`; Suchprüfung und HTTP-Audits auf `b1e3a8fa92e37e76835ff0487b6c5114ccfc37f2`, Branch `feat/shared-search-architecture`. Keine vollständige Produktions-, Race- oder Ausfallabnahme.
 
 Grundlagen: [Konzept/Hindernismatrix](../../sucharchitektur-konzept.md), [Zielstruktur](zielstruktur.md), [Arbeitsstand](README.md), [TMDb-Analyse](../../tmdb-api-analysis.md), [Requests](../../tmdb-search-examples.md), [Prüfregeln](../../testing.md). Keine zweite vollständige Regelmatrix.
 
@@ -20,9 +20,11 @@ Angebotene Auswahl erfolgt ohne LLM; Freitext nutzt die gemeinsame Interpretatio
 
 Allgemeiner Testausbau bleibt bis zum Bestandsaudit zurückgestellt. Keine vorsorgliche Migration, pauschale Löschung oder Änderung von Ausschlüssen/Coverage/Checks zum Verbergen von Fehlern. Konkrete Teständerungen separat vereinbaren.
 
-Historische Freigaben bleiben bestehen: zwei alte Submission-Tests entfernt; Titeltesterwartung um include_adult ergänzt; Parser-Vertragstestimport auf llm umgestellt; bestehende Adaptererwartungen mit ed031e3 minimal auf .results angepasst. Keine zusätzliche automatische Zählungsabsicherung daraus ableiten.
+Historische Freigaben bleiben bestehen: zwei alte Submission-Tests entfernt; Titeltesterwartung um include_adult ergänzt; Parser-Vertragstestimport auf llm umgestellt; bestehende Adaptererwartungen mit ed031e3 minimal auf .results angepasst. Keine zusätzliche automatische Zählungsabsicherung daraus ableiten. Die unten dokumentierte gezielte Chat-/Aliasbereinigung wurde anschließend ausdrücklich beauftragt und einzeln bestätigt; daraus folgt keine allgemeine Löschungsfreigabe.
 
 Die eigenständigen HTTP-Audits waren gesonderte Prüfaufträge, keine allgemeine Erweiterung des Projekttestbestands. Die zusätzliche Simulationsserie wurde auf Nutzerwunsch beendet. Weitere Providerverzögerungs-/Fehlersimulationen sind nicht Voraussetzung eines stillschweigend erweiterten Terminalauftrags; fehlende Nachweise bleiben aber ausdrücklich offen.
+
+Am 22. November um 17:23 CET wurde der projektweite Vollscan ausdrücklich aus dem Abschlussumfang genommen. Die Struktur-/Importaussage bleibt auf die tatsächlich gelesenen Suchproduktionspfade begrenzt. Kein Vollscan durchgeführt und kein offener Pflichtauftrag zu dessen Nachholung; keine projektweite Fehlerfreiheit daraus ableiten.
 
 ## Umsetzung und Abschlussarbeiten
 
@@ -36,8 +38,9 @@ Die eigenständigen HTTP-Audits waren gesonderte Prüfaufträge, keine allgemein
 - [x] Struktur und interne Importe der gelesenen Suchproduktionspfade prüfen.
 - [x] Parserzuständigkeit und gebundene Medienfrage umsetzen; Kriterienerhalt mit Prompt 1.5.3 präzisieren.
 - [x] Vereinbarte normale Terminalprüfungen und HTTP-Audit B01–B08 durchführen und Ergebnisse erfassen.
-- [x] Aktuelle Typecheck-/Lint-Nutzerbestätigung erfassen.
-- [ ] Projektweiten Vollscan außerhalb des geprüften Suchbereichs abschließen beziehungsweise dessen Relevanz für AC1 ausdrücklich begrenzen.
+- [x] Alte Chat-Verträge samt Export und zugehörigen zwei Tests gezielt entfernen; TMDb-Fehleralias durch direkten Import im bestehenden Trending-Test ersetzen.
+- [x] Erneute Typecheck-/Lint-Nutzerbestätigung nach der Bereinigung erfassen.
+- [x] Prüfumfang ausdrücklich auf den Suchbereich begrenzen; projektweiten Vollscan auf Nutzerentscheidung aus dem Abschlussumfang nehmen (nicht durchgeführt).
 - [ ] Aktuellen Lauf des bestehenden Projekttestbestands belegen; Typecheck/Lint sind kein Ersatz.
 - [ ] Bestehenden Testbestand auditieren und priorisierte Lücken-/Doppelungsbewertung dokumentieren.
 - [ ] Dokumentationsabgleich und abschließende Bewertung der ACs mit verbleibenden Grenzen durchführen.
@@ -87,13 +90,25 @@ D01 im vorgelegten Bericht bestanden. D02 zunächst 410 beim Folgeauftrag mit ve
 
 | Check | Aktueller Nachweis |
 | --- | --- |
-| Typecheck | Vom Nutzer am 22. November um 17:15 CET als in Ordnung bestätigt; keine eigenen Befehlsläufe oder erfundenen Ausgabe-/Testzahlen. |
-| Lint | Dieselbe aktuelle Nutzerbestätigung. |
+| Typecheck | Vom Nutzer am 22. November um 17:30 CET erneut nach der Bereinigung bis e111ef6 als in Ordnung bestätigt; frühere Bestätigung 17:15 CET. Keine eigenen Befehlsläufe oder erfundenen Ausgabe-/Testzahlen. |
+| Lint | Dieselbe erneute Nutzerbestätigung nach der Bereinigung bis e111ef6. |
 | Bestehende Projekttests | Kein aktueller Lauf bestätigt; letzte historische grüne Rückmeldung 08:29 CET nach 794788f nicht auf spätere Änderungen übertragen. |
+
+### Gezielte Altbestandsbereinigung
+
+Am 22. November ausdrücklich beauftragt; Änderungen vor Ausführung einzeln bestätigt. Kein allgemeiner Testumbau und kein Ersatz für den noch offenen Testbestandsaudit.
+
+| Commit | Änderung |
+| --- | --- |
+| c63b80d | Chat-Re-Export aus src/lib/schemas/index.ts entfernt; createTmdbSpikeError-Alias aus server/utils/tmdb.ts entfernt; tests/unit/utils/tmdb.spec.ts auf direkten createTmdbError-Import und entsprechenden Fabrikaufruf umgestellt. |
+| 2f54361 | tests/unit/schemas/chat.spec.ts mit den zwei Tests des ausgemusterten ChatIntent-Vertrags entfernt. |
+| e111ef6 | src/lib/schemas/chat.ts mit altem ChatIntent-Vertrag und zugehörigen Teilschemas/Typen entfernt. |
+
+getTmdbConfig(), fetchWeeklyTrending(), der TmdbRequest-Typexport sowie sämtliche Trending-Testfälle und deren fachliche Erwartungen bleiben erhalten. Aktuelle Suchverträge, Matrix, Flow und Suchlogik wurden nicht geändert. Keine automatische Ersetzung des alten Chat-Vertrags durch schemas/search; unterschiedliche Verträge nicht gleichgesetzt. Kein neuer Projekttestlauf aufgrund dieser Commits behauptet. Typecheck/Lint anschließend vom Nutzer erfolgreich bestätigt.
 
 ## Struktur-/Import- und Textzuordnungsprüfung
 
-Statischer GitHub-Prüfstand b1e3a8f, keine Erfassung nicht gepushter lokaler Änderungen. Verzeichnisse des Suchkerns aufgelistet; Implementierungen unter server/api, server/services, server/utils, gemeinsame Schemas und scripts/search.mjs gelesen. Parser-Anweisungen bereits separat geprüft. Kein projektweiter Vollscan einschließlich app/app.vue, sämtlicher Build-Konfigurationen und Styles.
+Statischer GitHub-Prüfstand b1e3a8f, keine Erfassung nicht gepushter lokaler Änderungen. Verzeichnisse des Suchkerns aufgelistet; Implementierungen unter server/api, server/services, server/utils, gemeinsame Schemas und scripts/search.mjs gelesen. Parser-Anweisungen bereits separat geprüft. Kein projektweiter Vollscan einschließlich app/app.vue, sämtlicher Build-Konfigurationen und Styles; nachfolgend auf Nutzerentscheidung nicht weiter als Abschlussarbeit verfolgt. Die gezielte spätere Altbestandsprüfung und Bereinigung ist oben separat dokumentiert.
 
 Keine fehlenden internen Importziele oder veralteten Suchimporte in den gelesenen Produktionsdateien gefunden. Aktiver Einstieg nur server/api/search/index.post.ts; Suchverzeichnis enthält flow.ts, matrix.ts, llm.ts, texts.ts. Parserverzeichnis enthält nur die beiden Instruktionsdateien. Keine alten Workflow-/Coordinator-/Submission-/ausführenden Parsermodule dort. Aktive Suchverträge direkt aus schemas/search; Runtime-/Provider-/Kartenverträge separat.
 
@@ -103,7 +118,7 @@ Textkette geprüft: searchTexts.clarification → Flow bindet question.message �
 
 TMDb-Fehlertexte seit 0e7c642 unter drei stabilen englischen Textschlüsseln in services/tmdb/errors.ts; Fehlercodes und Statusabbildung getrennt (400 ungültige Anfrage, 503 Konfiguration, 502 übriger Provider-/Antwortfehler). Keine i18n-Infrastruktur oder Sprachauswahl daraus ableiten.
 
-Nicht automatisch zu löschen: schemas/chat.ts und dessen Barrel-Export enthalten älteren ChatIntent-Vertrag; aktive Suchpfade verwenden schemas/search. utils/tmdb.ts enthält createTmdbSpikeError-Alias und Trending-Hilfen. Kein fehlendes Importziel und kein zweiter aktiver Suchkoordinator; Verwendung/Bereinigung im separaten Bestandsaudit bewerten.
+Die zunächst als zu bewerten erfassten Chat-Verträge samt Barrel-Export und der createTmdbSpikeError-Alias sind durch die oben protokollierte Bereinigung entfernt. Das aktive TMDb-Hilfsmodul wurde nicht als Ganzes ausgemustert. Keine noch offene Löschungsentscheidung zu diesen konkreten Altbeständen.
 
 Bekannte Architekturgrenzen: konkrete Matrix-Wegkennung wird nicht bis zur Ausführung durchgereicht; Medienfrage bleibt nach fehlendem Titel/passendem Weg der pauschale Restfall. Bei neuen Kriterien erneut bewerten. Keine Änderung aufgrund der statischen Prüfung.
 
@@ -111,7 +126,7 @@ Bekannte Architekturgrenzen: konkrete Matrix-Wegkennung wird nicht bis zur Ausf�
 
 | ID | Kriterium | Stand/Beleg und Grenze |
 | --- | --- | --- |
-| AC1 | Zielstruktur, keine alten Schichten/Importe, Testlücken erfasst | Suchproduktionspfade statisch ohne blockierenden Befund; projektweiter Vollscan und Testbestandsaudit offen. |
+| AC1 | Zielstruktur, keine alten Schichten/Importe, Testlücken erfasst | Suchproduktionspfade statisch ohne blockierenden Befund; konkrete Altbestände bereinigt. Projektweiter Vollscan ausdrücklich nicht im Abschlussumfang, nicht durchgeführt. Testbestandsaudit offen. |
 | AC2 | Wege gegen gleichen Stand, bestätigte Kriterien/Umfang erhalten, keine mehrfachen Fachregeln | Code geprüft, Kriterienerhaltsfehler mit 1.5.3 nachgetestet; keine allgemeine Garantie semantischer LLM-Zuverlässigkeit. |
 | AC3 | Titel allein/all über Multi, keine optionale Typ-/Jahresfrage | Normale Terminalfälle vom Nutzer bestätigt und Codeweg geprüft; keine nicht protokollierten Einzelresultate erfinden. |
 | AC4 | Movie/TV, Jahr über primary_release_year/first_air_date_year | Titeladapterparameter statisch geprüft; normale Typ-/Jahreswege manuell bestätigt. |
@@ -121,7 +136,7 @@ Bekannte Architekturgrenzen: konkrete Matrix-Wegkennung wird nicht bis zur Ausf�
 | AC8 | Altantworten unschädlich, reservierte Revision nicht doppelt starten | Bindungs-/Wiederholungs-/Parallelitäts-HTTP-Fälle und LLM-Verzögerung nachgewiesen bzw. Nutzerbestätigung; exakte Trefferaufrufzahl/Providerverzögerung/Browserrennen offen. |
 | AC9 | Gründe und Formulierung getrennt, message bis CLI/Klärungskontext, keine doppelte Medienfrage/i18n auf Vorrat | Statische Textzuordnungsprüfung im Suchpfad abgeschlossen, ohne blockierenden Befund. |
 | AC10 | Kompakte Treffer und getrennte Seiten-/Gesamtzahl, unbekannt nicht null, Zustände unterscheidbar | Anzeige/Adapter statisch geprüft, erfolgreiche Tabellen und HTTP-Zahlen beobachtet; kontrollierter Zählungsausfall/alle Leer-/Fehler-/Altresultatzustände nicht vollständig live geprüft. |
-| AC11 | Aktuelle Check-/manuelle Nachweise einzeln dokumentiert, Testausbau zurückgestellt | Typecheck/Lint aktuell vom Nutzer bestätigt, Terminal-/HTTP-Nachweise erfasst; Testbestandsaudit und aktueller Projekttestlauf offen. |
+| AC11 | Aktuelle Check-/manuelle Nachweise einzeln dokumentiert, Testausbau zurückgestellt | Typecheck/Lint nach Bereinigung erneut vom Nutzer bestätigt, Terminal-/HTTP-Nachweise erfasst; gezielte Altbestandsausnahme dokumentiert. Testbestandsaudit und aktueller Projekttestlauf offen. |
 
 ## Gesamtzählung und historische Nachweise
 
@@ -129,10 +144,10 @@ Titeladapter liefert results/totalResults. Movie/TV direkte Providerzahlen ohne 
 
 Historischer API-Versuch 09:13 CET: fünf Suchtexte mit Multi − Person = Movie + TV; Stichprobe, kein API-Vertrag oder ID-/Mengenbeweis. Historische Terminal-/Parservergleichs-/Commitdetails siehe verlinkten Vorzustand, nicht als neue Abnahme behandeln.
 
-Entfernte Tests und offene Ersatzabsicherung: tests/unit/services/search-submission.spec.ts (25aaf44; Kriterienkopie/Jahrentfernung/unabhängige Kriterien), tests/integration/tmdb/search-submission.spec.ts (7940ca3; Direktsuche/Klärung/vollständige Kriterien). SEARCH-SUBMIT-INT-001 bis 005 historisch ausgemustert. Frühere Testimportprüfung auf 5244cb3 las 20 TS-Testdateien ohne Verweise auf entfernte Schemas; kein aktueller Testbestandsaudit.
+Entfernte Tests und offene Ersatzabsicherung: tests/unit/services/search-submission.spec.ts (25aaf44; Kriterienkopie/Jahrentfernung/unabhängige Kriterien), tests/integration/tmdb/search-submission.spec.ts (7940ca3; Direktsuche/Klärung/vollständige Kriterien). SEARCH-SUBMIT-INT-001 bis 005 historisch ausgemustert. Frühere Testimportprüfung auf 5244cb3 las 20 TS-Testdateien ohne Verweise auf entfernte Schemas; kein aktueller Testbestandsaudit. Die spätere Entfernung von chat.spec.ts betrifft einen ausgemusterten anderen Vertrag, keine nachgewiesene Ersatzabsicherung des aktuellen Suchvertrags.
 
 ## Verbleibende Grenzen und nächster Arbeitspunkt
 
-Keine weiteren Simulationen beauftragt: Providerverzögerungen, kontrollierter Suchfehler und ausdrücklicher Neuversuch, isolierter Personenzählungsausfall, instrumentierte Provideraufrufzahlen, garantierte interne Execute-Überlappung, Sitzungslaufzeit/Mehrinstanzverhalten und Browser-/Wizardrennen bleiben ungeprüft. Kein Produktionsfreigabenachweis.
+Keine weiteren Simulationen beauftragt: Providerverzögerungen, kontrollierter Suchfehler und ausdrücklicher Neuversuch, isolierter Personenzählungsausfall, instrumentierte Provideraufrufzahlen, garantierte interne Execute-Überlappung, Sitzungslaufzeit/Mehrinstanzverhalten und Browser-/Wizardrennen bleiben ungeprüft. Kein Produktionsfreigabenachweis. Projektweiter Vollscan ausdrücklich nicht vorgesehen.
 
 Nächster begrenzter Arbeitspunkt: bestehenden Testbestand auf fachliche Aktualität, Grenzen Matrix/Flow/LLM/Provider/HTTP, Doppelungen und fehlende Zusicherungen auditieren; priorisierte Bestandsbewertung dokumentieren. Konkrete Teständerungen separat vereinbaren. Danach aktuellen Testlauf und Dokumentationsabgleich erfassen und Architekturabschluss mit ausdrücklich verbleibenden Grenzen bewerten. Kein neuer Suchweg vor separater Entscheidung.
