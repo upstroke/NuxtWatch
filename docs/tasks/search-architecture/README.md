@@ -1,6 +1,6 @@
 # Sucharchitektur – Arbeitsstand und Tasks
 
-Stand: 22. November 2026. Branch: `feat/shared-search-architecture`. Aktueller Codebezug: `9010afb`. Typecheck, Lint und vorhandene Tests danach laut Nutzer erfolgreich (08:14 CET); kein eigener Tool-Lauf und noch keine manuelle Abnahme des aktuellen Umbaus.
+Stand: 22. November 2026. Branch: `feat/shared-search-architecture`. Aktueller Codebezug: `794788f`. Typecheck, Lint und vorhandene Tests laut Nutzer am 22. November um 08:29 CET erfolgreich; kein eigener Tool-Lauf und noch keine dokumentierte manuelle Abnahme des aktuellen Umbaus.
 
 ## Aktiver Umsetzungstask
 
@@ -8,7 +8,7 @@ Stand: 22. November 2026. Branch: `feat/shared-search-architecture`. Aktueller C
 | --- | --- | --- |
 | [01 – Gemeinsame Suchmatrix und Ablaufsteuerung](01-shared-search-matrix.md) | In Umsetzung, nicht fachlich abgenommen | Zielstruktur und Matrix mit vorhandenen Titelwegen herstellen und im Terminal prüfen |
 
-Task enthält Umfang, Ausschlüsse, Abnahmekriterien, tatsächliches Prüfprotokoll und Findings. Ein Task pro konkretem Schritt/Durchstich, nicht pro Datei. Task 02 erst nach Auswahl des nächsten Anwendungsfalls; Keyword ist möglich, nicht festgelegt. Findings aktualisieren gemeinsame Regeln; abgeschlossene Tasks bleiben zunächst als Abnahmebeleg. Keine weitere Sammlung von Zwischenstandsnotizen.
+Task enthält Umfang, Ausschlüsse, Abnahmekriterien, Prüfprotokoll und Findings. Ein Task pro konkretem Schritt/Durchstich, nicht pro Datei. Task 02 erst nach Auswahl des nächsten Anwendungsfalls; Keyword ist möglich, nicht festgelegt. Findings aktualisieren gemeinsame Regeln; abgeschlossene Tasks bleiben zunächst als Abnahmebeleg. Keine weitere Sammlung von Zwischenstandsnotizen.
 
 ## Verbindliche Grundlage
 
@@ -20,12 +20,17 @@ Task enthält Umfang, Ausschlüsse, Abnahmekriterien, tatsächliches Prüfprotok
 
 - `flow.ts` bündelt Auftrag, Kriterienübernahme, Revision, Fragebindung und reservierte Ausführung. `workflow.ts`, `coordinator.ts` und `submit.ts` sind entfernt; HTTP und Session verwenden den Flow.
 - `matrix.ts` bewertet Multi/Movie/TV gegen denselben Kriterienstand. Fachliche Vollabnahme noch offen.
-- `src/lib/schemas/search.ts` bündelt Kriterien, Vorschläge, Fragen, Aktionen und Antworten. Fünf geprüfte Produktionsdateien verwenden direkte Importe; vier alte Schema-Dateien sind entfernt. Runtime-/Provider-/Kartenverträge bleiben getrennt.
+- `src/lib/schemas/search.ts` bündelt Kriterien, Vorschläge, Fragen, Aktionen und Antworten. Fünf zuvor geprüfte Produktionsdateien verwenden direkte Importe; vier alte Schema-Dateien sind entfernt. Runtime-/Provider-/Kartenverträge bleiben getrennt. Kein vollständiger repositoryweiter Produktionsimportscan.
 - `llm.ts` enthält Modelltransport und gemeinsame Vorschlagsinterpretation. `parser.ts` ist entfernt; Flow und bestehender Parser-Vertragstest verwenden `llm.ts`. Prompt, JSON-Kontext, Validierung und Modellparameter unverändert.
-- HTTP liegt noch in `server/api/search.post.ts`. `texts.ts` und kompakte Terminaldarstellung stehen aus. Kein vollständiger repositoryweiter Produktionsimportscan.
+- HTTP liegt in `server/api/search/index.post.ts`; `server/api/search.post.ts` ist im geprüften API-Verzeichnis nicht mehr vorhanden. URL bleibt `POST /api/search`.
+- `server/services/search/texts.ts` bündelt anwendungseigene Klärungstexte sowie HTTP- und Sessionmeldungen. Flow, HTTP und Session verwenden diesen Katalog. Freie Modellnachrichten bleiben davon getrennt.
+- `scripts/search.mjs` bündelt feste Terminaltexte und dynamische Ausgabevorlagen im lokalen `terminalTexts`-Katalog. Keine Serverimporte, zusätzliche Datei oder i18n-Infrastruktur. Die Medienauswahl wird lokal beschriftet; das ist kein gemeinsamer server-/clientübergreifender Textkatalog. Vollständige AC9-Abnahme noch offen.
+- Kompakte Terminaltabelle mit Titel, Film/Serie, Datum und TMDb-ID; fehlendes Datum als `—`. Eigene Leermeldung und Trefferzahl nur für die aktuelle Antwort, keine Gesamtzahl. Angezeigte Trefferfelder werden validiert.
 - Titel ohne Typ/Jahr: Multi; expliziter Film/Serie optional mit Einzeljahr: Movie/TV. Titel/Jahr ohne Typ: gewählte Rückfragestrategie, keine Listen-Zusammenführung oder Jahres-Nachfilterung. Multi-Personen nicht als Titelkarten; `include_adult=true`, keine Adult-basierte Ausfilterung.
 - Clarify sucht nicht; Execute interpretiert nicht erneut. Submit/Execute nutzen dieselbe Reservierung. Laufende/erfolgreiche Revision nicht nochmals starten, technischer Fehler erlaubt ausdrücklichen neuen Versuch. Nicht erneut manuell abgenommen, insbesondere keine Parallelitätsprüfung.
 - Prozesslokale Session: 30 Minuten Inaktivität, maximal 1.000 Sessions, nicht neustartfest.
+
+Jüngste Umsetzungen: `83b393f` kompakte Terminaltreffer, `22f6cd2` zentrale HTTP-/Sessionmeldungen, `794788f` Terminaltextkatalog. Wortlaut und Ablauf bei den beiden Textrefactorings unverändert.
 
 Historischer Klärungsnachweis seit JSON-Stand `81dc0e8`: Auf „Finde Morgenbogen von 1999“ führten freie Film-/Serienantworten zu movie/1999 beziehungsweise tv/1999, explizite Jahreskorrektur zu movie/2001. Titel erhalten, ready, keine automatische Suche; Execute dabei nicht geprüft. Zuvor vier erfolgreiche Textläufe, frühere Fehlerursache nicht isoliert. Kein Ersatz für erneuten Durchstich nach Umbau.
 
@@ -33,7 +38,7 @@ Historischer Klärungsnachweis seit JSON-Stand `81dc0e8`: Auf „Finde Morgenbog
 
 Automatischer Testausbau bleibt zurückgestellt. Keine neuen/duplizierten Tests oder vorsorgliche Testmigration. Bestehende Tests nicht pauschal löschen oder durch Ausschlüsse/unnötige Kompatibilitätsschichten retten.
 
-Ausdrücklich freigegebene Einzelfälle am 22. November: zwei alte Submission-Testdateien entfernt; im Titeltest ausschließlich `include_adult` ergänzt; Parser-Vertragstest nur auf den neuen Modulpfad umgestellt. Keine Coverage-/Prüfkonfiguration verändert. Vorhandene Tests auf Nutzerauftrag ausgeführt und zuletzt nach `9010afb` laut Nutzer grün, ebenso Typecheck/Lint. Testumfang/Zahlen nicht aus pauschaler Rückmeldung ableiten.
+Ausdrücklich freigegebene Einzelfälle am 22. November: zwei alte Submission-Testdateien entfernt; im Titeltest ausschließlich `include_adult` ergänzt; Parser-Vertragstest nur auf den neuen Modulpfad umgestellt. Keine Coverage-/Prüfkonfiguration verändert. Vorhandene Tests zuletzt für den Stand nach `794788f` laut Nutzer um 08:29 CET grün, ebenso Typecheck/Lint. Kein eigener Lauf; Befehle, Testumfang, Zahlen und Coverage nicht aus der pauschalen Rückmeldung ableiten. Frühere grüne Rückmeldung nach `9010afb` um 08:14 CET bleibt historisch.
 
 Die entfernten Tests hinterlassen offene Absicherung für Kriterienübernahme/Jahrentfernung und den neuen Submit-/Klärungsflow. Kennungen `SEARCH-SUBMIT-INT-001` bis `005` nicht erneut vergeben. Erhaltene Parser- und Titeladaptertests ersetzen keine vollständige Flow-/Race-Prüfung. Details und Commitbelege im Task.
 
@@ -46,7 +51,7 @@ node scripts/search.mjs
 node scripts/search.mjs http://localhost:3001
 ```
 
-Nuxt, Modellserver und lokale Konfiguration erforderlich. HTTP/Cookie-Client ohne eigene Providerzugangsdaten oder Serverimporte. Text ohne Frage → Submit, mit Frage → gebundene Antwort. `/select NUMMER`, `/submit TEXT`, `/execute`, `/reset`, `/exit` bleiben explizite Aktionen. Wizard und kompakte Treffer nur nach Bedarf erweitern.
+Nuxt, Modellserver und lokale Konfiguration erforderlich. HTTP/Cookie-Client ohne eigene Providerzugangsdaten oder Serverimporte. Text ohne Frage → Submit, mit Frage → gebundene Antwort. `/select NUMMER`, `/submit TEXT`, `/execute`, `/reset`, `/exit` bleiben explizite Aktionen. Kriterien und Entscheidungen weiterhin als JSON; Treffer kompakt als Tabelle. Weitere Wizard-/Terminalfunktionen nur nach Bedarf.
 
 ## Abgeschlossener Parservergleich
 
@@ -58,6 +63,6 @@ Relevante Vergleichsfälle bleiben Orientierung: Film/Serie, Titel allein, Titel
 
 ## Offene Arbeit
 
-Als Nächstes verbleibende Zielstruktur umsetzen (HTTP-Pfad, Texte), Terminal bedarfsgerecht ergänzen, danach fachlich durchstechen. Checks nach Codeänderungen erneut protokollieren. Kein neuer Suchweg vor Abschluss dieses Durchstichs.
+Gezielte fachliche Codeprüfung einschließlich Textzuordnung/AC9 und vollständigen Produktionsimportnachweis abschließen; anschließend manuelle Terminalfälle samt Ergebnis protokollieren. Kompakte Ausgabe ist implementiert, nicht manuell abgenommen. Keine Vollabnahme von AC9, AC10 oder Task 01 aus den grünen Checks ableiten. Kein neuer Suchweg vor Abschluss dieses Durchstichs.
 
 Historische Durchstichsnotizen und Vergleichsverzeichnis sind entfernt; frühere Skript-Inventur zeigte nur `scripts/search.mjs`. Keine erneute Bereinigung lokaler Ergebnisse. Außerhalb des ersten Umfangs: unabhängige Teilübernahme bei Modellklärung, Submit-Idempotenz/Ergebniswiederholung, optionale Eingrenzung/Gesamtzählung. Keine Auswahloptionen aus freiem LLM-Fragetext ableiten; Mehrfachtreffer allein kein Pflichtklärungsgrund. Zugriffsschutz/Ressourcenlimits vor öffentlichem Betrieb.

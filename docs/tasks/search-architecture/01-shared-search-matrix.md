@@ -1,6 +1,6 @@
 # Task 01 – Gemeinsame Suchmatrix und Ablaufsteuerung
 
-Status: in Umsetzung, noch nicht fachlich abgenommen. Stand: 22. November 2026. Codebezug: `9010afb`, Branch: `feat/shared-search-architecture`.
+Status: in Umsetzung, noch nicht fachlich abgenommen. Stand: 22. November 2026. Codebezug: `794788f`, Branch: `feat/shared-search-architecture`.
 
 Grundlagen: [Konzept und Hindernismatrix](../../sucharchitektur-konzept.md), [Zielstruktur](zielstruktur.md), [Arbeitsstand](README.md), [TMDb-Analyse](../../tmdb-api-analysis.md), [geprüfte Requests](../../tmdb-search-examples.md), [Prüfregeln](../../testing.md). Keine zweite vollständige Regelmatrix in diesem Task.
 
@@ -18,8 +18,8 @@ Einzelentscheidungen vom 22. November, keine allgemeine Freigabe für weitere Te
 
 - Zwei veraltete Submission-Testdateien auf ausdrücklichen Nutzerwunsch entfernt; Ersatzabsicherung weiter offen.
 - In `title-search.spec.ts` ausschließlich `include_adult: 'true'` zur exakten Multi-Aufruferwartung ergänzt, nach gezeigtem Testfehler und Freigabe.
-- In `search-parser.spec.ts` ausschließlich den Import von `search/parser` auf `search/llm` umgestellt, im Zuge der ausdrücklich beauftragten Zusammenführung. Erwartungen und Testumfang erhalten.
-- Vorhandene Tests auf Nutzerauftrag ausgeführt; Ergebnisse als Nutzerbericht erfasst. Dies hebt die Zurückstellung neuer automatisierter Absicherung nicht auf.
+- In `search-parser.spec.ts` ausschließlich den Import von `search/parser` auf `search/llm` umgestellt. Erwartungen und Testumfang erhalten.
+- Vorhandene Tests auf Nutzerauftrag ausgeführt; Ergebnisse als Nutzerbericht erfasst. Die jüngste grüne Rückmeldung um 08:29 CET hebt die Zurückstellung neuer automatisierter Absicherung nicht auf.
 
 ## Umsetzungsschritte
 
@@ -27,12 +27,12 @@ Einzelentscheidungen vom 22. November, keine allgemeine Freigabe für weitere Te
 - [x] Koordination in `flow.ts` zusammenführen, HTTP und Session anbinden; `workflow.ts`, `coordinator.ts`, `submit.ts` entfernen.
 - [ ] Matrix vollständig abnehmen: `matrix.ts` implementiert und angebunden, Kriterienabdeckung und Verhalten noch manuell zu prüfen.
 - [x] Kriterien-, Vorschlags-, Frage-, Aktions- und Antwortverträge in `src/lib/schemas/search.ts` konsolidieren; fünf geprüfte Produktionsdateien auf direkte Importe umstellen; vier alte Schema-Re-Exports entfernen.
-- [ ] HTTP-Einstieg von `server/api/search.post.ts` nach `server/api/search/index.post.ts` verschieben; URL beibehalten.
+- [x] HTTP-Einstieg nach `server/api/search/index.post.ts` verschieben; URL beibehalten. Zielpfad gelesen, alte Datei im API-Verzeichnis nicht mehr vorhanden.
 - [x] Gemeinsame Interpretation/Validierung in `llm.ts` zusammenführen; Flow und freigegebenen Testimport umstellen, `parser.ts` entfernen.
-- [ ] Anwendungseigene Fragen/Hinweise in `texts.ts` bündeln; freie Modellnachrichten unterscheiden.
+- [x] Anwendungseigene Klärungs-/HTTP-/Sessiontexte in `texts.ts` bündeln; Terminaltexte lokal in `terminalTexts` zentralisieren, freie Modellnachrichten unterscheiden. Vollständige AC9-Abnahme separat offen.
 - [x] Vorhandenen TMDb-Titeladapter ohne zusätzlichen Titel-Wrapper wiederverwenden.
-- [ ] Terminal bedarfsgerecht um kompakte Trefferdarstellung ergänzen.
-- [ ] Fachliche Codeprüfung und manuelle Fälle durchführen; nach weiteren Änderungen technische Checks erneut protokollieren.
+- [x] Terminal um kompakte Trefferdarstellung ergänzen; manuelle AC10-Abnahme offen.
+- [ ] Fachliche Codeprüfung und manuelle Fälle durchführen; technische Checks zuletzt für Stand nach `794788f` laut Nutzer erfolgreich.
 - [ ] Findings in Konzept/Matrix/Zielstruktur zurückführen und nächsten Suchweg gesondert auswählen.
 
 Abgehakte Umbauten sind Umsetzungsstatus, keine automatische fachliche Abnahme.
@@ -66,13 +66,13 @@ Je Fall Ausgangskriterien, Eingabe/Aktion, beobachtete Kriterien/Frage, belegte 
 7. Execute nach Erfolg wiederholen; technischer Fehler mit ausdrücklicher Wiederholung soweit kontrolliert möglich. Parallelstarts separat ausweisen.
 8. Kompakte Trefferansicht sowie leere Liste und Fehler soweit reproduzierbar.
 
-Alle acht Fälle für den aktuellen Umbau noch nicht dokumentiert durchgeführt. Nicht reproduzierte Fälle bleiben offen.
+Alle acht Fälle für den aktuellen Umbau noch nicht dokumentiert durchgeführt. Die Nutzerbestätigung von Typecheck/Lint/Tests umfasst keinen ausdrücklich gemeldeten manuellen Durchstich. Nicht reproduzierte Fälle bleiben offen.
 
 ## Prüfprotokoll
 
 | Kriterium | Status | Beleg / Lücke |
 | --- | --- | --- |
-| AC1 | Teilweise geprüft | Flow/LLM/Verträge konsolidiert, alte Module entfernt, technische Checks nach `9010afb` laut Nutzer grün. HTTP-Zielpfad und Texte noch offen; kein vollständiger Produktionsimportscan. |
+| AC1 | Teilweise geprüft | Flow/LLM/Verträge konsolidiert, alte Module entfernt. HTTP-Zielpfad vorhanden, alte Handlerdatei im API-Verzeichnis nicht mehr vorhanden. Checks nach `794788f` laut Nutzer grün; vollständiger Produktionsimportscan offen. |
 | AC2 | Nicht geprüft | Matrix implementiert, vollständige fachliche Abnahme offen. |
 | AC3 | Nicht geprüft | Kein aktueller Terminalbeleg. |
 | AC4 | Nicht geprüft | Kein aktueller Terminalbeleg. |
@@ -80,20 +80,22 @@ Alle acht Fälle für den aktuellen Umbau noch nicht dokumentiert durchgeführt.
 | AC6 | Nicht geprüft | Kein aktueller Terminalbeleg nach Zusammenführung. |
 | AC7 | Nicht geprüft | Kein aktueller Terminalbeleg für Clarify/Execute. |
 | AC8 | Nicht geprüft | Keine reproduzierte Parallelitäts-/Race-Prüfung. |
-| AC9 | Nicht geprüft | Zentrale Texte noch umzusetzen. |
-| AC10 | Nicht geprüft | Kompakte Ausgabe und Durchstich offen. |
-| AC11 | Teilweise geprüft | Typecheck/Lint/Tests nach `9010afb` laut Nutzer erfolgreich; manuelle Abnahmen fehlen. |
+| AC9 | Teilweise geprüft | Serverkatalog für Klärungs-/HTTP-/Sessiontexte; lokaler Terminalkatalog für feste Texte und Vorlagen. Freie Modellnachrichten separat, keine i18n-Infrastruktur oder Serverimporte im CLI. Vollständige fachliche Textzuordnungs-/Zentralisierungsprüfung offen, keine Vollabnahme. |
+| AC10 | Teilweise geprüft | Kompakte Tabelle, Trefferfeldvalidierung, Leermeldung und Antwort-Trefferzahl implementiert. Manuelle Prüfung von Treffer/leer/Fehler sowie Altzuständen offen. |
+| AC11 | Teilweise geprüft | Typecheck/Lint/vorhandene Tests nach `794788f` am 22. November um 08:29 CET laut Nutzer erfolgreich; manuelle Abnahmen fehlen. |
 
 Status: nicht geprüft, teilweise geprüft, erfüllt, fehlgeschlagen, blockiert. Keine Vollabnahme aus Review oder grünem Testlauf ableiten.
 
 | Check | Letzter gemeldeter Stand |
 | --- | --- |
-| Typecheck | Nach Parser-/LLM-Zusammenführung und Löschung `9010afb` am 22. November um 08:14 CET laut Nutzer erfolgreich. |
-| Lint | Nach `9010afb` laut derselben Rückmeldung erfolgreich. |
-| Vorhandene Tests | Nach `9010afb` laut derselben Rückmeldung erfolgreich; kein Nachweis einer neuen Flow-/Parallelitätsabsicherung. |
+| Typecheck | Für Stand nach `794788f` am 22. November um 08:29 CET laut Nutzer erfolgreich. |
+| Lint | Für denselben Stand laut derselben Rückmeldung erfolgreich. |
+| Vorhandene Tests | Für denselben Stand laut derselben Rückmeldung erfolgreich; kein Nachweis neuer Flow-/Parallelitätsabsicherung. |
 | Manuelle Terminal-Abnahme | Für aktuellen Umbau nicht dokumentiert. |
 
-Keine eigenen Tool-Läufe der Projektbefehle. Keine Testzahlen, Coverage oder Browser-/HTTP-Suite-Ausführung aus der pauschalen Nutzerbestätigung ableiten. Frühere Meldungen: TS2345 im HTTP-Handler, mit `6861dff` korrigiert; nachfolgend Typecheck erfolgreich. Veraltete Multi-Parametererwartung durch Nutzerlauf bestätigt, mit `07200b5` korrigiert. Nutzer meldete danach bereits alle drei Checks grün; jüngste Bestätigung gilt dem neuen Stand `9010afb`.
+Keine eigenen Tool-Läufe der Projektbefehle. Keine konkreten Befehle, Testzahlen, Coverage oder Browser-/HTTP-Suite-Ausführung aus der pauschalen Nutzerbestätigung ableiten. Die Angabe 08:29 CET bezeichnet die Rückmeldung, nicht einen gemessenen Laufzeitpunkt.
+
+Historisch: TS2345 im HTTP-Handler mit `6861dff` korrigiert, danach Typecheck erfolgreich. Veraltete Multi-Parametererwartung durch Nutzerlauf bestätigt, mit `07200b5` korrigiert; danach alle drei Checks grün gemeldet. Weitere grüne Rückmeldung nach Parser-/LLM-Zusammenführung `9010afb` um 08:14 CET. Jüngste Bestätigung bezieht sich auf den nachfolgenden Stand mit `83b393f`, `22f6cd2` und `794788f`.
 
 ## Umsetzungschronik
 
@@ -109,8 +111,21 @@ Keine eigenen Tool-Läufe der Projektbefehle. Keine Testzahlen, Coverage oder Br
 | `49ad728`, `3e3027e`, `51f8810`, `5244cb3` | Vier vorübergehende Schema-Re-Export-Dateien entfernt. |
 | `07200b5` | Bestehende Titeltest-Erwartung um `include_adult: 'true'` ergänzt. |
 | `d70769e`, `9010afb` | Parserfunktion/Typen nach LLM übernommen, Flow/Testimport angepasst, altes Parsermodul entfernt. |
+| `83b393f` | Kompakte Terminaltabelle mit Titel, Film/Serie, Datum und TMDb-ID; Trefferfeldvalidierung, eigene Leermeldung, Trefferzahl nur für aktuelle Antwort. |
+| `22f6cd2` | Sieben HTTP- und zwei Sessionmeldungen nach `texts.ts` ausgelagert; Aufrufer umgestellt, Wortlaut/Statuscodes/Kontrollfluss erhalten. |
+| `794788f` | Feste Terminaltexte, Prompts, Tabellenüberschriften und dynamische Ausgabevorlagen lokal in `terminalTexts` gebündelt; keine neue Datei oder Serverimporte, Befehle/HTTP/Bindung unverändert. |
+
+HTTP-Zielpfad und Verwendung der Klärungstexte im Flow wurden für diese Dokumentationsaktualisierung gezielt gelesen; ihre ursprünglichen Umsetzungscommits werden hier mangels ermitteltem Commitbeleg nicht nachgetragen.
 
 Der LLM-Umbau erhält Prompt und JSON-Kontext, Generator-Injektion, `JSON.parse`/Schema-Prüfung, Konfigurations-/Leerantwortfehler, `maxOutputTokens: 256` und `maxRetries: 0`. Kriterienübernahme und Ausführung bleiben im Flow, externer Vorschlagsvertrag im Schema.
+
+## Textkataloge und Terminaldarstellung
+
+`server/services/search/texts.ts` enthält anwendungseigene Klärungsformulierungen sowie HTTP-/Sessionmeldungen. Fachliche Entscheidungen bleiben im Flow bzw. in der Matrix; freie Modellnachrichten werden nicht zu Katalogeinträgen. Der Flow verwendet die zentrale Titelrückfrage und die Medienfrage als Klärungskontext. Die strukturierte Medienfrage enthält weiterhin Optionen statt eines serverseitigen Anzeigetexts.
+
+`scripts/search.mjs` hält reine Terminaldarstellung im lokalen `terminalTexts`-Katalog: Hilfen, Prompts, Fehler, Status-/Ausführungshinweise, Medienauswahl-Beschriftung, Tabellenüberschriften, Datumsplatzhalter und Ausgabevorlagen. Kein gemeinsamer server-/clientübergreifender Katalog; keine Serverimporte, zusätzliche Datei oder vorsorgliche i18n-Infrastruktur. Freie Server-/LLM-Nachrichten bleiben unverändert. AC9 bleibt bis zur vollständigen Prüfung der Textzuordnung teilweise geprüft.
+
+Treffer werden als Tabelle angezeigt, fehlende Daten als `—`; eine erfolgreiche leere Liste hat eine eigene Meldung. Die Zahl bezeichnet ausschließlich Treffer in dieser Antwort, keine Gesamtzahl. Kriterien und Entscheidungen bleiben als JSON sichtbar. Keine neuen Suchregeln, Folgeaufrufe oder Befehle; keine manuelle AC10-Abnahme aus dieser Implementierungsbeschreibung ableiten.
 
 ## Importprüfung und offene Absicherung
 
@@ -125,4 +140,4 @@ Historisch erwartete der entfernte Integrationstest beim Multi-Aufruf kein `incl
 
 ## Findings und Abschluss
 
-Offen: HTTP-Zielpfad, zentrale Texte, kompakte Terminaldarstellung, fachliche Durchstiche und vollständiger Produktionsimportnachweis. Grüne Checks schließen weder die Ersatzabsicherungslücken noch Parallelitätsrisiken. Findings mit Grund in gemeinsame Regeln zurückführen. Task 02 erst nach Wahl des nächsten Anwendungsfalls anlegen. Keine Produktionsfreigabe oder vollständige Abnahme durch diesen Dokumentationsstand.
+HTTP-Zielpfad, serverseitiger Textkatalog, lokaler Terminaltextkatalog und kompakte Trefferanzeige sind implementiert. Offen bleiben vollständige fachliche Code-/Textzuordnungsprüfung, manuelle Terminalfälle und vollständiger Produktionsimportnachweis. Grüne Checks schließen weder die Ersatzabsicherungslücken noch Parallelitätsrisiken. Findings mit Grund in gemeinsame Regeln zurückführen. Task 02 erst nach Wahl des nächsten Anwendungsfalls anlegen. Keine Produktionsfreigabe oder vollständige Abnahme durch diesen Dokumentationsstand.
