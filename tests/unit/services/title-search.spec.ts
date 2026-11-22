@@ -54,6 +54,7 @@ describe('TMDb title search', () => {
     ]);
     expect(http.get).toHaveBeenCalledExactlyOnceWith('/search/multi', {
       query: 'Synthetic Title',
+      include_adult: 'true',
     });
   });
 
