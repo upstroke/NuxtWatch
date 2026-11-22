@@ -1,120 +1,128 @@
 # Task 01 – Gemeinsame Suchmatrix und Ablaufsteuerung
 
-Status: in Umsetzung, noch nicht abgenommen. Stand: 22. November 2026. Branch: `feat/shared-search-architecture`.
+Status: in Umsetzung, noch nicht fachlich abgenommen. Stand: 22. November 2026. Codebezug: `9010afb`, Branch: `feat/shared-search-architecture`.
 
-Grundlagen: [Konzept und Hindernismatrix](../../sucharchitektur-konzept.md), [Zielstruktur](zielstruktur.md), [Arbeitsstand](README.md), [TMDb-Analyse](../../tmdb-api-analysis.md), [geprüfte Requests](../../tmdb-search-examples.md), [Prüfregeln](../../testing.md). Regeln nicht als zweite vollständige Matrix in diesem Task pflegen.
+Grundlagen: [Konzept und Hindernismatrix](../../sucharchitektur-konzept.md), [Zielstruktur](zielstruktur.md), [Arbeitsstand](README.md), [TMDb-Analyse](../../tmdb-api-analysis.md), [geprüfte Requests](../../tmdb-search-examples.md), [Prüfregeln](../../testing.md). Keine zweite vollständige Regelmatrix in diesem Task.
 
-## Ziel
+## Ziel und Umfang
 
-Bestehende Suche gemäß Zielstruktur ordnen und die vereinbarten Titelwege über die gemeinsame Hindernismatrix bewerten. Titel ist vorhandener Abnahmefall der gemeinsamen Architektur, kein eigener Parser. Erst nach dem Durchstich wird der nächste konkrete Anwendungsfall gewählt; das kann beispielsweise ein Keyword sein.
+Bestehende Suche gemäß Zielstruktur ordnen und vorhandene Titelwege über die gemeinsame Hindernismatrix bewerten. Titel ist Abnahmefall der gemeinsamen Architektur, kein eigener Parser. Erst danach nächsten konkreten Anwendungsfall wählen; Keyword ist möglich, nicht bereits beauftragt.
 
-## Umfang und Grenzen
+Umfang: gemeinsamer Coordinator, Hindernisbewertung, zusammengehörige externe Verträge, zentrale Anwendungstexte und minimal nötige Terminaldarstellung. Sessionbindung, JSON-Interpretation und Provideradapter erhalten. Keine neue Keyword-/Personen-/Discovery-Strecke, Jahresbereiche, Datenbank, generische Regel-Engine, vollständige Internationalisierung, Web-UI oder neuer Modellvergleich.
 
-Gemeinsamer Coordinator, Hindernisbewertung, Grenzverträge, zentrale Anwendungstexte und minimal nötige Terminaldarstellung. Bestehende Sessionbindung, JSON-Interpretation und Provideradapter erhalten. Keine neue Keyword-/Personen-/Discovery-Strecke, Jahresbereiche, Datenbank, generische Regel-Engine, vollständige Internationalisierung oder Web-UI. Kein erneuter Prompt-/Modellvergleich.
+## Prüfvereinbarung und ausdrücklich freigegebene Ausnahmen
 
-Automatisierte Tests sind für diese explorative Phase ausdrücklich zurückgestellt: weder neu anlegen noch erweitern, duplizieren oder im Zuge des Umbaus refaktorieren. Bestehende Tests nicht pauschal löschen. Durch Umbenennungen oder Verträge ungültige Tests als bekannte Lücke protokollieren; keine Ausschlüsse, Konfigurationsänderungen oder Kompatibilitätsschichten allein zum Verbergen solcher Fehler. Automatisierte Testläufe sind hier kein verpflichtender Abnahmeschritt; nicht ausgeführte Tests nicht als grün melden. Typecheck und Lint bleiben vorgesehen.
+Automatischer Testausbau bleibt zurückgestellt: keine neuen, erweiterten, duplizierten oder vorsorglich refaktorierten Tests. Keine pauschale Löschung, keine geänderten Ausschlüsse oder Coverage-/Checkkonfiguration zum Verbergen von Fehlern. Kriterien zunächst per Codeprüfung und dokumentierten Terminalfällen abnehmen; Typecheck/Lint sind technische Checks, kein fachlicher Nachweis.
 
-Ausdrückliche Einzelentscheidung vom 22. November 2026: Die beiden unten genannten veralteten Suchtests wurden auf Nutzerwunsch entfernt. Dies ist keine pauschale Freigabe zum Löschen weiterer Tests. Die fehlende Ersatzabsicherung bleibt dokumentiert und zurückgestellt.
+Einzelentscheidungen vom 22. November, keine allgemeine Freigabe für weitere Testarbeiten:
+
+- Zwei veraltete Submission-Testdateien auf ausdrücklichen Nutzerwunsch entfernt; Ersatzabsicherung weiter offen.
+- In `title-search.spec.ts` ausschließlich `include_adult: 'true'` zur exakten Multi-Aufruferwartung ergänzt, nach gezeigtem Testfehler und Freigabe.
+- In `search-parser.spec.ts` ausschließlich den Import von `search/parser` auf `search/llm` umgestellt, im Zuge der ausdrücklich beauftragten Zusammenführung. Erwartungen und Testumfang erhalten.
+- Vorhandene Tests auf Nutzerauftrag ausgeführt; Ergebnisse als Nutzerbericht erfasst. Dies hebt die Zurückstellung neuer automatisierter Absicherung nicht auf.
 
 ## Umsetzungsschritte
 
-- [ ] Aktuellen Code und Aufrufer gegen die Zielstruktur prüfen; benötigte Funktionen zuordnen.
-- [x] `flow.ts` mit benötigter Koordination aus `workflow.ts`, `coordinator.ts` und `submit.ts` herstellen; diese drei alten Module entfernen. Keine vollständige fachliche Abnahme hierdurch.
-- [ ] `matrix.ts` für gemeinsame Hindernisbewertung herstellen. Jeder passende Weg erhält denselben Kriterienstand; vollständigen Suchumfang und Kriterienabdeckung prüfen.
-- [ ] HTTP-Einstieg nach `server/api/search/index.post.ts` verschieben, zusammengehörige externe Suchverträge konsolidieren; Produktionsimporte nachziehen.
-- [ ] Gemeinsame LLM-Interpretation/Validierung sinnvoll ordnen, keinen Parser je Suchweg und keinen neuen Vertrag auf Vorrat einführen.
-- [ ] Anwendungseigene Fragen/Hinweise zentral gemäß Textkatalog verwalten; freie Modellnachrichten davon unterscheiden.
-- [ ] Vorhandene TMDb-Adapter wiederverwenden; keine zusätzliche `title.ts` als reine Weiterleitung.
-- [ ] Terminal nur soweit nötig für Kriterien, gebundene Fragen, Execute und kompakte Treffer ergänzen.
-- [ ] Codeprüfung, manuelle Fälle, Typecheck und Lint durchführen und protokollieren. Testlücken einschließlich ausdrücklich beauftragter Löschungen dokumentieren; keine vorsorgliche Ersatztestsuite.
-- [ ] Findings in Konzept/Matrix/Zielstruktur zurückführen; nächsten Suchweg gesondert auswählen.
+- [ ] Vollständige Struktur-/Aufruferprüfung abschließen; bisher gezielte Dateiprüfungen, kein vollständiger repositoryweiter Produktionsimportscan.
+- [x] Koordination in `flow.ts` zusammenführen, HTTP und Session anbinden; `workflow.ts`, `coordinator.ts`, `submit.ts` entfernen.
+- [ ] Matrix vollständig abnehmen: `matrix.ts` implementiert und angebunden, Kriterienabdeckung und Verhalten noch manuell zu prüfen.
+- [x] Kriterien-, Vorschlags-, Frage-, Aktions- und Antwortverträge in `src/lib/schemas/search.ts` konsolidieren; fünf geprüfte Produktionsdateien auf direkte Importe umstellen; vier alte Schema-Re-Exports entfernen.
+- [ ] HTTP-Einstieg von `server/api/search.post.ts` nach `server/api/search/index.post.ts` verschieben; URL beibehalten.
+- [x] Gemeinsame Interpretation/Validierung in `llm.ts` zusammenführen; Flow und freigegebenen Testimport umstellen, `parser.ts` entfernen.
+- [ ] Anwendungseigene Fragen/Hinweise in `texts.ts` bündeln; freie Modellnachrichten unterscheiden.
+- [x] Vorhandenen TMDb-Titeladapter ohne zusätzlichen Titel-Wrapper wiederverwenden.
+- [ ] Terminal bedarfsgerecht um kompakte Trefferdarstellung ergänzen.
+- [ ] Fachliche Codeprüfung und manuelle Fälle durchführen; nach weiteren Änderungen technische Checks erneut protokollieren.
+- [ ] Findings in Konzept/Matrix/Zielstruktur zurückführen und nächsten Suchweg gesondert auswählen.
+
+Abgehakte Umbauten sind Umsetzungsstatus, keine automatische fachliche Abnahme.
 
 ## Abnahmekriterien
 
-| ID | Beobachtbares Kriterium | Vorgesehene Prüfung |
+| ID | Beobachtbares Kriterium | Prüfung |
 | --- | --- | --- |
-| AC1 | Betroffene Produktionsdateien entsprechen der Zielstruktur; keine abgelösten Koordinationsschichten oder alten Produktionsimporte bleiben parallel bestehen. Verbliebene Testinkompatibilitäten oder ausdrücklich entfernte Tests sind als Absicherungslücken erfasst. | Codeprüfung, Typecheck |
-| AC2 | Registrierte passende Wege werden gegen denselben Kriterienstand bewertet. Kein bestätigtes Kriterium wird weggelassen, der gemeinte Suchumfang nicht verengt; Regeln sind nicht mehrfach implementiert. | Codeprüfung, manuelle Fälle |
-| AC3 | Titel allein führt über Multi zur Suche, ohne Frage nach optionalem Medientyp/Jahr. | Terminal, gezielte Codeprüfung der Wegwahl |
-| AC4 | Expliziter Film/Serie verwendet Movie/TV; Einzeljahr wird als `primary_release_year`/`first_air_date_year` berücksichtigt. | Terminal, Parameterabbildung im Code |
-| AC5 | Titel plus Jahr ohne Medientyp liefert eine gebundene Frage und keinen Trefferaufruf; dies bleibt die vereinbarte Produktstrategie. | Terminal, Codeprüfung des Übergangs |
-| AC6 | Angebotene Auswahl wird ohne LLM geprüft. Gebundener Freitext erhält ursprünglichen Wunsch und Fragekontext; Titel/Jahr bleiben erhalten oder werden ausdrücklich korrigiert. | Terminal, Codeprüfung |
-| AC7 | Clarify führt keine Treffersuche aus. Erst ausdrückliches Execute verwendet den bestätigten gebundenen Stand ohne erneute LLM-Interpretation. | Terminal, Codeprüfung |
-| AC8 | Veraltete Antworten überschreiben keinen neueren Stand. Wiederholte/parallele Starts derselben reservierten Revision erzeugen keinen zweiten Trefferaufruf. | Codeprüfung und soweit möglich manuelle Prüfung; nicht reproduzierte Rennen ausdrücklich ungeprüft |
-| AC9 | Anwendungseigene Texte liegen zentral; fachliche Gründe und Formulierung bleiben getrennt. Keine neue i18n-Infrastruktur auf Vorrat. | Codeprüfung |
-| AC10 | Terminal zeigt Kriterien, nötige Fragen und kompakte Treffer. Fehler, leerer Erfolg und Treffer sind unterscheidbar; alter Ergebnisstand wird nicht als neuer ausgegeben. | Manueller Durchstich |
-| AC11 | Typecheck und Lint wurden ausgeführt, Ergebnisse protokolliert. Manuelle Fälle und nicht geprüfte Punkte sind einzeln dokumentiert; automatisierte Tests bleiben zurückgestellt. | Prüfprotokoll |
+| AC1 | Produktionsdateien entsprechen der Zielstruktur; keine abgelösten Koordinationsschichten oder alten Produktionsimporte. Verbliebene Testinkompatibilitäten/entfernte Tests sind als Lücken erfasst. | Codeprüfung, Typecheck |
+| AC2 | Passende Wege werden gegen denselben Kriterienstand bewertet. Kein bestätigtes Kriterium entfällt, der Suchumfang wird nicht verengt; keine mehrfachen Fachregeln. | Codeprüfung, manuelle Fälle |
+| AC3 | Titel allein führt über Multi zur Suche, ohne Frage nach optionalem Typ/Jahr. | Terminal, Wegwahl im Code |
+| AC4 | Expliziter Film/Serie nutzt Movie/TV; Einzeljahr wird über `primary_release_year`/`first_air_date_year` berücksichtigt. | Terminal, Parameterabbildung |
+| AC5 | Titel/Jahr ohne Typ liefert eine gebundene Frage, keinen Trefferaufruf; gewählte Produktstrategie. | Terminal, Übergang im Code |
+| AC6 | Angebotene Auswahl ohne LLM; Freitext erhält ursprünglichen Wunsch und Fragekontext. Titel/Jahr bleiben erhalten oder werden ausdrücklich korrigiert. | Terminal, Codeprüfung |
+| AC7 | Clarify sucht nicht. Erst ausdrückliches Execute verwendet den bestätigten gebundenen Stand ohne erneute LLM-Interpretation. | Terminal, Codeprüfung |
+| AC8 | Alte Antworten überschreiben keinen neuen Stand; wiederholte/parallele Starts einer reservierten Revision erzeugen keinen zweiten Trefferaufruf. | Codeprüfung, reproduzierte Fälle; ungeprüfte Rennen offen |
+| AC9 | Anwendungstexte zentral, fachliche Gründe und Formulierung getrennt; keine i18n-Infrastruktur auf Vorrat. | Codeprüfung |
+| AC10 | Terminal zeigt Kriterien, Fragen und kompakte Treffer. Fehler/leer/Treffer unterscheidbar; keine alten Ergebnisse als neue ausgeben. | Terminal |
+| AC11 | Typecheck/Lint ausgeführt und protokolliert; manuelle Fälle und offene Punkte einzeln ausgewiesen. Automatischer Testausbau zurückgestellt. | Prüfprotokoll |
 
 ## Manuelle Fälle
 
-Jeweils Ausgangskriterien, Eingabe/Aktion, beobachtete Kriterien/Frage, gewählten Weg soweit belegt und Suchstart dokumentieren. Keine feste Live-Trefferzahl voraussetzen, keine realen sensiblen Verläufe oder Zugangsdaten committen. Terminalausgabe allein beweist keinen ausgehenden Parameter; dafür Codeprüfung beziehungsweise sichere lokale Diagnose verwenden.
+Je Fall Ausgangskriterien, Eingabe/Aktion, beobachtete Kriterien/Frage, belegte Wegwahl und Suchstart protokollieren. Keine feste Live-Trefferzahl voraussetzen oder Zugangsdaten/sensible Verläufe committen. Providerparameter nicht allein aus Terminalausgabe ableiten, sondern Code oder sichere lokale Diagnose heranziehen.
 
-1. Nach Reset: nur Titel.
-2. Nach Reset: Titel ausdrücklich als Film, dann separat als Serie.
-3. Film mit Jahr und Serie mit Erstausstrahlungsjahr.
-4. Titel/Jahr ohne Typ, danach angebotene Auswahl; Suche erst durch Execute.
-5. Dasselbe mit freier Film-/Serienantwort; separat Antwort mit Jahreskorrektur.
-6. Während offener Frage ausdrücklich neuer `/submit TEXT` und separat Reset; alte Bindung darf nicht mehr gelten. Verzögerte Antwort nur als geprüft markieren, wenn tatsächlich reproduziert.
-7. Execute erneut nach Erfolg; technischer Fehler und ausdrückliche Wiederholung soweit kontrolliert möglich. Parallele Starts separat als geprüft/ungeprüft ausweisen.
-8. Kompakte Trefferansicht sowie leere Liste und Fehler soweit reproduzierbar. Nicht reproduzierte Fälle bleiben offen.
+1. Nach Reset nur Titel.
+2. Titel ausdrücklich als Film, separat als Serie.
+3. Film mit Jahr, Serie mit Erstausstrahlungsjahr.
+4. Titel/Jahr ohne Typ, angebotene Auswahl, Suche erst durch Execute.
+5. Gebundene freie Film-/Serienantwort und separat Jahreskorrektur.
+6. Neuer `/submit TEXT` sowie Reset während offener Frage; alte Bindung ungültig. Verzögerte Antwort nur als geprüft markieren, wenn reproduziert.
+7. Execute nach Erfolg wiederholen; technischer Fehler mit ausdrücklicher Wiederholung soweit kontrolliert möglich. Parallelstarts separat ausweisen.
+8. Kompakte Trefferansicht sowie leere Liste und Fehler soweit reproduzierbar.
+
+Alle acht Fälle für den aktuellen Umbau noch nicht dokumentiert durchgeführt. Nicht reproduzierte Fälle bleiben offen.
 
 ## Prüfprotokoll
 
-Beleg je Kriterium, nicht pauschal aus einem erfolgreichen Durchlauf ableiten.
-
-| Kriterium | Status | Tatsächliche Prüfung / Beleg / Lücke |
+| Kriterium | Status | Beleg / Lücke |
 | --- | --- | --- |
-| AC1 | Teilweise geprüft | HTTP-Handler und Session-Typimport bei `26312c4` auf `flow.ts` geprüft; drei alte Module danach entfernt. Zwei veraltete Tests auf ausdrücklichen Wunsch entfernt, Absicherungslücken unten erfasst. Typecheck nach `6861dff` laut Nutzer erfolgreich, vor Testlöschungen. Kein vollständiger repositoryweiter Importscan; übrige Zielstruktur noch offen. |
-| AC2 | Nicht geprüft | Matrix implementiert, noch keine vollständige Abnahme. |
-| AC3 | Nicht geprüft | — |
-| AC4 | Nicht geprüft | — |
-| AC5 | Nicht geprüft | — |
-| AC6 | Nicht geprüft | — |
-| AC7 | Nicht geprüft | — |
+| AC1 | Teilweise geprüft | Flow/LLM/Verträge konsolidiert, alte Module entfernt, technische Checks nach `9010afb` laut Nutzer grün. HTTP-Zielpfad und Texte noch offen; kein vollständiger Produktionsimportscan. |
+| AC2 | Nicht geprüft | Matrix implementiert, vollständige fachliche Abnahme offen. |
+| AC3 | Nicht geprüft | Kein aktueller Terminalbeleg. |
+| AC4 | Nicht geprüft | Kein aktueller Terminalbeleg. |
+| AC5 | Nicht geprüft | Kein aktueller Terminalbeleg. |
+| AC6 | Nicht geprüft | Kein aktueller Terminalbeleg nach Zusammenführung. |
+| AC7 | Nicht geprüft | Kein aktueller Terminalbeleg für Clarify/Execute. |
 | AC8 | Nicht geprüft | Keine reproduzierte Parallelitäts-/Race-Prüfung. |
-| AC9 | Nicht geprüft | — |
-| AC10 | Nicht geprüft | — |
-| AC11 | Teilweise geprüft | Nutzer meldet Typecheck nach `6861dff` erfolgreich. Kein erneuter Lauf nach Testlöschungen dokumentiert; Lint und manuelle Durchstiche weiterhin offen. |
+| AC9 | Nicht geprüft | Zentrale Texte noch umzusetzen. |
+| AC10 | Nicht geprüft | Kompakte Ausgabe und Durchstich offen. |
+| AC11 | Teilweise geprüft | Typecheck/Lint/Tests nach `9010afb` laut Nutzer erfolgreich; manuelle Abnahmen fehlen. |
 
-Erlaubte Status: nicht geprüft, teilweise geprüft, erfüllt, fehlgeschlagen, blockiert. Ein Code-Review ist kein vollständiger Parallelitätsnachweis. Ungeprüfte Teile eines Kriteriums bleiben sichtbar, keine pauschale Vollabnahme.
+Status: nicht geprüft, teilweise geprüft, erfüllt, fehlgeschlagen, blockiert. Keine Vollabnahme aus Review oder grünem Testlauf ableiten.
 
-| Check | Ergebnis |
+| Check | Letzter gemeldeter Stand |
 | --- | --- |
-| Typecheck | Zunächst laut Nutzerlauf mit TS2345 im HTTP-Handler fehlgeschlagen. Nach Korrektur `6861dff` am 22. November laut Nutzer erfolgreich; vor `25aaf44`/`7940ca3`. Kein neuer Lauf nach Testlöschungen dokumentiert, kein eigener Tool-Lauf. |
-| Lint | Nicht ausgeführt beziehungsweise kein Ergebnis gemeldet. |
-| Automatisierte Tests | Bewusst zurückgestellt; zwei veraltete Dateien auf Nutzerwunsch entfernt, Ersatzabsicherung offen. Kein aktueller Erfolgsnachweis. |
+| Typecheck | Nach Parser-/LLM-Zusammenführung und Löschung `9010afb` am 22. November um 08:14 CET laut Nutzer erfolgreich. |
+| Lint | Nach `9010afb` laut derselben Rückmeldung erfolgreich. |
+| Vorhandene Tests | Nach `9010afb` laut derselben Rückmeldung erfolgreich; kein Nachweis einer neuen Flow-/Parallelitätsabsicherung. |
+| Manuelle Terminal-Abnahme | Für aktuellen Umbau nicht dokumentiert. |
 
-## Umsetzung und bekannte Testlücken – 22. November 2026
+Keine eigenen Tool-Läufe der Projektbefehle. Keine Testzahlen, Coverage oder Browser-/HTTP-Suite-Ausführung aus der pauschalen Nutzerbestätigung ableiten. Frühere Meldungen: TS2345 im HTTP-Handler, mit `6861dff` korrigiert; nachfolgend Typecheck erfolgreich. Veraltete Multi-Parametererwartung durch Nutzerlauf bestätigt, mit `07200b5` korrigiert. Nutzer meldete danach bereits alle drei Checks grün; jüngste Bestätigung gilt dem neuen Stand `9010afb`.
 
-- `2e9a27b`: gemeinsame `matrix.ts` eingeführt.
-- `377b977`: Koordination in `flow.ts` zusammengeführt.
-- `26312c4`: HTTP-Handler und Session-Typimport auf `flow.ts` umgestellt. Handler liegt weiterhin in `server/api/search.post.ts`; Verschiebung und Vertragskonsolidierung stehen aus.
-- `235e0d2`: `workflow.ts` entfernt.
-- `63ab5df`: `submit.ts` entfernt.
-- `932e41d`: `coordinator.ts` entfernt.
-- `6861dff`: Parametertyp von `executionResponse` auf die Rückgabetypen von Execute und Submit erweitert, ohne Cast oder Änderung der Runtime-Validierung. Nutzer meldet anschließenden Typecheck erfolgreich.
-- `25aaf44`: veralteten Unit-Test `tests/unit/services/search-submission.spec.ts` auf ausdrücklichen Nutzerwunsch entfernt.
-- `7940ca3`: veralteten Integrationstest `tests/integration/tmdb/search-submission.spec.ts` auf ausdrücklichen Nutzerwunsch entfernt.
+## Umsetzungschronik
 
-Die Importprüfung war eine gezielte Dateiprüfung des Suchablaufs und der zugehörigen Tests auf Stand `26312c4`, kein vollständiger repositoryweiter Scan. HTTP-Handler und Session-Speicher verwendeten dort bereits `flow.ts`; der Terminal-Client nutzt HTTP ohne Serverimporte. Interne Verweise der drei alten Module entfallen mit deren Löschung. Die zwei dabei gefundenen direkten Testimporte entfallen nun mit den ausdrücklich entfernten Testdateien. Weitere Aufrufer sind damit nicht repositoryweit ausgeschlossen.
+| Commit | Änderung |
+| --- | --- |
+| `2e9a27b` | Gemeinsame Matrix eingeführt. |
+| `377b977`, `26312c4` | Flow zusammengeführt, HTTP und Session angebunden. |
+| `235e0d2`, `63ab5df`, `932e41d` | Workflow, Submit und Coordinator entfernt. |
+| `6861dff` | HTTP-Ergebnistyp für Submit und Execute korrigiert, ohne Cast. |
+| `25aaf44`, `7940ca3` | Zwei alte Submission-Testdateien auf Wunsch entfernt. |
+| `3f87bd7`, `5cf625f` | Vorschlagsvertrag und übrige externe Suchverträge konsolidiert. |
+| `464649b` | HTTP, Flow, Parser, Matrix und Titeladapter auf direkte Schemaimporte umgestellt. |
+| `49ad728`, `3e3027e`, `51f8810`, `5244cb3` | Vier vorübergehende Schema-Re-Export-Dateien entfernt. |
+| `07200b5` | Bestehende Titeltest-Erwartung um `include_adult: 'true'` ergänzt. |
+| `d70769e`, `9010afb` | Parserfunktion/Typen nach LLM übernommen, Flow/Testimport angepasst, altes Parsermodul entfernt. |
 
-| Entfernte Datei | Grund und Status | Zurückgestellte Absicherung |
+Der LLM-Umbau erhält Prompt und JSON-Kontext, Generator-Injektion, `JSON.parse`/Schema-Prüfung, Konfigurations-/Leerantwortfehler, `maxOutputTokens: 256` und `maxRetries: 0`. Kriterienübernahme und Ausführung bleiben im Flow, externer Vorschlagsvertrag im Schema.
+
+## Importprüfung und offene Absicherung
+
+Produktionsprüfung bisher gezielt, kein vollständiger repositoryweiter Scan. Im Testbaum wurden auf Stand `5244cb3` alle 20 TypeScript-Dateien gelesen (14 Unit-Dateien, zwei HTTP-Dateien, ein Mock, drei Fixtures): keine direkten, relativen oder Mock-/dynamischen Importverweise auf die vier entfernten Suchschemadateien. Diese Aussage ist kein Testlauf. Nachfolgend bekannter Parserimport im bestehenden Test ausdrücklich auf `llm.ts` umgestellt.
+
+| Entfernte Datei | Historischer Grund / Status | Offene Ersatzabsicherung |
 | --- | --- | --- |
-| `tests/unit/services/search-submission.spec.ts` | Importierte `submitSearch` aus dem entfernten `coordinator`; auf ausdrücklichen Nutzerwunsch mit `25aaf44` entfernt, nicht migriert. Kein verbleibender Importfehler aus dieser Datei. | Kriterienübernahme auf Kopie sowie Jahrentfernung mit Erhalt unabhängiger Kriterien später am neuen Flow absichern. Keine Ersatztests angelegt; die Lücke ist nicht durch die Löschung geschlossen. |
-| `tests/integration/tmdb/search-submission.spec.ts` | Importierte `submitAndSearch` aus dem entfernten `submit`; zusätzlich veraltete Erwartungen. Auf ausdrücklichen Nutzerwunsch mit `7940ca3` entfernt. Der alte ungebundene Einstieg ist kein beizubehaltender Produktionsvertrag. | Direktsuche, Klärung ohne Trefferaufruf und Kriterienabdeckung später über den aktuellen Flow prüfen; keine bloße Wiederherstellung des alten Einstiegs oder Importumbenennung. |
+| `tests/unit/services/search-submission.spec.ts` | Alter Coordinatorimport; auf Wunsch mit `25aaf44` entfernt. | Kriterienkopie, Jahr entfernen und unabhängige Kriterien erhalten am neuen Flow absichern. |
+| `tests/integration/tmdb/search-submission.spec.ts` | Alter Submitimport, veraltete Erwartungen; mit `7940ca3` entfernt. | Direktsuche, Klärung ohne Trefferaufruf und vollständige Kriterienabdeckung am neuen Flow absichern. |
 
-Historische veraltete Erwartungen des entfernten Integrationstests, kein aktueller Fehler in einer noch vorhandenen Datei:
+Historisch erwartete der entfernte Integrationstest beim Multi-Aufruf kein `include_adult` und lehnte explizite Filmsuche sowie Serie/Jahr fälschlich ab. Seine Kennungen `SEARCH-SUBMIT-INT-001` bis `SEARCH-SUBMIT-INT-005` bleiben ausgemustert. Keine Kompatibilitätsmodule zur Rettung alter Tests, keine Testausschlüsse oder Konfigurationsänderungen. Die erhaltenen Parser-Vertragstests wurden nur im Import angepasst, keine zusätzlichen dedizierten LLM-Tests angelegt.
 
-- `SEARCH-SUBMIT-INT-001` erwartete beim Multi-Aufruf nur `query`, ohne das im vorhandenen Adapter gesetzte `include_adult=true`.
-- `SEARCH-SUBMIT-INT-004` erwartete fälschlich eine Ablehnung der heute unterstützten expliziten Filmsuche.
-- `SEARCH-SUBMIT-INT-005` erwartete fälschlich eine Ablehnung der heute unterstützten Seriensuche mit Einzeljahr.
+## Findings und Abschluss
 
-Die Kennungen `SEARCH-SUBMIT-INT-001` bis `SEARCH-SUBMIT-INT-005` sind mit der entfernten Datei ausgemustert und dürfen nicht neu vergeben werden. Alle übrigen Tests bleiben durch diese Schritte unverändert. Keine Tests deaktiviert oder ausgeschlossen, keine Coverage-/Checkkonfiguration geändert und keine Kompatibilitätsmodule für alte Tests angelegt. Die ursprünglichen Testimportprobleme waren aus dem Code festgestellt, nicht durch einen Testlauf. Der gemeldete Typecheck-Erfolg ist kein Nachweis ausgeführter oder erfolgreicher Tests. Bei späterer Testarbeit bestehende Abdeckungsgrenzen inventarisieren und doppelte Fallmatrizen vermeiden.
-
-## Findings, Risiken und Abschluss
-
-Die fehlende Ersatzabsicherung der entfernten Tests bleibt bewusst offen. Der Typecheck-Erfolg nach `6861dff` ist laut Nutzer belegt, nicht jedoch ein erneuter Lauf nach den Testlöschungen. Lint und manuelle Terminal-Durchstiche stehen aus; insbesondere Parallelität ist nicht nachgewiesen. Zentrale Texte, Parser-/Vertragskonsolidierung, HTTP-Zielpfad und kompakte Terminaldarstellung bleiben weiterzubearbeiten. Historische Iststandsangaben im Task-README sind durch die obige Umsetzung fortgeschrieben, nicht als aktueller Strukturbeleg zu lesen.
-
-Änderungen an Regeln mit Grund und betroffenem Dokument festhalten. Umsetzung, manuelle Abnahme und offene Absicherung getrennt berichten. Ein explorativer Zwischenstand ist keine Produktionsfreigabe; ungeprüfte Kriterien nicht als erfüllt schließen.
-
-Task 02 erst nach Auswahl des nächsten Anwendungsfalls mit eigenen Abnahmekriterien anlegen, nicht vorsorglich alle Suchwege planen.
+Offen: HTTP-Zielpfad, zentrale Texte, kompakte Terminaldarstellung, fachliche Durchstiche und vollständiger Produktionsimportnachweis. Grüne Checks schließen weder die Ersatzabsicherungslücken noch Parallelitätsrisiken. Findings mit Grund in gemeinsame Regeln zurückführen. Task 02 erst nach Wahl des nächsten Anwendungsfalls anlegen. Keine Produktionsfreigabe oder vollständige Abnahme durch diesen Dokumentationsstand.

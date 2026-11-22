@@ -1,40 +1,43 @@
 # Sucharchitektur – Arbeitsstand und Tasks
 
-Stand: 21. November 2026. Branch: `feat/shared-search-architecture`. Dokumentierter Implementierungsstand: `81dc0e8`; Zielbild `dcb41e6`, Konsolidierung `a0e6ad9`. Keine Code-Umstrukturierung oder neuen Checks durch diese Taskplanung.
+Stand: 22. November 2026. Branch: `feat/shared-search-architecture`. Aktueller Codebezug: `9010afb`. Typecheck, Lint und vorhandene Tests danach laut Nutzer erfolgreich (08:14 CET); kein eigener Tool-Lauf und noch keine manuelle Abnahme des aktuellen Umbaus.
 
 ## Aktiver Umsetzungstask
 
 | Task | Status | Ziel |
 | --- | --- | --- |
-| [01 – Gemeinsame Suchmatrix und Ablaufsteuerung](01-shared-search-matrix.md) | Vorbereitet, nicht begonnen | Zielstruktur umsetzen, gemeinsame Hindernismatrix herstellen, mit vorhandenen Titelwegen im Terminal prüfen |
+| [01 – Gemeinsame Suchmatrix und Ablaufsteuerung](01-shared-search-matrix.md) | In Umsetzung, nicht fachlich abgenommen | Zielstruktur und Matrix mit vorhandenen Titelwegen herstellen und im Terminal prüfen |
 
-Ein aktiver Task pro konkretem Umsetzungsschritt/Durchstich, nicht pro Datei oder automatisch pro Kriterium. Jeder Task enthält Umfang, Ausschlüsse, nummerierte Abnahmekriterien, tatsächliches Prüfprotokoll und Findings. Task 02 entsteht erst nach Auswahl des nächsten Anwendungsfalls, beispielsweise Keyword. Findings gehen in die gemeinsamen Regeln zurück; abgeschlossene Tasks bleiben zunächst als Abnahmebeleg. Keine neue Sammlung von Zwischenstandsnotizen.
+Task enthält Umfang, Ausschlüsse, Abnahmekriterien, tatsächliches Prüfprotokoll und Findings. Ein Task pro konkretem Schritt/Durchstich, nicht pro Datei. Task 02 erst nach Auswahl des nächsten Anwendungsfalls; Keyword ist möglich, nicht festgelegt. Findings aktualisieren gemeinsame Regeln; abgeschlossene Tasks bleiben zunächst als Abnahmebeleg. Keine weitere Sammlung von Zwischenstandsnotizen.
 
 ## Verbindliche Grundlage
 
 - [Konzept und Hindernismatrix](../../sucharchitektur-konzept.md), [Zielstruktur](zielstruktur.md).
 - [TMDb-Analyse](../../tmdb-api-analysis.md), [geprüfte Requests](../../tmdb-search-examples.md), [Wizard](../../ideas/clarificaton-wizzard-flow.md), [Textkatalog](../../ideas/translation-catalog.md).
-- [Testing](../../testing.md) und [Typing](../../typing.md); aktuelle Ausnahme für explorative Suchdurchstiche beachten.
-
-## Prüfung in der explorativen Phase
-
-Automatisierte Tests sind ausdrücklich zurückgestellt. Keine neuen, erweiterten, duplizierten oder umgebauten Tests als Teil dieser Durchstiche. Bestehende Tests nicht pauschal löschen. Inkompatibilitäten durch geänderte Pfade/Verträge als Lücke im aktiven Task protokollieren, nicht durch Ausschlüsse, Konfigurationsänderungen oder unnötige Kompatibilitätsschichten verdecken.
-
-Abnahmekriterien bleiben verbindlich und werden zunächst per Codeprüfung und manuell im Terminal beurteilt. Typecheck/Lint ausführen; Ergebnisse und gegebenenfalls durch unveränderte Testdateien verursachte Fehler ehrlich berichten. Keine grünen Checks behaupten oder Prüfumfang stillschweigend verkleinern. Ein Terminaldurchlauf beweist keine vollständige Race-/Parallelitätssicherheit. Nicht reproduzierte Punkte bleiben ungeprüft. Spätere automatisierte Absicherung separat vereinbaren: zuerst vorhandene Tests inventarisieren, jede Zusicherung einer geeigneten Grenze zuordnen und doppelte Fallmatrizen vermeiden. Die bisherige Testinventur ist nur historische Orientierung, kein aktueller Auftrag zum Testumbau.
+- [Testing](../../testing.md), [Typing](../../typing.md); explorative Prüfvereinbarung und ausdrücklich freigegebene Einzelfälle im aktiven Task beachten.
 
 ## Implementierung und Nachweise
 
-- HTTP und Terminal unterstützen Submit, gebundene Klärung, Execute und Reset. Serverkriterien, Auftrag, Revision und Frage sind getrennt gebunden. Noch vorhanden: `workflow.ts`, `coordinator.ts`, `submit.ts`, `parser.ts`, `llm.ts`; gemeinsame `matrix.ts` fehlt.
-- Titel ohne Typ/Jahr: Multi; Film/Serie optional mit Einzeljahr: Movie/TV. Titel/Jahr ohne Typ: Klärung, keine Listen-Zusammenführung oder Jahres-Nachfilterung. Multi-Personen werden nicht zu Titelkarten; `include_adult=true`, keine Adult-basierte Ausfilterung.
-- Clarify sucht nicht. Submit/Execute teilen die Reservierung; Execute interpretiert nicht erneut. Laufende/erfolgreiche Revision startet nicht nochmals, technischer Fehler erlaubt ausdrücklichen neuen Versuch. Prozesslokale Session: 30 Minuten Inaktivität, maximal 1.000, nicht neustartfest.
-- JSON seit `81dc0e8`, Interpretationsregeln erhalten. Drei gezeigte Antworten auf „Finde Morgenbogen von 1999“: Film → movie/1999, Serie → tv/1999, Film von 2001 → movie/2001. Titel erhalten, ready, keine Titelrückfrage/automatische Suche; Execute nicht geprüft. Zuvor vier erfolgreiche Textläufe, keine isolierte Ursachenbestimmung.
-- Typecheck/Lint des früheren Textstands bestätigt; erneute ausdrückliche Bestätigung für `81dc0e8` nicht dokumentiert. Kein aktueller automatisierter Erfolgsnachweis.
+- `flow.ts` bündelt Auftrag, Kriterienübernahme, Revision, Fragebindung und reservierte Ausführung. `workflow.ts`, `coordinator.ts` und `submit.ts` sind entfernt; HTTP und Session verwenden den Flow.
+- `matrix.ts` bewertet Multi/Movie/TV gegen denselben Kriterienstand. Fachliche Vollabnahme noch offen.
+- `src/lib/schemas/search.ts` bündelt Kriterien, Vorschläge, Fragen, Aktionen und Antworten. Fünf geprüfte Produktionsdateien verwenden direkte Importe; vier alte Schema-Dateien sind entfernt. Runtime-/Provider-/Kartenverträge bleiben getrennt.
+- `llm.ts` enthält Modelltransport und gemeinsame Vorschlagsinterpretation. `parser.ts` ist entfernt; Flow und bestehender Parser-Vertragstest verwenden `llm.ts`. Prompt, JSON-Kontext, Validierung und Modellparameter unverändert.
+- HTTP liegt noch in `server/api/search.post.ts`. `texts.ts` und kompakte Terminaldarstellung stehen aus. Kein vollständiger repositoryweiter Produktionsimportscan.
+- Titel ohne Typ/Jahr: Multi; expliziter Film/Serie optional mit Einzeljahr: Movie/TV. Titel/Jahr ohne Typ: gewählte Rückfragestrategie, keine Listen-Zusammenführung oder Jahres-Nachfilterung. Multi-Personen nicht als Titelkarten; `include_adult=true`, keine Adult-basierte Ausfilterung.
+- Clarify sucht nicht; Execute interpretiert nicht erneut. Submit/Execute nutzen dieselbe Reservierung. Laufende/erfolgreiche Revision nicht nochmals starten, technischer Fehler erlaubt ausdrücklichen neuen Versuch. Nicht erneut manuell abgenommen, insbesondere keine Parallelitätsprüfung.
+- Prozesslokale Session: 30 Minuten Inaktivität, maximal 1.000 Sessions, nicht neustartfest.
 
-## Abgeschlossener Parservergleich
+Historischer Klärungsnachweis seit JSON-Stand `81dc0e8`: Auf „Finde Morgenbogen von 1999“ führten freie Film-/Serienantworten zu movie/1999 beziehungsweise tv/1999, explizite Jahreskorrektur zu movie/2001. Titel erhalten, ready, keine automatische Suche; Execute dabei nicht geprüft. Zuvor vier erfolgreiche Textläufe, frühere Fehlerursache nicht isoliert. Kein Ersatz für erneuten Durchstich nach Umbau.
 
-Qwen/Gemma jeweils 14 Fälle × drei Varianten × drei Wiederholungen, je 126 abgeschlossen. Qwen A 38/42 vertragsgültig, B/C je 42/42; keine Abschneidungen. Gemma 126/126 vertragsgültig ohne Abschneidung; B/C stellten erwartete Fragen bei Titel/Jahr und mehrdeutiger Fortführung. B bevorzugt, C ohne erkennbaren Mehrwert; bevorzugte Titelrückfrage bei fehlendem Titel auch bei Gemma nicht zuverlässig.
+## Prüfvereinbarung und Teststatus
 
-Gemma-Vergleich: `google_gemma-4-26b-a4b-it`, Q4_K_M, 21. November ab 10:19:23.618Z, Stand `6baabbd`, Kontext laut damaliger Angabe 20066, null Reasoning-Tokens. Vergleichslimit 2048 versus Qwen 256; UI-Sampling kein vollständiger Nachweis effektiver Defaults. Kein isolierter Modelleffekt, keine semantische Zuverlässigkeitsabnahme und keine automatische Aussage über spätere App-Einstellungen. Zusatzkontext wurde ohne nichtleere offene Frage getestet; Ergebnis widerlegt gebundenen Klärungskontext nicht. Kein weiterer Vergleich als Pflichtaufgabe. Rohantworten nicht ungeprüft veröffentlichen oder lokale `test-results/` pauschal löschen.
+Automatischer Testausbau bleibt zurückgestellt. Keine neuen/duplizierten Tests oder vorsorgliche Testmigration. Bestehende Tests nicht pauschal löschen oder durch Ausschlüsse/unnötige Kompatibilitätsschichten retten.
+
+Ausdrücklich freigegebene Einzelfälle am 22. November: zwei alte Submission-Testdateien entfernt; im Titeltest ausschließlich `include_adult` ergänzt; Parser-Vertragstest nur auf den neuen Modulpfad umgestellt. Keine Coverage-/Prüfkonfiguration verändert. Vorhandene Tests auf Nutzerauftrag ausgeführt und zuletzt nach `9010afb` laut Nutzer grün, ebenso Typecheck/Lint. Testumfang/Zahlen nicht aus pauschaler Rückmeldung ableiten.
+
+Die entfernten Tests hinterlassen offene Absicherung für Kriterienübernahme/Jahrentfernung und den neuen Submit-/Klärungsflow. Kennungen `SEARCH-SUBMIT-INT-001` bis `005` nicht erneut vergeben. Erhaltene Parser- und Titeladaptertests ersetzen keine vollständige Flow-/Race-Prüfung. Details und Commitbelege im Task.
+
+Manuelle Abnahme pro Kriterium dokumentieren; grüne technische Checks sind kein fachlicher Nachweis. Nicht reproduzierte Rennen bleiben offen. Spätere Automatisierung separat vereinbaren: Bestand inventarisieren, Zusicherungen an geeigneten Grenzen absichern, keine doppelte Fallmatrix. Keine zusätzlichen dedizierten LLM-Tests ohne neue Vereinbarung.
 
 ## Terminal
 
@@ -43,25 +46,18 @@ node scripts/search.mjs
 node scripts/search.mjs http://localhost:3001
 ```
 
-Nuxt, Modellserver und lokale Konfiguration müssen bereitstehen. HTTP/Cookie-Client ohne eigene Providerzugangsdaten oder Serverimporte. Text ohne Frage → Submit; mit offener Frage → gebundene Antwort. `/select NUMMER`, `/submit TEXT`, `/execute`, `/reset`, `/exit` bleiben explizite Aktionen. Wizard und kompakte Treffer nach Bedarf erweitern.
+Nuxt, Modellserver und lokale Konfiguration erforderlich. HTTP/Cookie-Client ohne eigene Providerzugangsdaten oder Serverimporte. Text ohne Frage → Submit, mit Frage → gebundene Antwort. `/select NUMMER`, `/submit TEXT`, `/execute`, `/reset`, `/exit` bleiben explizite Aktionen. Wizard und kompakte Treffer nur nach Bedarf erweitern.
 
-## Zurückgestellte Testorientierung
+## Abgeschlossener Parservergleich
 
-Aus früherer Inventur übernommen, Pfade/Abdeckung nicht erneut geprüft und kein Änderungsauftrag:
+Historisch jeweils 14 Fälle × drei Varianten × drei Wiederholungen für Qwen und Gemma: je 126 abgeschlossen. Qwen A 38/42 vertragsgültig, B/C je 42/42; keine Abschneidungen. Gemma 126/126 gültig ohne Abschneidung; B/C stellten erwartete Fragen bei Titel/Jahr und mehrdeutiger Fortführung. B bevorzugt, C ohne erkennbaren Mehrwert; Titelrückfrage bei fehlendem Titel auch bei Gemma nicht zuverlässig.
 
-| Zusicherung | Bisheriger Ansatz |
-| --- | --- |
-| Direktsuche, Klärung/Unsupported ohne Trefferaufruf | `tests/integration/tmdb/search-submission.spec.ts`, bestehende SEARCH-SUBMIT-INT-Kennungen nicht wiederverwenden |
-| Kriterienkopie, Jahr entfernen, übrige Kriterien erhalten | `tests/unit/services/search-submission.spec.ts` |
-| System-/Nutzerdaten trennen und Vorschläge validieren | `tests/unit/services/search-parser.spec.ts` |
-| Providerparameter, Mapping, Personen ausschließen, leer versus Fehler | `tests/unit/services/title-search.spec.ts` |
+Gemma: `google_gemma-4-26b-a4b-it`, Q4_K_M, 21. November ab 10:19:23.618Z, Stand `6baabbd`, Kontext laut damaliger Angabe 20066, null Reasoning-Tokens. Vergleichslimit 2048 versus Qwen 256; UI-Sampling kein vollständiger Nachweis effektiver Defaults. Kein isolierter Modelleffekt, keine semantische Zuverlässigkeitsabnahme und keine automatische Aussage über spätere App-Einstellungen. Zusatzkontext ohne nichtleere offene Frage geprüft; widerlegt gebundenen Kontext nicht. Kein weiterer Vergleich als Pflicht. Rohantworten nicht ungeprüft veröffentlichen oder lokale `test-results/` pauschal löschen.
 
-Spätere Absicherung umfasst zusätzlich Fragekontext, Auswahl ohne LLM, Ablösung/Reset, Reservierung, Fehlerwiederholung und HTTP-Grenze, ohne dieselbe Fallmatrix überall zu wiederholen. Alte Ablehnungsfälle für konkreten Medientyp/Jahr sind keine aktuellen Sollregeln. Keine zusätzlichen dedizierten `llm.ts`-Tests ohne neue Vereinbarung.
-
-Relevante Vergleichsfälle bleiben Orientierung: expliziter Film/Serie, Titel allein, Titel/Jahr ohne Typ, Titelkorrektur/Fortführung, ausdrückliches Entfernen bisheriger Einschränkungen, Jahr entfernen, Medientyp aufheben, Mehrdeutigkeit, fehlender Titel, Medienwort im Titel, nicht unterstützte Bewertung. Versuchserwartungen sind keine stillschweigend beschlossenen Produktregeln.
+Relevante Vergleichsfälle bleiben Orientierung: Film/Serie, Titel allein, Titel/Jahr ohne Typ, Titelkorrektur/Fortführung, ausdrückliches Entfernen von Einschränkungen, Jahr entfernen, Typ aufheben, Mehrdeutigkeit, fehlender Titel, Medienwort im Titel, nicht unterstützte Bewertung. Versuchserwartungen sind keine stillschweigend beschlossenen Produktregeln.
 
 ## Offene Arbeit
 
-Die alten Durchstichsnotizen und das Vergleichsverzeichnis sind laut geprüftem Verzeichnisstand entfernt; Task 01 ergänzt nun bewusst die verbleibenden Dateien. Entfernung des zugehörigen Vergleichsskripts separat prüfen, nicht als erledigt behaupten. Terminal und reguläre Tests bleiben.
+Als Nächstes verbleibende Zielstruktur umsetzen (HTTP-Pfad, Texte), Terminal bedarfsgerecht ergänzen, danach fachlich durchstechen. Checks nach Codeänderungen erneut protokollieren. Kein neuer Suchweg vor Abschluss dieses Durchstichs.
 
-Nächster Schritt: Task 01 umsetzen und manuell durchstechen; danach nächsten Suchweg recherchieren und wählen. Offen außerhalb des ersten Umfangs: unabhängige Teilübernahme bei Modellklärung, Submit-Idempotenz/Ergebniswiederholung, optionale Eingrenzung und Gesamtzählung. Auswahloptionen nicht aus freien LLM-Fragetexten ableiten. Mehrfachtreffer allein sind kein Pflichtklärungsgrund. Zugriffsschutz/Ressourcenlimits vor öffentlichem Betrieb.
+Historische Durchstichsnotizen und Vergleichsverzeichnis sind entfernt; frühere Skript-Inventur zeigte nur `scripts/search.mjs`. Keine erneute Bereinigung lokaler Ergebnisse. Außerhalb des ersten Umfangs: unabhängige Teilübernahme bei Modellklärung, Submit-Idempotenz/Ergebniswiederholung, optionale Eingrenzung/Gesamtzählung. Keine Auswahloptionen aus freiem LLM-Fragetext ableiten; Mehrfachtreffer allein kein Pflichtklärungsgrund. Zugriffsschutz/Ressourcenlimits vor öffentlichem Betrieb.

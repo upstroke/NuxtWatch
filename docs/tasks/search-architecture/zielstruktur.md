@@ -1,46 +1,48 @@
 # Zielstruktur der gemeinsamen Suche
 
-Stand: 21. November 2026. Beschlossenes Ziel, noch kein umgesetzter Strukturumbau. [Konzept](../../sucharchitektur-konzept.md), [Arbeitsstand](README.md), [aktiver Task 01](01-shared-search-matrix.md). Namen machen Zuständigkeiten sichtbar; keine Dateien allein zur optischen Vollständigkeit.
+Stand: 22. November 2026. Zielbild teilweise umgesetzt, Codebezug `9010afb`. [Konzept](../../sucharchitektur-konzept.md), [Arbeitsstand](README.md), [Task 01 und Prüfprotokoll](01-shared-search-matrix.md). Umsetzung ist nicht automatisch fachliche Abnahme.
 
 ## Zielbaum
 
 ```text
 server/
-├── api/search/index.post.ts       # Gemeinsamer HTTP-Einstieg
+├── api/search/index.post.ts       # Gemeinsamer HTTP-Einstieg; Verschiebung offen
 ├── services/
 │   ├── search/
-│   │   ├── flow.ts                # Ein gemeinsamer Coordinator
+│   │   ├── flow.ts                # Gemeinsamer Coordinator
 │   │   ├── matrix.ts              # Fähigkeiten und Hindernisse
-│   │   ├── llm.ts                 # Gemeinsame Interpretation samt Validierung
-│   │   └── texts.ts               # Zentrale Anwendungstexte/Fragezuordnung
-│   └── tmdb/                     # Transport, Titeladapter und Mapping
+│   │   ├── llm.ts                 # Transport, Interpretation und Validierung
+│   │   └── texts.ts               # Zentrale Texte/Fragezuordnung; noch offen
+│   └── tmdb/                     # Bestehender Transport, Adapter und Mapping
 └── utils/search-session.ts       # Cookie, Ablage, Lebensdauer
 src/lib/
-├── schemas/search.ts             # Zusammengehörige externe Suchverträge
-└── parser/instructions.ts        # Versionierter Systemauftrag
-scripts/search.mjs               # Explorativ ausgebauter Terminal-Wizard
+├── schemas/search.ts             # Gemeinsame externe Suchverträge
+└── parser/
+    ├── instructions.ts           # Versionierter Systemauftrag
+    └── clarification-instructions.ts # Bestehender Klärungszusatz
+scripts/search.mjs               # Bedarfsgerecht erweiterter HTTP-Terminalclient
 ```
 
-Der Baum zeigt den Suchbereich, nicht sämtliche Dateien. Runtime- und Provider-/Kartenverträge bleiben fachlich passend eingeordnet.
+Suchbereich, nicht vollständiger Projektbaum. Runtime-/Provider-/Kartenverträge bleiben fachlich separat. Keine Dateien allein zur optischen Vollständigkeit.
 
-## Zuständigkeiten und Umbau
+## Zuständigkeiten und Umsetzungsstand
 
-| Ziel | Aufgabe | Änderung |
+| Ziel | Verantwortung | Stand |
 | --- | --- | --- |
-| `server/api/search/index.post.ts` | Aktionen/Runtime validieren, Session zuordnen, Coordinator aufrufen, HTTP abbilden | `server/api/search.post.ts` verschieben; URL bleibt `POST /api/search` |
-| `server/services/search/flow.ts` | Auftrag, Kriterienübernahme, Revision, Fragebindung, Ausführung/Reservierung koordinieren | `workflow.ts` umbenennen, benötigte Koordination aus `coordinator.ts`/`submit.ts` integrieren; keine parallelen Schichten |
-| `server/services/search/matrix.ts` | Wege gegen denselben Kriterienstand bewerten; Hindernisse und vollständige Abdeckung | Entscheidung aus `coordinator.ts` ablösen; keine Kombinationsliste oder doppelten Fachregeln |
-| `server/services/search/llm.ts` | Submit/gebundene Antwort interpretieren, Ausgabe validieren | `parser.ts`/Transport sinnvoll zusammenführen; kein Parser je Weg |
-| `server/services/search/texts.ts` | Zentrale übersetzbare Texte und Fragezuordnung | Verstreute Texte bündeln, keine vorsorgliche i18n-Infrastruktur; Fragenwahl bleibt fachlich |
-| `server/services/tmdb/` | Ausgewählten Weg auf Parameter abbilden, aufrufen, validieren, normalisieren | Vorhandenen Titeladapter nutzen; keine zusätzliche `search/title.ts` als Wrapper |
-| `server/utils/search-session.ts` | Cookie-Zuordnung/Ablage | Vom frameworkfreien Coordinator getrennt behalten |
-| `src/lib/schemas/search.ts` | Zusammengehörige externe Suchverträge und Zod-abgeleitete Typen | Konsolidieren, keine blinde Übernahme von Runtime/Provider/Karten; interne Auftragstypen zu `flow.ts` |
-| `src/lib/parser/instructions.ts` | Versionierter Systemauftrag | Behalten, keine neue Format-/Thinking-Optimierung |
-| `scripts/search.mjs` | HTTP-Client, gebundene Eingabe, Auswahl, kompakte Ergebnisse | Nur bedarfsgerecht erweitern |
+| `server/api/search/index.post.ts` | Aktionen/Runtime validieren, Session zuordnen, Flow aufrufen, HTTP abbilden | Inhalt weiter in `server/api/search.post.ts`; Verschiebung offen, URL bleibt `POST /api/search`. |
+| `search/flow.ts` | Auftrag, Kriterienübernahme, Revision, Fragebindung, Ausführung/Reservierung | Zusammengeführt und angebunden; Workflow/Coordinator/Submit entfernt. Interne Auftragstypen bleiben hier. |
+| `search/matrix.ts` | Wege gegen denselben Stand bewerten, Hindernisse und vollständige Abdeckung | Implementiert; manuelle/fachliche Abnahme offen. Keine Kombinationsliste oder doppelten Regeln. |
+| `search/llm.ts` | Gemeinsame Interpretation für Submit/gebundene Antwort, Modelltransport und Vorschlagsvalidierung | Zusammengeführt; `parser.ts` entfernt. Keine Zustandsübernahme, Matrixentscheidung oder Treffersuche. |
+| `search/texts.ts` | Übersetzbare Anwendungstexte und Zuordnung fachlicher Frageanlässe | Noch umzusetzen; keine vorsorgliche i18n-Infrastruktur. |
+| `services/tmdb/` | Parameterabbildung, Provideraufruf, Validierung und Normalisierung | Vorhandenen Titeladapter wiederverwendet, kein zusätzlicher Titel-Wrapper. |
+| `utils/search-session.ts` | Cookie-Zuordnung und konkrete Ablage | Getrennt vom frameworkfreien Flow; Typimport auf Flow umgestellt. |
+| `schemas/search.ts` | Externe Kriterien-, Vorschlags-, Frage-, Aktions- und Antwortverträge, Zod-abgeleitete Typen | Konsolidiert; vier alte Schemadateien inklusive Übergangs-Re-Exports entfernt. |
+| `parser/instructions.ts` und Klärungszusatz | Feste Modellanweisungen getrennt von Nutzerdaten | Unverändert erhalten; keine Format-/Thinking-Optimierung im Umbau. |
+| `scripts/search.mjs` | HTTP-Eingaben, gebundene Antworten, Auswahl und Darstellung | Vorhandener Client; kompakte Trefferdarstellung noch offen. |
 
-Eigene `title.ts`/`title/` erst bei benötigter eigenständiger Fachlogik. Wiederverwendung/DRY statt generischer Helferschichten. Unterschiedliche Jahresparameter gehören zur Providerabbildung, nicht zu mehreren Parsern.
+Eigene `title.ts`/`title/` nur bei eigenständiger benötigter Fachlogik. Wiederverwendung statt Wrapper-/Helferschichten auf Vorrat. Jahresparameter gehören zur Providerabbildung, nicht zu mehreren Parsern.
 
-## Taskdokumentation
+## Taskstruktur
 
 ```text
 docs/tasks/search-architecture/
@@ -49,10 +51,12 @@ docs/tasks/search-architecture/
 └── 01-shared-search-matrix.md
 ```
 
-Ein aktiver Task mit Umfang, Abnahmekriterien, Prüfprotokoll und Findings. Nächste Taskdatei erst für einen ausgewählten konkreten Anwendungsfall anlegen; beispielsweise Keyword ist möglich, nicht bereits beauftragt. Keine neue historische Notiz pro Umsetzungsschritt.
+Ein aktiver Task mit Umfang, Abnahmekriterien, Prüfprotokoll und Findings. Nächste Datei erst für konkret gewählten Anwendungsfall. Keine neue historische Notiz pro Umsetzungsschritt.
 
-## Nachweis beim Umbau
+## Prüfung
 
-Produktionsimporte, Aufrufer und Dokumentverweise nachziehen. Automatisierte Tests sind in dieser explorativen Phase zurückgestellt: keine neuen/erweiterten/duplizierten Tests, kein Testrefactoring. Unveränderte Tests nicht pauschal löschen; durch Pfade/Verträge entstandene Inkompatibilitäten im Task dokumentieren. Nicht durch Ausschlüsse oder unnötige Produktionskompatibilität verstecken.
+Typecheck, Lint und vorhandene Tests nach `9010afb` laut Nutzer erfolgreich. Kein eigener Tool-Lauf; daraus keine vollständige fachliche, Live-Modell- oder Parallelitätsabnahme ableiten. Manuelle Fälle im Task noch offen. Nach weiterem Umbau Checks erneut protokollieren.
 
-Codeprüfung, manuelle Terminalfälle, Typecheck und Lint getrennt protokollieren. Nicht ausgeführte Tests und nicht reproduzierte Rennen bleiben offen; bei Checkfehlern Ursache nennen, keinen erfolgreichen Abschluss behaupten. Geänderte Struktur erst nach Umsetzung als Iststand führen. Keine neue Suchstrecke, Speicherlösung oder vollständiger Terminal-Ausbau als Teil des Strukturumbaus. Findings aus dem Durchstich aktualisieren Konzept und Matrix.
+Automatischer Testausbau bleibt zurückgestellt. Einzelne ausdrücklich freigegebene Löschungen sowie Titeltest-Korrektur und Parser-Testimportanpassung sind im Task dokumentiert; keine allgemeine Testmigration. Keine Prüfkonfiguration oder Ausschlüsse zum Verbergen von Fehlern. Produktionsimporte/Dokumentverweise weiter nachziehen; vollständiger repositoryweiter Produktionsimportscan noch nicht nachgewiesen.
+
+Keine neue Suchstrecke, Speicherlösung oder vollständiger Terminal-Ausbau als Teil des Strukturumbaus. Findings aktualisieren Konzept und Matrix.
