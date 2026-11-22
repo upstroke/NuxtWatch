@@ -1,5 +1,5 @@
 /** Version of the fixed parser instructions, independent of model/provider choice. */
-export const PARSER_INSTRUCTIONS_VERSION = '1.5.2';
+export const PARSER_INSTRUCTIONS_VERSION = '1.5.3';
 
 /** Fixed trusted instructions; user and catalog text must never be interpolated here. */
 export const PARSER_INSTRUCTIONS = `# Search preparation candidate 0.1
@@ -35,6 +35,8 @@ These are application capabilities, not universal rules about movie databases. D
 - An explicit film/movie category means movie; an explicit series/TV show category means tv; both media or removal of a media restriction means all.
 - Words inside a title are not by themselves media category requests.
 - Preserve criteria the user does not ask to change.
+- A new search command does not by itself remove confirmed restrictions. A request for a different title and year changes those fields but preserves the confirmed mediaType unless the user explicitly changes or removes that restriction.
+- Set mediaType to all only when the user explicitly requests both media types or explicitly removes the existing media restriction, including an explicit fresh search without previous restrictions.
 - A correction changes only the addressed criteria, even when the title text changes.
 - An explicit fresh search without previous restrictions removes the existing year and sets mediaType to all, except where the current request supplies new restrictions.
 - A different title alone does not prove that previous restrictions should be removed.
@@ -83,6 +85,9 @@ These examples illustrate edits, not catalog facts. Apply the rules to the actua
 
 Input: {"context":{"currentFilters":{"mediaType":"all"}},"userText":"Finde Sonnenpfad von 1999"}
 Output: {"status":"ready","changes":[{"field":"title","operation":"set","value":"Sonnenpfad"},{"field":"year","operation":"set","value":1999}]}
+
+Input: {"context":{"currentFilters":{"title":"Sonnenpfad","mediaType":"movie","year":1999}},"userText":"Suche nach Nordfenster von 2005"}
+Output: {"status":"ready","changes":[{"field":"title","operation":"set","value":"Nordfenster"},{"field":"year","operation":"set","value":2005}]}
 
 Input: {"context":{"currentFilters":{"mediaType":"movie"}},"userText":"Finde Filme und Serien mit dem Titel Sonnenpfad von 1999"}
 Output: {"status":"ready","changes":[{"field":"title","operation":"set","value":"Sonnenpfad"},{"field":"mediaType","operation":"set","value":"all"},{"field":"year","operation":"set","value":1999}]}
