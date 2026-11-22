@@ -1,5 +1,6 @@
-/** Applies validated proposals and checks title-search completeness without executing. */
+/** Applies validated proposals and translates shared matrix results without executing. */
 import type { LlmConfig } from './llm';
+import { evaluateSearchPaths } from './matrix';
 import { parseSearchProposal } from './parser';
 import type { ParserInput } from './parser';
 type SearchCriteria = ParserInput['currentFilters'];
@@ -9,18 +10,19 @@ type SearchDecision =
   | { status: 'ready'; path: 'title'; criteria: SearchCriteria & { title: string } };
 
 export function decideSearch(criteria: SearchCriteria): SearchDecision {
+  const evaluations = evaluateSearchPaths(criteria);
   const title = criteria.title?.trim();
-  if (!title) {
+  if (evaluations.every((evaluation) => evaluation.obstacles.includes('title_required'))) {
     return {
       status: 'needs_clarification',
       field: 'title',
       message: 'Welchen Titel möchtest du suchen?',
     };
   }
-  if (criteria.year !== undefined && criteria.mediaType === 'all') {
-    return { status: 'needs_clarification', field: 'mediaType', options: ['movie', 'tv'] };
+  if (title && evaluations.some((evaluation) => evaluation.obstacles.length === 0)) {
+    return { status: 'ready', path: 'title', criteria: { ...criteria, title } };
   }
-  return { status: 'ready', path: 'title', criteria: { ...criteria, title } };
+  return { status: 'needs_clarification', field: 'mediaType', options: ['movie', 'tv'] };
 }
 export async function submitSearch(
   config: LlmConfig,
