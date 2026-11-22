@@ -1,5 +1,10 @@
-/** Validates the TMDb multi, movie, and TV search fields consumed by title search. */
+/** Validates the TMDb title search results and separately consumed count metadata. */
 import { z } from 'zod';
+
+/** Count metadata is independent so invalid counts do not discard valid title cards. */
+export const TmdbSearchCountSchema = z.object({
+  total_results: z.number().int().nonnegative(),
+});
 
 const date = z.union([z.iso.date(), z.literal('')]).nullish();
 const mediaFields = {

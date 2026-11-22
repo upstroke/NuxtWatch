@@ -1,16 +1,14 @@
 /** Fetches the first title page and its available movie/TV total. */
-import { z } from 'zod';
 import type { SearchCriteria } from '@lib/schemas/search';
 import {
   TmdbMovieSearchResponseSchema,
+  TmdbSearchCountSchema,
   TmdbTitleSearchResponseSchema,
   TmdbTvSearchResponseSchema,
 } from '@lib/schemas/tmdb-title-search';
 import type { SearchResultCard } from '@lib/schemas/ui/search-result-card';
 import { createTmdbError } from './errors';
 import type { TmdbHttpClient } from './http';
-
-const countSchema = z.object({ total_results: z.number().int().nonnegative() });
 
 /**
  * Returns a page object with cards and an available movie/TV total.
@@ -65,7 +63,7 @@ export async function searchTitles(
     });
   }
 
-  const providerCount = countSchema.safeParse(raw);
+  const providerCount = TmdbSearchCountSchema.safeParse(raw);
   let totalResults: number | null =
     providerCount.success && providerCount.data.total_results >= response.data.results.length
       ? providerCount.data.total_results
@@ -74,7 +72,7 @@ export async function searchTitles(
   if (path === '/search/multi' && totalResults !== null) {
     try {
       // The same query and adult setting; both calls use the default first page/language.
-      const personCount = countSchema.safeParse(await http.get('/search/person', { ...query }));
+      const personCount = TmdbSearchCountSchema.safeParse(await http.get('/search/person', { ...query }));
       if (!personCount.success) {
         totalResults = null;
       } else {
