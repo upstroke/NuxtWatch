@@ -1,30 +1,33 @@
 # NuxtWatch
 
-NuxtWatch aims to help people find movies and TV shows by describing what they want in their own words. They can start with a simple request and refine it in later messages without repeating what they already said.
+NuxtWatch helps people find movies and TV shows by describing what they want in their own words. The LLM proposes structured criteria changes; the application validates them, decides whether clarification is required, and executes verified TMDb requests server-side.
 
-## How search should work
+## Implemented search scope
 
-1. The LLM interprets each message and proposes structured changes to the search criteria or flags an ambiguity. It does not change the search state or make TMDb requests.
-2. The application validates the proposal and combines it with the current criteria in one shared search object. This object describes what the user wants, not which TMDb endpoints or parameters to use.
-3. The application asks a focused question only when an ambiguity or missing detail prevents it from carrying out the request as stated. The current search remains unchanged while clarification is pending. If a criterion is unsupported, the application explains the limitation rather than silently dropping it.
-4. The application maps the validated criteria to verified TMDb calls, runs them server-side, and displays the matching titles. User feedback comes from translatable templates.
+The shared title-search flow supports a title, movie/TV scope, and an optional single year through `POST /api/search`.
 
-For example, “Find The Matrix” is enough to search without asking for a year or media type. “I mean the 1999 movie” adds those criteria while keeping the title. Multiple matching titles are a valid result, not a reason to ask for clarification before searching.
+- Title with `all` and no year uses Multi search. Explicit movie or TV scope uses the corresponding endpoint.
+- Title with a year and `all`, including explicitly requested movies and series, requires a bound movie/TV selection. Title and year are preserved. Lists are not merged and the year is not silently removed.
+- Confirmed criteria remain unless explicitly changed. Validated criteria may already be stored while clarification is pending; clarification itself never starts a title search.
+- `submit` opens a new request and may search immediately when executable. `clarify` only resolves the bound question. After clarification, `execute` runs the confirmed revision without another LLM interpretation. `reset` starts a new session context.
+- Search cards exclude people. Page results and total counts are separate; an unavailable total is `null`, not zero.
 
-## Starting point
+The terminal client is an alternative interface to the same HTTP contract:
 
-This repository starts from the NextWatch `v0.0.1` Spike source snapshot (`e835d5a7813859ef708c1826963ede62601874a4`), without the original Git history. The search flow above describes the project goal, not what is already implemented.
+```bash
+node scripts/search.mjs http://localhost:3000
+```
 
 ## Getting started
 
-Copy `.env.example` to `.env` and add your own TMDb credentials. TMDb requests must remain server-side.
+Copy `.env.example` to `.env` and configure TMDb and the local model integration. Provider credentials remain server-side.
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-## Checks
+## Checks and current status
 
 ```bash
 pnpm test
@@ -33,7 +36,13 @@ pnpm lint
 pnpm typecheck
 ```
 
-See [AGENTS.md](AGENTS.md) for the working agreement, [TMDb search examples](docs/tmdb-search-examples.md) for verified requests, and [docs/](docs/) for further documentation.
+On 22 November 2026, the user confirmed passing tests, lint and typecheck, plus coverage above 80%, on the working state including `d6e071c`. The local live HTTP audit reported eight passed, zero failed and zero blocked cases. This closes the agreed shared-search/title slice, not production readiness, exhaustive model reliability, or all race/failure scenarios. Evidence, attribution and limits are recorded in [Task 01](docs/tasks/search-architecture/01-shared-search-matrix.md). The locally supplied audit script and raw reports are not committed.
+
+## Documentation and origin
+
+See [AGENTS.md](AGENTS.md), the [search concept](docs/sucharchitektur-konzept.md), [implementation status](docs/tasks/search-architecture/README.md), and [verified TMDb requests](docs/tmdb-search-examples.md).
+
+The repository originated from the NextWatch `v0.0.1` Spike source snapshot (`e835d5a7813859ef708c1826963ede62601874a4`), without its original Git history. Broader search criteria and the web wizard remain separate future work.
 
 ![discover_dark-desktop.png](docs/images/discover_dark-desktop.png)
 ![details_dark-deskotp.png](docs/images/details_dark-deskotp.png)

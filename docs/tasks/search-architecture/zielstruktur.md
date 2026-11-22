@@ -1,74 +1,53 @@
 # Zielstruktur der gemeinsamen Suche
 
-Stand: 22. November 2026. Codebezug `a806145`. Struktur, Textkataloge, Terminaldarstellung, Gesamtzählung und Medienfragekorrektur implementiert; vollständige fachliche Abnahme offen. [Konzept](../../sucharchitektur-konzept.md), [Arbeitsstand](README.md), [Task/Prüfprotokoll](01-shared-search-matrix.md). Umsetzung ist nicht Abnahme.
+Stand: 22. November 2026. Codebezug `d6e071c`, Branch `feat/shared-search-architecture`. Im vereinbarten Such-/Titelumfang umgesetzt und geprüft; kein vollständiger Projektbaum oder Produktionsfreigabenachweis. [Konzept](../../sucharchitektur-konzept.md), [Arbeitsstand](README.md), [Abschlussprotokoll](01-shared-search-matrix.md).
 
-## Zielbaum
+## Produktionsstruktur
 
 ```text
 server/
-├── api/search/index.post.ts       # Gemeinsamer HTTP-Einstieg
+├── api/search/index.post.ts       # HTTP-Verträge, Runtime, Statusabbildung
 ├── services/
 │   ├── search/
-│   │   ├── flow.ts                # Gemeinsamer Coordinator
+│   │   ├── flow.ts                # Kriterien, Aktualität, Fragen, Reservierung
 │   │   ├── matrix.ts              # Fähigkeiten und Hindernisse
-│   │   ├── llm.ts                 # Transport, Interpretation und Validierung
-│   │   └── texts.ts               # Anwendungseigene Klärungs-/HTTP-/Sessiontexte
-│   └── tmdb/                     # Transport, Adapter, Mapping und Titelgesamtzahl
-└── utils/search-session.ts       # Cookie, Ablage, Lebensdauer
+│   │   ├── llm.ts                 # Transport, Interpretation, Vorschlagsvalidierung
+│   │   └── texts.ts               # Anwendungs-, HTTP- und Sessiontexte
+│   └── tmdb/
+│       ├── title-search.ts        # Titelparameter, Karten und Gesamtzahlen
+│       └── errors.ts              # Fehlercodes, Status und stabile englische Texte
+└── utils/search-session.ts       # Cookie, prozesslokale Ablage, Lebensdauer
 src/lib/
-├── schemas/search.ts             # Gemeinsame externe Suchverträge
+├── schemas/search.ts             # Kriterien, Vorschläge, Fragen, Aktionen, Antworten
 └── parser/
     ├── instructions.ts           # Versionierter Systemauftrag
-    └── clarification-instructions.ts # Bestehender Klärungszusatz
-scripts/search.mjs               # HTTP-Terminalclient mit lokalem Textkatalog
+    └── clarification-instructions.ts
+scripts/search.mjs               # HTTP-Terminalclient, lokaler Darstellungskatalog
 ```
 
-Suchbereich, kein vollständiger Projektbaum. Runtime-/Provider-/Kartenverträge bleiben separat. Keine Dateien allein zur optischen Vollständigkeit.
+Runtime-/Provider-/Kartenverträge bleiben separat. Keine alten Workflow-/Coordinator-/Submission-/ausführenden Parsermodule im geprüften Suchkern. Alte Chat-Verträge/Export und TMDb-Spike-Fehleralias wurden gezielt entfernt; Historie im Task. Kein projektweiter Vollscan behauptet.
 
-## Zuständigkeiten und Stand
+## Verantwortungsgrenzen
 
-| Ziel                                        | Verantwortung und Stand                                                                                                                                                                                                                                                               |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `server/api/search/index.post.ts`           | Aktionen/Runtime validieren, Session zuordnen, Flow aufrufen, HTTP abbilden. Zielpfad vorhanden; alte `server/api/search.post.ts` im zuvor geprüften API-Verzeichnis nicht vorhanden. URL `POST /api/search` erhalten.                                                                |
-| `search/flow.ts`                            | Auftrag, Kriterienübernahme, Revision, Matrixauswertung, nächste Aktion, Fragebindung, Ausführung/Reservierung. Workflow/Coordinator/Submit entfernt. Erzeugt Medienfrage mit zentralem `message`; derselbe gebundene Text dient Anzeige und Klärungskontext. Keine eigene Zählung.   |
-| `search/matrix.ts`                          | Wege gegen denselben Stand bewerten; Fähigkeiten, Hindernisse, vollständige Kriterien-/Umfangsabdeckung. Keine Texte, Fragebindungen oder Sessionverwaltung. Implementiert, Vollabnahme offen.                                                                                        |
-| `search/llm.ts`                             | Gemeinsame Interpretation für Submit/gebundene Antwort, Modelltransport und Vorschlagsvalidierung. `parser.ts` entfernt. Keine Zustandsübernahme, Matrixentscheidung oder Suche.                                                                                                      |
-| `search/texts.ts`                           | Zentrale Anwendungsfragen und HTTP-/Sessionmeldungen. Medienfrage erklärt Jahresanlass; freie Modellnachrichten separat. AC9-Vollprüfung offen.                                                                                                                                       |
-| `services/tmdb/title-search.ts`             | Parameter, Transport, Validierung, Karten, Gesamtzählung. Liefert `{ results, totalResults }`; Multi zusätzlich Personenzählung, Movie/TV direkte Zahlen. Zählfehler → null, gültige Karten erhalten; keine neue Sortierung/weiteren Seiten.                                          |
-| `utils/search-session.ts`                   | Cookie und konkrete Ablage, vom frameworkfreien Flow getrennt. Typimport auf Flow, Meldungen aus `texts.ts`.                                                                                                                                                                          |
-| `schemas/search.ts`                         | Konsolidierte Kriterien-/Vorschlags-/Frage-/Aktions-/Antwortverträge; vier alte Re-Exports entfernt. `select_media_type` hat Pflichtfeld `message`, Optionen und Fragebindung. Completed enthält `totalResults: number` oder `null`.                                                  |
-| `parser/instructions.ts` und Klärungszusatz | Feste Anweisungen getrennt von Nutzerdaten. Seit `0715d10` Promptversion `1.5.2`: LLM liefert darstellbare Kriterien, nimmt Pflicht-Medienfrage nicht vorweg. Keine Thinking-/Formatoptimierung.                                                                                      |
-| `scripts/search.mjs`                        | HTTP-Client für Eingaben, gebundene Antworten und Darstellung. Validiert/zeigt geliefertes `message` der Medienfrage, keine eigene Fachformulierung. Lokale Hilfen/Labels/Vorlagen in `terminalTexts`; keine Serverimporte. Tabelle/Seiten-/Gesamtzahl vorhanden, Live-Abnahme offen. |
+Matrix bewertet vollständige Kriterien-/Umfangsabdeckung ohne Texte oder Zustand. LLM interpretiert/validiert ohne Suche oder Zustandsübernahme; Prompt 1.5.3 präzisiert Kriterienerhalt. Flow bindet zentrale Frage und entscheidet nächste Aktion. HTTP validiert Ein-/Ausgabe und übersetzt Fehler, Session ordnet Cookie und Ablage zu. Adapter bildet Jahresparameter ab und liefert `results`/`totalResults`; Zählfehler lassen gültige Karten bestehen.
 
-## Medienklärung und Textgrenze
+`message` wird vom zentralen Suchkatalog über Flow und Response-Schema bis CLI/Freitextkontext durchgereicht. Reine Terminaltexte bleiben lokal, freie Modellnachrichten separat. Keine zusätzliche i18n-Infrastruktur. Drei englische TMDb-Fehlertexte zentralisiert, ohne Änderung von Codes/Status/Wortlaut.
 
-Nicht genannter Medientyp und ausdrücklich „Filme und Serien“ bedeuten `all`, sofern kein bestätigter anderer Typ fortgilt. Titel ohne Jahr bei `all` → Multi. Titel + Jahr + `all` → Matrix erkennt fehlende Abdeckung, Flow fordert gebundene Auswahl `movie`/`tv`; keine Suche. `all` nur Zwischenstand, vor Ausführung Auswahl übernehmen und Titel/Jahr erhalten. Explizites `movie`/`tv` optional mit Jahr → entsprechender direkter Weg. Nach Klärung erst ausdrückliches Execute.
-
-`texts.ts` liefert den serverseitigen Anwendungstext, `terminalTexts` reine Darstellung einschließlich Medienlabels, Hilfen, Prompts, Fehler und Vorlagen. Keine Optionen aus LLM-Prosa ableiten, keine Fachregeln im Client, keine neue i18n-Infrastruktur. Technische Aktions-/Statuswerte und Befehle nicht übersetzen. `/select` klärt Medien, wählt keine Treffer.
-
-Zählung bleibt im Adapter, nicht Matrix/LLM/CLI. Multi − Person = Movie + TV wurde für fünf Suchtexte lokal beobachtet, nicht als API-Garantie belegt. Multi/Person verwenden identischen Suchtext/adult und dieselben Standardwerte. Unplausible Zahlen nicht anzeigen. Eigene `title.ts`/`title/` nur bei benötigter eigenständiger Fachlogik; Jahresparameter bleiben Providerabbildung.
-
-## Taskstruktur
+## Gezielte Teststruktur
 
 ```text
-docs/tasks/search-architecture/
-├── README.md
-├── zielstruktur.md
-└── 01-shared-search-matrix.md
+tests/unit/services/title-search.spec.ts         # Endpunkte, Mapping, robuste Gesamtzahlen
+tests/unit/services/search-flow.spec.ts          # Echter Flow/Matrix/Parser mit äußeren Testgrenzen
+tests/integration/search/search-http.spec.ts     # Echter Handler/Session über H3-HTTP-Server
+tests/integration/search/README.md              # Aufbau und Grenzen des HTTP-Harness
 ```
 
-Ein aktiver Task mit Umfang, ACs, Prüfprotokoll und Findings. Nächste Datei erst für konkret gewählten Anwendungsfall, keine Zwischenstands-/Auditdatei auf Vorrat.
+Flowtests kontrollieren Modellgenerierung und injizierten TMDb-Transport; HTTP-Tests zusätzlich Runtime-Konfiguration und Nuxt-Autoimportbereitstellung durch echte H3-Funktionen. Interne Suchmodule bleiben echt. H3-HTTP ist kein vollständiger Nuxt-/Nitro- oder Browserlauf. Keine Änderung der Runner-/Coverage-Regeln zum Abschluss.
 
-## Prüfung und Reihenfolge
+Nutzer bestätigt Tests, Lint, Typecheck und Coverage über 80%; lokaler Live-Audit acht von acht bestanden. Details und Nachweisgrenzen im Task, keine rohen Berichte oder lokales Audit-Skript im Zielbaum.
 
-Letzte grüne Nutzerbestätigung: Typecheck/Lint/vorhandene Tests nach `794788f`, Rückmeldung 22. November 08:29 CET; frühere nach `9010afb` um 08:14 CET. Nicht auf spätere Commits übertragen. Kein eigener Projektbefehlslauf; aktuelle Checks einschließlich `0715d10`/`a806145` offen. Keine Befehle, Testzahlen oder Coverage aus pauschaler Rückmeldung ableiten.
+## Erweiterungen
 
-Mitschnitt 08:39 belegt damalige direkte Titelwege und freie Dune-Klärung bis ready, nicht strukturierte Auswahl/Execute. Lokaler SHA unbekannt, vor Gesamtzählung und Medienfragekorrektur. Keine Vollabnahme von Modellverhalten, Rennen, AC9/AC10 oder integrierter Zählung. Vollständiger Produktionsimportscan offen.
+Konkrete Matrix-Wegkennung wird noch nicht durchgereicht; pauschale Restfall-Medienfrage bei neuen Kriterien neu bewerten. Weitere Wege erst nach API-Beleg und eigener Beauftragung, keine vorsorglichen Wrapper/Dateien/State-Machine-Bibliothek. Gemeinsame Methoden wiederverwenden, nicht Regeln zwischen Prompt/Matrix/Adapter duplizieren.
 
-Ausnahme `ed031e3`: bestehende Adaptertests minimal auf `.results` angepasst, Fälle/Mocks/Fehlererwartungen erhalten; keine zusätzliche Zählungsabsicherung. Allgemeiner Testausbau bleibt zurückgestellt; keine neuen Löschungen, Ausschlüsse oder vorsorgliche Migration.
-
-Als Nächstes Struktur-/Produktionsimport-/Textzuordnungsprüfung abschließen, offene manuelle Fälle und Gesamtzählung durchstechen, aktuelle Checks protokollieren, Findings zurückführen und Architekturabschluss bewerten. Keine neue Suchstrecke/Speicherlösung.
-
-## Letzter Arbeitspunkt: Testaudit
-
-Erst nach Architekturumbau und manuellen Durchstichen bestehenden Bestand auf Aktualität, Modul-/Vertragsgrenzen, Doppelungen und fehlende Zusicherungen prüfen. Flow-/Race-/Zählungslücken einbeziehen; priorisierte Bestandsbewertung dokumentieren. Noch nicht durchgeführt. Konkrete Teständerungen separat vereinbaren, keine allgemeine Migrationsfreigabe.
+Dokumentation bleibt bei README, Zielstruktur und einem Task je gewähltem Durchstich. Historische Detailstände sind über die Git-Historie erreichbar; kein neues Zwischenstandsverzeichnis.
