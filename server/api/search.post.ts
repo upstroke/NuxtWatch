@@ -24,7 +24,11 @@ function throwSearchHttpError(error: unknown): never {
   if (isTmdbError(error)) throw createError(toTmdbHttpError(error));
   throw createError({ statusCode: 502, statusMessage: 'Search processing failed' });
 }
-function executionResponse(result: Awaited<ReturnType<typeof executeSearch>>) {
+function executionResponse(
+  result:
+    | Awaited<ReturnType<typeof executeSearch>>
+    | Awaited<ReturnType<typeof submitForSession>>,
+) {
   if (result.status === 'rejected')
     throw createError({ statusCode: 409, statusMessage: 'Search execution not applicable' });
   if (result.status === 'superseded')
