@@ -32,7 +32,8 @@ describe('TMDb title search', () => {
       }),
     };
 
-    await expect(searchTitles(http, 'Synthetic Title')).resolves.toEqual([
+    const page = await searchTitles(http, 'Synthetic Title');
+    expect(page.results).toEqual([
       {
         id: 101,
         mediaType: 'movie',
@@ -81,7 +82,7 @@ describe('TMDb title search', () => {
       }),
     };
 
-    const cards = await searchTitles(http, 'Synthetic Title');
+    const { results: cards } = await searchTitles(http, 'Synthetic Title');
     expect(cards).toHaveLength(2);
     for (const card of cards) {
       expect(card).toMatchObject({ date: null, backdropPath: null, rating: null });
@@ -91,7 +92,8 @@ describe('TMDb title search', () => {
   // Branch coverage: distinguishes a valid empty response from an invalid response.
   it('returns an empty list for a valid response without matches', async () => {
     const http = { get: vi.fn().mockResolvedValue({ results: [] }) };
-    await expect(searchTitles(http, 'Synthetic Title')).resolves.toEqual([]);
+    const page = await searchTitles(http, 'Synthetic Title');
+    expect(page.results).toEqual([]);
   });
 
   // Branch coverage: rejects missing results or incomplete media rather than hiding them.

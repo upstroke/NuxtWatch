@@ -13,9 +13,7 @@ import type { TmdbHttpClient } from './http';
 const countSchema = z.object({ total_results: z.number().int().nonnegative() });
 
 /**
- * Returns a page object rather than the former card array.
- * Existing array-based adapter tests require separately approved adaptation;
- * they have not been migrated or removed for this feature.
+ * Returns a page object with cards and an available movie/TV total.
  * Multi totals subtract a separate person count (empirically checked, not an API guarantee).
  * Count failures must never discard otherwise valid title cards.
  */
