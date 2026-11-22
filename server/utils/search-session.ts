@@ -2,7 +2,7 @@
 import { randomBytes } from 'node:crypto';
 import { createError, getCookie, getRequestURL, setCookie } from 'h3';
 import type { H3Event } from 'h3';
-import type { SearchState } from '../services/search/workflow';
+import type { SearchState } from '../services/search/flow';
 
 type SearchSession = SearchState & {
   expiresAt: number;

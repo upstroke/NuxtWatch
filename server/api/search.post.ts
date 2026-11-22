@@ -1,4 +1,4 @@
-/** Validates HTTP intent and delegates bound workflow transitions. */
+/** Validates HTTP intent and delegates bound flow transitions. */
 import { randomUUID } from 'node:crypto';
 import { searchRequestSchema } from '@lib/schemas/search-request';
 import { searchResponseSchema } from '@lib/schemas/search-response';
@@ -8,7 +8,7 @@ import {
   clarifySearchText,
   executeSearch,
   submitForSession,
-} from '@server/services/search/workflow';
+} from '@server/services/search/flow';
 import { createTmdbHttpClient } from '@server/services/tmdb/http';
 import { isTmdbError, toTmdbHttpError } from '@server/services/tmdb/errors';
 import { getTmdbConfig } from '@server/utils/tmdb';
