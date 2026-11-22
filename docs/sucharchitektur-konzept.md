@@ -17,6 +17,8 @@ Neue Suchwege einzeln belegen und vertikal umsetzen: API prüfen, gemeinsame Kri
 - HTTP/Session: externe Verträge und Statusabbildung beziehungsweise Cookiebindung, Ablage und Lebensdauer.
 - Oberflächen: serverseitige Fragen, Optionen und Ergebnisse darstellen; keine zweite fachliche Suchmatrix. Kandidatenauflösung ist keine Treffersuche.
 
+Die Vorschlagsvalidierung prüft Struktur, erlaubte Felder und Werte des Modelloutputs. Sie garantiert nicht, dass eine formal erlaubte Änderung der tatsächlichen Nutzerabsicht entspricht. Ausführbarkeit und Zustandsübernahme prüft die Anwendung getrennt.
+
 ## Struktur
 
 ```text
@@ -45,6 +47,8 @@ Suchbereich, kein vollständiger Projektbaum. Weitere TMDb-Transport-/Mappingmod
 ## Kriterien und Wege
 
 Das gemeinsame Kriterienobjekt beschreibt den Wunsch, nicht den Endpunkt. Aktuell unterstützt: Titel, Medientyp und optionales Einzeljahr. Bestätigte Kriterien bleiben erhalten, sofern nicht ausdrücklich geändert. Prompt 1.5.3 präzisiert diesen Kriterienerhalt; Modellbefolgung bleibt separat zu bewerten.
+
+„Bestätigte Kriterien“ bezeichnet den von der Anwendung übernommenen aktuellen Kriterienstand. Der Begriff bedeutet weder eine gesonderte Nutzerfreigabe jedes Werts noch, dass der Auftrag bereits ausführbar ist.
 
 | Kriterien | Verhalten |
 | --- | --- |
@@ -81,7 +85,11 @@ Personen aus Multi werden nicht zu Titelkarten. `include_adult=true`, keine Adul
 
 Titeladapter liefert `results` und `totalResults`. Movie/TV nutzen direkte Providerzahlen; Multi zieht eine gesonderte plausible Personenzählung mit gleichem Suchtext/Adult-Parameter und gleichen Standardwerten ab. Unverfügbare oder unplausible Zählung ergibt `null`, gültige Karten bleiben. Keine Rückkehr zur ungefilterten Multi-Zahl. Leere Seite ist nicht gleich Gesamtzahl null; keine Auffüllung, weiteren Seiten oder Neusortierung.
 
-Technischen Fehler, erfolgreiche leere Liste und Trefferliste unterscheiden. Keine Altresultate als neue Ergebnisse einer blockierten Revision darstellen. Optionale Ergebnisverfeinerung ist von Pflichtklärung vor Ausführung getrennt und nicht vollständig umgesetzt.
+Technischen Fehler, erfolgreiche leere Liste und Trefferliste unterscheiden.
+
+Für die Ergebnisdarstellung gilt: Ergebnisse gehören zur ausgeführten Request-ID und Revision. Falls eine Oberfläche frühere Ergebnisse während eines neuen, blockierten oder fehlgeschlagenen Auftrags weiter anzeigt, muss sie diese als frühere Ergebnisse kennzeichnen. Dies ist eine Darstellungsanforderung, kein Nachweis einer bereits umgesetzten Web-Oberfläche.
+
+Optionale Ergebnisverfeinerung ist von Pflichtklärung vor Ausführung getrennt und nicht vollständig umgesetzt.
 
 ## Texte und Oberflächen
 
