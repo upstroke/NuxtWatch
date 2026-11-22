@@ -228,6 +228,7 @@ describe('Bound clarification and execution', () => {
     const body = await prepare(h);
     let release: ((value: unknown) => void) | undefined;
     const pending = new Promise<unknown>((resolve) => { release = resolve; });
+    if (!release) throw new Error('Provider response gate was not initialized');
     h.http.get.mockReturnValueOnce(pending);
     const first = executeSearch(h.state, body, h.http, h.isCurrent);
     try {
@@ -236,7 +237,6 @@ describe('Bound clarification and execution', () => {
         .toMatchObject({ status: 'rejected', reason: 'execution_already_reserved' });
       expect(h.http.get).toHaveBeenCalledTimes(1);
     } finally {
-      if (!release) throw new Error('Provider response gate was not initialized');
       release({ results: [], total_results: 0 });
     }
     expect(await first).toMatchObject({ status: 'completed' });
