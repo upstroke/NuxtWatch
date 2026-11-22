@@ -21,8 +21,20 @@ const questionSchema = z.discriminatedUnion('kind', [
 ]);
 const criteria = z.record(z.string(), z.unknown());
 const decision = z.record(z.string(), z.unknown());
+// Validate only fields used by this HTTP client's result presentation.
+const resultCardSchema = z.object({
+  id: z.number().int().positive(),
+  mediaType: z.enum(['movie', 'tv']),
+  title: z.string().trim().min(1),
+  date: z.iso.date().nullable(),
+});
 const responseSchema = z.discriminatedUnion('status', [
-  z.object({ status: z.literal('completed'), ...binding, criteria, results: z.array(z.unknown()) }),
+  z.object({
+    status: z.literal('completed'),
+    ...binding,
+    criteria,
+    results: z.array(resultCardSchema),
+  }),
   z.object({
     status: z.literal('not_executed'),
     ...binding,
@@ -39,6 +51,23 @@ const responseSchema = z.discriminatedUnion('status', [
   }),
   z.object({ status: z.literal('reset'), criteria }),
 ]);
+
+function displayResults(results) {
+  if (results.length === 0) {
+    console.log('Suche erfolgreich: keine Treffer in dieser Antwort.');
+    return;
+  }
+  console.log(`Suche erfolgreich: ${results.length} Treffer in dieser Antwort (keine Gesamtzahl).`);
+  console.table(
+    results.map((result) => ({
+      Titel: result.title,
+      Typ: result.mediaType === 'movie' ? 'Film' : 'Serie',
+      Datum: result.date ?? '—',
+      'TMDb-ID': result.id,
+    })),
+  );
+}
+
 async function main() {
   const baseUrl = new URL(process.argv[2] ?? 'http://localhost:3000');
   if (!['http:', 'https:'].includes(baseUrl.protocol) || baseUrl.username || baseUrl.password)
@@ -142,8 +171,7 @@ async function main() {
         if (result.data.status === 'reset')
           console.log('Neuer serverseitiger Suchkontext begonnen.');
         else if (result.data.status === 'completed') {
-          console.log(`Treffer (${result.data.results.length} in dieser Antwort):`);
-          console.log(JSON.stringify(result.data.results, null, 2));
+          displayResults(result.data.results);
         } else {
           console.log('Nicht ausgeführt. Serverentscheidung:');
           console.log(JSON.stringify(result.data.decision, null, 2));
