@@ -1,10 +1,10 @@
 /** Coordinates criteria, bound clarification and execution without HTTP or storage. */
-import type { SearchCriteria } from '@lib/schemas/search-criteria';
-import type { SearchQuestion } from '@lib/schemas/search-question';
 import type {
+  SearchCriteria,
+  SearchQuestion,
   SearchClarifyRequest,
   SearchExecuteRequest,
-} from '@lib/schemas/search-request';
+} from '@lib/schemas/search';
 import type { TmdbHttpClient } from '../tmdb/http';
 import { searchTitles } from '../tmdb/title-search';
 import type { LlmConfig } from './llm';

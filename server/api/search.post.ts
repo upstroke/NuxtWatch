@@ -1,7 +1,6 @@
 /** Validates HTTP intent and delegates bound flow transitions. */
 import { randomUUID } from 'node:crypto';
-import { searchRequestSchema } from '@lib/schemas/search-request';
-import { searchResponseSchema } from '@lib/schemas/search-response';
+import { searchRequestSchema, searchResponseSchema } from '@lib/schemas/search';
 import { LlmRuntimeConfigSchema } from '@lib/schemas/runtime-config';
 import {
   clarifySearch,

@@ -1,10 +1,8 @@
 /** Generates and validates proposals without applying criteria or executing searches. */
 import { PARSER_INSTRUCTIONS } from '@lib/parser/instructions';
 import { CLARIFICATION_INSTRUCTIONS } from '@lib/parser/clarification-instructions';
-import { searchMediaTypeSchema as mediaType } from '@lib/schemas/search-criteria';
-import type { SearchCriteria } from '@lib/schemas/search-criteria';
-import { searchProposalSchema } from '@lib/schemas/search';
-import type { SearchProposal } from '@lib/schemas/search';
+import { searchMediaTypeSchema as mediaType, searchProposalSchema } from '@lib/schemas/search';
+import type { SearchCriteria, SearchProposal } from '@lib/schemas/search';
 import { generateLlmText } from './llm';
 import type { LlmConfig } from './llm';
 

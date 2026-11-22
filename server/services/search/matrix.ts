@@ -1,5 +1,5 @@
 /** Evaluates the currently supported title paths without interpreting or executing. */
-import type { SearchCriteria } from '@lib/schemas/search-criteria';
+import type { SearchCriteria } from '@lib/schemas/search';
 
 export type SearchPath = 'multi' | 'movie' | 'tv';
 export type SearchObstacle =

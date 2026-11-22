@@ -1,5 +1,5 @@
 /** Fetches TMDb title matches and maps mixed or single-media results to search cards. */
-import type { SearchCriteria } from '@lib/schemas/search-criteria';
+import type { SearchCriteria } from '@lib/schemas/search';
 import {
   TmdbMovieSearchResponseSchema,
   TmdbTitleSearchResponseSchema,
