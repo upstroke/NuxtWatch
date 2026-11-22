@@ -1,137 +1,137 @@
-# NuxtWatch – Sucharchitektur
+# NuxtWatch – Search Architecture
 
-Stand: 22. November 2026. Dauerhafte Referenz für Regeln, Struktur und Erweiterungsgrenzen der gemeinsamen Suche. Der erste Such-/Titel-Durchstich ist im vereinbarten Umfang abgeschlossen. Geprüfter Codebezug `d6e071c`, Branch `feat/shared-search-architecture`; spätere Dokumentationsänderungen sind keine neuen Funktionsprüfungen. Kein vollständiger Produktions-, Race-, Browser- oder Modellnachweis.
+As of November 22, 2026. Permanent reference for the rules, structure, and extension boundaries of shared search. The initial search/title vertical slice is complete within the agreed scope. Reviewed code reference: `d6e071c`, branch `feat/shared-search-architecture`; subsequent documentation changes do not constitute new functional verification. This is not comprehensive production, race-condition, browser, or model validation.
 
-## Grundlage und Arbeitsweise
+## Foundations and Working Approach
 
-Ausgangspunkt sind [TMDb-Analyse](tmdb-api-analysis.md) und [geprüfte Suchbeispiele](tmdb-search-examples.md). API-Fähigkeit, Produktentscheidung und implementierter Stand bleiben getrennt. Titel ist erster Abnahmefall der gemeinsamen Architektur, nicht Grundlage getrennter Parser je Suchstrecke.
+The starting points are the [TMDb analysis](tmdb-api-analysis.md) and [verified search examples](tmdb-search-examples.md). API capabilities, product decisions, and implemented behavior remain distinct. Title search is the first acceptance case for the shared architecture, not a basis for separate parsers per search path.
 
-Neue Suchwege einzeln belegen und vertikal umsetzen: API prüfen, gemeinsame Kriterien und Hindernisse ergänzen, konkreten Ablauf prüfen und Findings zurückführen. Keine vollständige Matrix, Regel-Engine, zweite Routing-Matrix, Speicherarchitektur oder Wrapper/Dateien auf Vorrat. Gemeinsame Methoden wiederverwenden, keine Fachregeln zwischen Prompt, Matrix, Adapter und Oberfläche duplizieren.
+Substantiate and implement new search paths individually as vertical slices: verify the API, extend shared criteria and blockers, test the specific flow, and feed findings back into the design. Do not build a complete matrix, rule engine, second routing matrix, storage architecture, or speculative wrappers/files. Reuse shared methods; do not duplicate domain rules across prompts, the matrix, adapters, and interfaces.
 
-## Verantwortlichkeiten
+## Responsibilities
 
-- LLM: natürliche Sprache und gebundene Freitextantworten interpretieren und Kriterienänderungen vorschlagen; die Vorschlagsvalidierung erfolgt im gemeinsamen LLM-Modul. Keine Zustandsübernahme, Endpunktwahl oder Suche. LLM-`ready` ist keine Ausführungsfreigabe.
-- Matrix: konkrete Wege gegen denselben Kriterienstand auf vollständige Abdeckung prüfen und Hindernisse liefern. Keine Texte, Fragebindung oder Sessionverwaltung.
-- Flow: validierte Änderungen übernehmen, Aktualität prüfen, nächste Aktion bestimmen, Fragen binden und Ausführung reservieren.
-- Adapter: Providerparameter, Transport, Antwortvalidierung, Karten und Gesamtzahlen. Keine Änderung der Suchabsicht oder Session.
-- HTTP/Session: externe Verträge und Statusabbildung beziehungsweise Cookiebindung, Ablage und Lebensdauer.
-- Oberflächen: serverseitige Fragen, Optionen und Ergebnisse darstellen; keine zweite fachliche Suchmatrix. Kandidatenauflösung ist keine Treffersuche.
+- LLM: interpret natural language and bound free-text answers and propose criteria changes; proposal validation takes place in the shared LLM module. No state acceptance, endpoint selection, or search execution. LLM `ready` is not authorization to execute.
+- Matrix: evaluate concrete paths against the same criteria state for complete coverage and report blockers. No text generation, question binding, or session management.
+- Flow: accept validated changes, check whether state is current, determine the next action, bind questions, and reserve execution.
+- Adapter: provider parameters, transport, response validation, cards, and totals. No changes to search intent or sessions.
+- HTTP/session: external contracts and status mapping; cookie binding, storage, and lifetime, respectively.
+- Interfaces: display server-provided questions, options, and results; no second domain-specific search matrix. Candidate resolution is not a result search.
 
-Die Vorschlagsvalidierung prüft Struktur, erlaubte Felder und Werte des Modelloutputs. Sie garantiert nicht, dass eine formal erlaubte Änderung der tatsächlichen Nutzerabsicht entspricht. Ausführbarkeit und Zustandsübernahme prüft die Anwendung getrennt.
+Proposal validation checks the structure, allowed fields, and values of model output. It does not guarantee that a formally permitted change matches the user's actual intent. The application checks executability and state acceptance separately.
 
-## Struktur
+## Structure
 
 ```text
 server/
-├── api/search/index.post.ts       # HTTP-Verträge, Runtime, Statusabbildung
+├── api/search/index.post.ts       # HTTP contracts, runtime, status mapping
 ├── services/
 │   ├── search/
-│   │   ├── flow.ts                # Kriterien, Aktualität, Fragen, Reservierung
-│   │   ├── matrix.ts              # Fähigkeiten und Hindernisse
-│   │   ├── llm.ts                 # Transport, Interpretation, Vorschlagsvalidierung
-│   │   └── texts.ts               # Anwendungs-, HTTP- und Sessiontexte
+│   │   ├── flow.ts                # Criteria, currency checks, questions, reservations
+│   │   ├── matrix.ts              # Capabilities and blockers
+│   │   ├── llm.ts                 # Transport, interpretation, proposal validation
+│   │   └── texts.ts               # Application, HTTP, and session texts
 │   └── tmdb/
-│       ├── title-search.ts        # Titelparameter, Karten und Gesamtzahlen
-│       └── errors.ts              # Fehlercodes, Status, stabile englische Texte
-└── utils/search-session.ts       # Cookie, prozesslokale Ablage, Lebensdauer
+│       ├── title-search.ts        # Title parameters, cards, and totals
+│       └── errors.ts              # Error codes, statuses, stable English texts
+└── utils/search-session.ts       # Cookie, process-local storage, lifetime
 src/lib/
-├── schemas/search.ts             # Kriterien, Vorschläge, Fragen, Aktionen, Antworten
+├── schemas/search.ts             # Criteria, proposals, questions, actions, responses
 └── parser/
-    ├── instructions.ts           # Versionierter Systemauftrag
+    ├── instructions.ts           # Versioned system instructions
     └── clarification-instructions.ts
-scripts/search.mjs               # HTTP-Terminalclient, lokaler Darstellungskatalog
+scripts/search.mjs               # HTTP terminal client, local presentation catalog
 ```
 
-Suchbereich, kein vollständiger Projektbaum. Weitere TMDb-Transport-/Mappingmodule sowie Runtime-/Provider-/Kartenverträge bleiben separat. Im geprüften Suchkern wurden alte Workflow-/Coordinator-/Submission-/ausführende Parsermodule entfernt; alte Chat-Verträge/Export und Spike-Fehleralias wurden gezielt bereinigt. Kein projektweiter Vollscan behauptet.
+This covers the search area, not the complete project tree. Additional TMDb transport/mapping modules and runtime/provider/card contracts remain separate. Legacy workflow/coordinator/submission/parser-execution modules were removed from the reviewed search core; legacy chat contracts/export and the spike error alias were cleaned up selectively. No project-wide exhaustive scan is claimed.
 
-## Kriterien und Wege
+## Criteria and Paths
 
-Das gemeinsame Kriterienobjekt beschreibt den Wunsch, nicht den Endpunkt. Aktuell unterstützt: Titel, Medientyp und optionales Einzeljahr. Bestätigte Kriterien bleiben erhalten, sofern nicht ausdrücklich geändert. Prompt 1.5.3 präzisiert diesen Kriterienerhalt; Modellbefolgung bleibt separat zu bewerten.
+The shared criteria object describes the user's intent, not the endpoint. Currently supported: title, media type, and an optional single year. Confirmed criteria are preserved unless explicitly changed. Prompt 1.5.3 clarifies this preservation rule; model compliance must be evaluated separately.
 
-„Bestätigte Kriterien“ bezeichnet den von der Anwendung übernommenen aktuellen Kriterienstand. Der Begriff bedeutet weder eine gesonderte Nutzerfreigabe jedes Werts noch, dass der Auftrag bereits ausführbar ist.
+“Confirmed criteria” means the current criteria state accepted by the application. It implies neither separate user approval of every value nor that the request is already executable.
 
-| Kriterien | Verhalten |
+| Criteria | Behavior |
 | --- | --- |
-| Titel fehlt | Bei gemeinter Titelstrecke Titel klären; andere Absichten nicht umdeuten |
-| Titel, `all`, kein Jahr | Multi; keine optionale Typ-/Jahresfrage |
-| Titel, `movie`, optional Jahr | Movie; Jahr über `primary_release_year` |
-| Titel, `tv`, optional Jahr | TV; Jahr über `first_air_date_year` |
-| Titel, Jahr, `all` | Gebundene Auswahl `movie` oder `tv`; keine Treffersuche |
+| Title missing | Clarify the title when title search is intended; do not reinterpret other intents |
+| Title, `all`, no year | Multi-search; no optional media-type/year question |
+| Title, `movie`, optional year | Movie search; year via `primary_release_year` |
+| Title, `tv`, optional year | TV search; year via `first_air_date_year` |
+| Title, year, `all` | Bound choice of `movie` or `tv`; no result search |
 
-Nicht genannter Typ und ausdrücklich Filme und Serien bedeuten `all`, sofern kein bestätigter anderer Typ fortgilt. Ausdrückliche Aufhebung auf beide Medien ist erlaubt. Mit Jahr ist `all` ein zu klärender Zwischenstand: Titel/Jahr erhalten, Typ auswählen, danach Execute. Kein geratenes Medium, entferntes Jahr, Zusammenführen von Listen oder eigene Jahres-Nachfilterung. Das ist eine Produktentscheidung, keine grundsätzliche API-Unmöglichkeit.
+An unspecified type and an explicit request for movies and TV both mean `all`, unless a different confirmed type still applies. Explicitly resetting the type to both media is allowed. With a year, `all` is an intermediate state requiring clarification: preserve title/year, select the type, then execute. Do not guess a medium, remove the year, merge lists, or implement custom year post-filtering. This is a product decision, not a fundamental API limitation.
 
-Mehrfachtreffer allein sind kein Pflichtklärungsgrund. Jahresbereiche sind nicht umgesetzt; genaue Daten nicht ungefragt verkürzen. Filmjahr meint primäres Veröffentlichungsjahr, Serienjahr Erstausstrahlungsjahr. Discover ersetzt keinen freien Titelabgleich. Weitere Kriterien erst mit ihrem konkreten API-Beleg und Durchstich ergänzen.
+Multiple results alone do not require clarification. Year ranges are not implemented; do not reduce exact dates without being asked. Movie year means primary release year; TV year means first-air year. Discover does not replace free-form title matching. Add further criteria only with their specific API evidence and vertical slice.
 
-## Aktionen, Zustand und Bindungen
+## Actions, State, and Bindings
 
-- `submit`: neuer ausdrücklicher Auftrag auf Basis bestätigter Serverkriterien. Er erhält eine neue `requestId` und ersetzt den bisherigen Auftrag bereits vor dem Modellaufruf. Die bisherigen Kriterien bleiben zunächst erhalten; alte Frage- und Execute-Bindungen sind nicht mehr aktuell. Scheitert die Interpretation, wird der vorherige Auftrag nicht automatisch wiederhergestellt. Ohne verbleibenden Klärungsbedarf darf der neue Auftrag direkt suchen. Kein clientseitiger Ersatzstand.
-- `clarify`: gebundene Antwort prüfen, übernehmen und erneut bewerten, niemals Treffersuche. Angebotene Medienauswahl ohne LLM; Freitext über gemeinsame Interpretation. Der Antwortstatus `clarified` bedeutet, dass die Antwort verarbeitet wurde. Er kann eine Folgefrage enthalten und ist allein keine Ausführungsfreigabe.
-- `execute`: aktuelle bestätigte Revision erneut prüfen und ausdrücklich ausführen, ohne erneute LLM-Interpretation. Nach abgeschlossener Klärung erforderlich. Eine offene Frage oder laufende Freitextklärung blockiert die Ausführung.
-- `reset`: bisherige Sessionzuordnung entfernen und einen neuen Sessionkontext ohne alte Kriterien erzeugen.
+- `submit`: a new explicit request based on confirmed server-side criteria. It receives a new `requestId` and replaces the previous request before the model call. Existing criteria are initially preserved; previous question and execute bindings are no longer current. If interpretation fails, the previous request is not automatically restored. If no clarification remains necessary, the new request may search directly. No client-side substitute state.
+- `clarify`: validate, accept, and reassess a bound answer; never perform a result search. Offered media choices are handled without the LLM; free text uses shared interpretation. The response status `clarified` means the answer was processed. It may include a follow-up question and does not itself authorize execution.
+- `execute`: recheck and explicitly execute the current confirmed revision without another LLM interpretation. Required after clarification is complete. An open question or ongoing free-text clarification blocks execution.
+- `reset`: remove the previous session association and create a new session context without old criteria.
 
-Validierte Kriterien können bereits während offener Klärung gespeichert sein; eine offene Frage startet keine Treffersuche. Ein gespeicherter Kriterienstand ist nicht automatisch ausführbar.
+Validated criteria may already be stored while clarification remains open; an open question does not start a result search. Stored criteria are not automatically executable.
 
-`requestId`, `revision` und `questionId` binden Antworten an Auftrag, Stand und Frage. Die Revision gilt innerhalb eines Auftrags und beginnt bei jedem neuen Auftrag mit `1`. Sie wird bei der Übernahme eines Kriterien-/Klärungsergebnisses erhöht, nicht bei jedem HTTP-Aufruf oder Ausführungsergebnis. Unterschiedliche Aufträge sind über ihre Request-ID zu unterscheiden, nicht durch einen Vergleich ihrer Revisionsnummern.
+`requestId`, `revision`, and `questionId` bind answers to the request, state, and question. The revision applies within a request and starts at `1` for each new request. It increases when a criteria/clarification result is accepted, not on every HTTP call or execution result. Distinguish separate requests by their request IDs, not by comparing revision numbers.
 
-Verspätete Ergebnisse dürfen keinen neueren Stand überschreiben oder alte Fragen wieder öffnen. Vor der Übernahme asynchroner Ergebnisse wird deren Aktualität erneut geprüft. Externe Aufrufe müssen dafür nicht abbrechbar sein. Diese serverseitige Absicherung ist kein vollständiger Nachweis gegen Browser-Cookierennen.
+Late results must not overwrite newer state or reopen old questions. Asynchronous results are checked again for currency before acceptance. External calls do not need to be cancellable for this safeguard. This server-side protection is not comprehensive proof against browser cookie races.
 
-Submit und Execute teilen die Reservierung vor dem Provideraufruf. Eine laufende oder erfolgreiche Revision darf nicht erneut gestartet werden; ein technischer Ausführungsfehler erlaubt einen ausdrücklichen Neuversuch derselben Revision. Ein neuer Submit ist dagegen ein neuer Auftrag und kann dieselben Kriterien erneut ausführen. Keine Zusicherung für Submit-Idempotenz oder erneute Ergebnisauslieferung bei wiederholtem Execute.
+Submit and execute share the reservation before the provider call. An in-progress or successful revision must not be started again; a technical execution failure permits an explicit retry of the same revision. A new submit is a new request and may execute the same criteria again. Neither submit idempotency nor repeated result delivery on repeated execute is guaranteed.
 
-Die Sessionablage ist prozesslokal: 30 Minuten Inaktivität, maximal 1.000 Sessions, nicht neustartfest oder instanzübergreifend. Ein mitgesendetes, nicht mehr vorhandenes oder abgelaufenes Sessioncookie führt zu `410`. Nicht anwendbare Frage- oder Execute-Bindungen führen bei gültiger Session und verfügbarer erforderlicher Konfiguration zu `409`. Da die Konfigurationsprüfung teilweise vor der Bindungsprüfung erfolgt, kann fehlende Konfiguration zuvor `503` auslösen. Zugriffsschutz und Betriebsgrenzen vor öffentlichem Betrieb separat bewerten.
+Session storage is process-local: 30 minutes of inactivity, at most 1,000 sessions, neither restart-persistent nor shared across instances. A supplied session cookie whose session no longer exists or has expired produces `410`. Inapplicable question or execute bindings produce `409` when the session is valid and required configuration is available. Because configuration checks sometimes precede binding checks, missing configuration may produce `503` first. Assess access controls and operational limits separately before public operation.
 
-## Karten und Gesamtzahlen
+## Cards and Totals
 
-Personen aus Multi werden nicht zu Titelkarten. `include_adult=true`, keine Adult-basierte Ausfilterung. Locale/Pagination sind Ausführungsoptionen, Sprache ist nicht Providerregion. ID und Medientyp identifizieren eine Karte gemeinsam.
+People from multi-search do not become title cards. `include_adult=true`; no adult-based filtering. Locale/pagination are execution options; language is not the provider region. ID and media type jointly identify a card.
 
-Titeladapter liefert `results` und `totalResults`. Movie/TV nutzen direkte Providerzahlen; Multi zieht eine gesonderte plausible Personenzählung mit gleichem Suchtext/Adult-Parameter und gleichen Standardwerten ab. Unverfügbare oder unplausible Zählung ergibt `null`, gültige Karten bleiben. Keine Rückkehr zur ungefilterten Multi-Zahl. Leere Seite ist nicht gleich Gesamtzahl null; keine Auffüllung, weiteren Seiten oder Neusortierung.
+The title adapter returns `results` and `totalResults`. Movie/TV use direct provider totals; multi-search subtracts a separate plausible person count using the same search text/adult parameter and the same defaults. An unavailable or implausible count produces `null`; valid cards remain available. Do not fall back to the unfiltered multi-search total. An empty page does not imply a zero total; no backfilling, additional pages, or reordering.
 
-Technischen Fehler, erfolgreiche leere Liste und Trefferliste unterscheiden.
+Distinguish technical errors, successful empty lists, and successful result lists.
 
-Für die Ergebnisdarstellung gilt: Ergebnisse gehören zur ausgeführten Request-ID und Revision. Falls eine Oberfläche frühere Ergebnisse während eines neuen, blockierten oder fehlgeschlagenen Auftrags weiter anzeigt, muss sie diese als frühere Ergebnisse kennzeichnen. Dies ist eine Darstellungsanforderung, kein Nachweis einer bereits umgesetzten Web-Oberfläche.
+For result presentation, results belong to the executed request ID and revision. If an interface continues to display previous results during a new, blocked, or failed request, it must identify them as previous results. This is a presentation requirement, not evidence of an already implemented web interface.
 
-Optionale Ergebnisverfeinerung ist von Pflichtklärung vor Ausführung getrennt und nicht vollständig umgesetzt.
+Optional result refinement is separate from mandatory clarification before execution and is not fully implemented.
 
-## Texte und Oberflächen
+## Texts and Interfaces
 
-`searchTexts` liefert Anwendungs-, HTTP- und Sessiontexte. Der Flow bindet die Medienfrage als Pflichtfeld `message`; HTTP validiert, CLI zeigt sie an. Derselbe gebundene Text dient dem Freitextkontext mit ursprünglichem Auftrag, bestätigten Kriterien, auftragsbezogenen Antworten und aktueller Frage. Kein allgemeiner Chatverlauf auf Vorrat; Optionen nicht aus Modellprosa ableiten.
+`searchTexts` provides application, HTTP, and session texts. The flow binds the media question as the required `message` field; HTTP validates it and the CLI displays it. The same bound text is used in the free-text context alongside the original request, confirmed criteria, request-specific answers, and current question. Do not maintain general chat history speculatively; do not derive options from model prose.
 
-Reine Terminalhilfen/Labels/Vorlagen bleiben in `terminalTexts`. Normaler Text ohne offene Frage ist Submit, sonst gebundene Antwort. `/submit TEXT`, `/select NUMMER`, `/execute`, `/reset` und `/exit` sind explizit; `/select` klärt Medien und wählt keine Treffer. Kompakte Tabelle mit Titel, Typ, Datum und ID; Seiten-/Gesamtzahl getrennt.
+Terminal-only help, labels, and templates remain in `terminalTexts`. Ordinary text is a submit when no question is open; otherwise, it is a bound answer. `/submit TEXT`, `/select NUMBER`, `/execute`, `/reset`, and `/exit` are explicit commands; `/select` clarifies media and does not select results. A compact table shows title, type, date, and ID; page counts and total counts are separate.
 
 ```sh
 node scripts/search.mjs
 node scripts/search.mjs http://localhost:3001
 ```
 
-Nuxt, Modellserver und lokale Konfiguration sind nötig. Keine Providerzugangsdaten im Terminalclient. TMDb-Fehlertexte sind seit `0e7c642` unter drei stabilen englischen Schlüsseln in `server/services/tmdb/errors.ts` gebündelt; Wortlaut, Codes und HTTP-Abbildung unverändert. Keine zusätzliche i18n-Infrastruktur oder Sprachauswahl. Freie Modellnachrichten bleiben separat. Web-/Wizardanbindung ist nicht abgenommen.
+Nuxt, a model server, and local configuration are required. No provider credentials in the terminal client. Since `0e7c642`, TMDb error texts have been grouped under three stable English keys in `server/services/tmdb/errors.ts`; wording, codes, and HTTP mapping are unchanged. No additional i18n infrastructure or language selection. Free-form model messages remain separate. Web/wizard integration has not been accepted.
 
-## Prüfstand des abgeschlossenen Titel-Durchstichs
+## Verification Status of the Completed Title Vertical Slice
 
-Stand vom 22. November 2026; Nachweise nicht auf spätere Verhaltensänderungen übertragen.
+As of November 22, 2026; do not carry evidence forward to subsequent behavioral changes.
 
-| Nachweis | Umfang und Herkunft |
+| Evidence | Scope and source |
 | --- | --- |
-| `8172f08` | Titeladaptertests: Endpunkte/Jahr, Karten, direkte/Multi-Zahlen, Metadaten, isolierter Personen-Zählungsfehler und leere Seiten; Nutzer bestätigt Testlauf |
-| `0e0e002` | Echter Flow/Matrix/Vorschlagsvalidierung/Adapter mit kontrollierten äußeren Grenzen: Kriterienerhalt/-änderung, Klärung, Execute, Bindungen, Reservierung und expliziter Neuversuch nach Fehler; Nutzer bestätigt Tests |
-| `e885a7c` | Echter Handler/Session über isoliertes H3-HTTP: Validierung, Cookies, Sessiontrennung, Reset, Konflikte, Antwortvertrag, no-store; Nutzer bestätigt Tests |
-| `d6e071c` | Lint-Korrektur: Provider-Gate-Prüfung vor Ausführung statt Throw im finally |
-| Projektchecks | Nutzer bestätigt um 18:17 CET Tests, Lint und Typecheck, anschließend Coverage über 80%; keine genaue Quote, Metrik oder Testanzahl genannt; keine eigenen Projektbefehlsläufe des Assistants |
-| Live-HTTP | Nutzerlauf gegen localhost:3000, 18:23 CET: acht PASSED, null FAILED, null BLOCKED; Konsolenausgabe und JSON-Bericht in der Unterhaltung geprüft |
+| `8172f08` | Title-adapter tests: endpoints/year, cards, direct/multi totals, metadata, isolated person-count failure, and empty pages; test run confirmed by the user |
+| `0e0e002` | Real flow/matrix/proposal validation/adapter with controlled external boundaries: criteria preservation/changes, clarification, execute, bindings, reservations, and explicit retry after failure; tests confirmed by the user |
+| `e885a7c` | Real handler/session through isolated H3 HTTP: validation, cookies, session isolation, reset, conflicts, response contract, no-store; tests confirmed by the user |
+| `d6e071c` | Lint correction: provider-gate check before execution instead of throwing in finally |
+| Project checks | At 18:17 CET, the user confirmed tests, lint, and typecheck, followed by coverage above 80%; no exact percentage, metric, or test count supplied; no project commands run independently by the assistant |
+| Live HTTP | User run against localhost:3000, 18:23 CET: eight PASSED, zero FAILED, zero BLOCKED; console output and JSON report reviewed in the conversation |
 
-Live-Fälle: neuer Auftrag bei offener Frage; falsche Request-/Frage-ID und Revision; doppelte Antwort; Reset mit alten Bindungen und Cookie; veraltetes Execute; Wiederholung nach Erfolg; zwei gleichzeitig abgesendete Executes; ausdrücklich Filme und Serien mit Jahr. Erwartete Konflikte beobachtet, gültiger aktueller Stand danach nutzbar. Parallelfall einmal completed/200 und einmal 409, kein Beweis interner Überlappung oder Provideraufrufzahl. Alle protokollierten Antworten no-store.
+Live cases: new request while a question is open; incorrect request/question ID and revision; duplicate answer; reset with old bindings and cookie; stale execute; repeat after success; two concurrently submitted execute requests; explicit movies-and-TV request with a year. Expected conflicts were observed, and the valid current state remained usable afterward. The parallel case produced one completed/200 and one 409, not proof of internal overlap or provider-call counts. All recorded responses were no-store.
 
-Live-Bericht `search-flow-audit-report.json`: 17:23:14.748Z bis 17:23:31.397Z; Commitangabe `d6e071ca8e5a2f28ccf14831c1d7e5f547f46e69` vom Aufrufer, nicht gegen den Server verifiziert. Audit-Skript nur lokal bereitgestellt und mit node --check geprüft; Skript und Rohberichte nicht committed. Der Audit prüft benötigte Felder, nicht das vollständige gemeinsame Schema.
+Live report `search-flow-audit-report.json`: 17:23:14.748Z to 17:23:31.397Z; commit value `d6e071ca8e5a2f28ccf14831c1d7e5f547f46e69` supplied by the caller, not verified against the server. The audit script was provided locally only and checked with node --check; the script and raw reports were not committed. The audit checks required fields, not the full shared schema.
 
-Geprüfte Suchproduktionspfade ohne blockierenden Struktur-/Import-/Textzuordnungsbefund; projektweiter Vollscan ausdrücklich aus dem Abschlussumfang genommen und nicht durchgeführt. Kein vollständiger projektweiter Testbestandsaudit behauptet. Die vorherige Testzurückstellung wurde durch separat vereinbarte gezielte Blöcke ergänzt; [Testregeln](testing.md) und [Entwicklungsregeln](../AGENTS.md) gelten weiterhin.
+The reviewed production search paths had no blocking structure/import/text-assignment findings; a project-wide exhaustive scan was explicitly excluded from the completion scope and was not performed. No comprehensive project-wide test-inventory audit is claimed. The earlier deferral of tests was supplemented by separately agreed targeted blocks; the [testing rules](testing.md) and [development rules](../AGENTS.md) continue to apply.
 
-Das ausführliche [historische Abschlussprotokoll von Task 01](https://github.com/upstroke/NuxtWatch/blob/5ac52968b8f68acfd2db0f838ac012c127c7357c/docs/tasks/search-architecture/01-shared-search-matrix.md) bleibt über den festen Commit erreichbar. Es enthält auch frühere B-/R-/D-Nachweise und deren Grenzen. R04-Freitext select 1 bleibt historisch fehlgeschlagen und außerhalb des vereinbarten Terminalumfangs; kein stillschweigender Fix. D01/D02 bleiben mit ihren damaligen Nachweisgrenzen historisch, nicht als neue Vollabnahme.
+The detailed [historical completion record for Task 01](https://github.com/upstroke/NuxtWatch/blob/5ac52968b8f68acfd2db0f838ac012c127c7357c/docs/tasks/search-architecture/01-shared-search-matrix.md) remains accessible through the fixed commit. It also contains earlier B/R/D evidence and its limitations. R04 free-text select 1 remains a historical failure outside the agreed terminal scope; no implicit fix is claimed. D01/D02 remain historical with their original evidence limitations, not a new full acceptance.
 
-## Offene Architektur- und Sicherheitsgrenzen
+## Open Architecture and Security Boundaries
 
-1. Konkrete Matrix-Wegkennung wird nicht bis zur Ausführung durchgereicht. Bei Erweiterung die eindeutige Weitergabe der Wegentscheidung bewerten.
-2. Medienfrage bleibt pauschaler Restfall nach fehlendem Titel/passendem Weg. Neue Kriterien benötigen passende Klärung oder begründete Ablehnung statt ungeprüfter Wiederverwendung.
-3. Allgemeine Teilübernahme bei LLM-Klärung ist nicht vollständig umgesetzt. Unabhängige Kriterien und gekoppelte Änderungen benötigen eine eigene fachliche Entscheidung.
-4. Prompt-Injection-Resistenz wurde nicht gezielt abgenommen. Schema-gültig ist nicht gleich auftragstreu; Modellantworten bleiben nicht vertrauenswürdig. Deterministische Grenztests und adversariale Modelltests separat vereinbaren. Sicherheitsregeln sind kein bestandener Sicherheitsaudit.
+1. The concrete matrix path identifier is not passed through to execution. When extending the system, assess unambiguous propagation of the path decision.
+2. The media question remains a generic fallback after handling a missing title or a matching path. New criteria require appropriate clarification or a justified rejection rather than unchecked reuse.
+3. General partial acceptance during LLM clarification is not fully implemented. Independent criteria and coupled changes require a separate domain decision.
+4. Prompt-injection resistance has not been specifically accepted. Schema-valid does not mean faithful to the request; model responses remain untrusted. Agree on deterministic boundary tests and adversarial model tests separately. Security rules are not a passed security audit.
 
-Nicht vollständig nachgewiesen: dauerhafte LLM-Semantik, instrumentierte Live-Provideraufrufzahlen, garantierte interne Execute-Überlappung, gezielt verzögerte TMDb-Antworten, kontrollierte reale Provider-/Personenzählungsausfälle, Browser-Cookierennen, Sessionablauf/Kapazitätsgrenze, Mehrinstanz-/Neustartverhalten. Kontrollierte Servicefehler/-neuversuche ersetzen keine realen Ausfallsimulationen.
+Not fully demonstrated: sustained LLM semantic reliability, instrumented live provider-call counts, guaranteed internal execute overlap, deliberately delayed TMDb responses, controlled real provider/person-count failures, browser cookie races, session expiry/capacity limits, and multi-instance/restart behavior. Controlled service failures/retries do not replace real failure simulations.
 
-Kein Produktionsfreigabenachweis. Weitere Suchwege, Web-Wizard, optionale Ergebnisverfeinerung, vollständige i18n, Betriebs- und Sicherheitsarbeit separat beauftragen. Kein nächster Suchweg vorweggenommen; Keyword ist eine Möglichkeit, keine festgelegte Folgeimplementierung.
+This is not evidence of production readiness. Commission further search paths, the web wizard, optional result refinement, full i18n, and operational/security work separately. No next search path is predetermined; keyword search is an option, not an agreed next implementation.
