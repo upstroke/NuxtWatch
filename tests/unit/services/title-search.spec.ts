@@ -116,11 +116,19 @@ describe('TMDb title search', () => {
 });
 
 const countedMovie = {
-  media_type: 'movie', id: 401, title: 'Counted Film', genre_ids: [],
+  media_type: 'movie',
+  id: 401,
+  title: 'Counted Film',
+  genre_ids: [],
 };
 const countedCard = {
-  id: 401, mediaType: 'movie', title: 'Counted Film',
-  backdropPath: null, date: null, genreIds: [], rating: null,
+  id: 401,
+  mediaType: 'movie',
+  title: 'Counted Film',
+  backdropPath: null,
+  date: null,
+  genreIds: [],
+  rating: null,
 };
 const mixedCountResults = [countedMovie, { media_type: 'person' }];
 
@@ -128,32 +136,53 @@ describe('TMDb single-media requests and totals', () => {
   // Branch coverage: maps each explicit scope and optional year without a person-count call.
   it.each([
     { options: { mediaType: 'movie' }, path: '/search/movie', yearQuery: {} },
-    { options: { mediaType: 'movie', year: 2021 }, path: '/search/movie',
-      yearQuery: { primary_release_year: '2021' } },
+    {
+      options: { mediaType: 'movie', year: 2021 },
+      path: '/search/movie',
+      yearQuery: { primary_release_year: '2021' },
+    },
     { options: { mediaType: 'tv' }, path: '/search/tv', yearQuery: {} },
-    { options: { mediaType: 'tv', year: 2017 }, path: '/search/tv',
-      yearQuery: { first_air_date_year: '2017' } },
+    {
+      options: { mediaType: 'tv', year: 2017 },
+      path: '/search/tv',
+      yearQuery: { first_air_date_year: '2017' },
+    },
   ] satisfies {
     options: NonNullable<Parameters<typeof searchTitles>[2]>;
     path: string;
     yearQuery: Record<string, string>;
-  }[])('requests $path with $yearQuery and uses its direct total', async ({ options, path, yearQuery }) => {
-    const result = options.mediaType === 'movie'
-      ? { id: 501, title: 'Synthetic Title', genre_ids: [] }
-      : { id: 501, name: 'Synthetic Title', genre_ids: [] };
-    const http = { get: vi.fn().mockResolvedValue({ results: [result], total_results: 42 }) };
+  }[])(
+    'requests $path with $yearQuery and uses its direct total',
+    async ({ options, path, yearQuery }) => {
+      const result =
+        options.mediaType === 'movie'
+          ? { id: 501, title: 'Synthetic Title', genre_ids: [] }
+          : { id: 501, name: 'Synthetic Title', genre_ids: [] };
+      const http = { get: vi.fn().mockResolvedValue({ results: [result], total_results: 42 }) };
 
-    const page = await searchTitles(http, 'Synthetic Title', options);
+      const page = await searchTitles(http, 'Synthetic Title', options);
 
-    expect(http.get).toHaveBeenCalledExactlyOnceWith(path, {
-      query: 'Synthetic Title', include_adult: 'true', ...yearQuery,
-    });
-    expect(page).toEqual({
-      results: [{ id: 501, mediaType: options.mediaType, title: 'Synthetic Title',
-        backdropPath: null, date: null, genreIds: [], rating: null }],
-      totalResults: 42,
-    });
-  });
+      expect(http.get).toHaveBeenCalledExactlyOnceWith(path, {
+        query: 'Synthetic Title',
+        include_adult: 'true',
+        ...yearQuery,
+      });
+      expect(page).toEqual({
+        results: [
+          {
+            id: 501,
+            mediaType: options.mediaType,
+            title: 'Synthetic Title',
+            backdropPath: null,
+            date: null,
+            genreIds: [],
+            rating: null,
+          },
+        ],
+        totalResults: 42,
+      });
+    },
+  );
 });
 
 describe('TMDb multi title totals', () => {
@@ -165,14 +194,17 @@ describe('TMDb multi title totals', () => {
     const http = { get: vi.fn().mockResolvedValueOnce(raw).mockResolvedValueOnce(people) };
 
     await expect(searchTitles(http, 'Synthetic Title')).resolves.toEqual({
-      results: [countedCard], totalResults: 7,
+      results: [countedCard],
+      totalResults: 7,
     });
     expect(http.get).toHaveBeenCalledTimes(2);
     expect(http.get).toHaveBeenNthCalledWith(1, '/search/multi', {
-      query: 'Synthetic Title', include_adult: 'true',
+      query: 'Synthetic Title',
+      include_adult: 'true',
     });
     expect(http.get).toHaveBeenNthCalledWith(2, '/search/person', {
-      query: 'Synthetic Title', include_adult: 'true',
+      query: 'Synthetic Title',
+      include_adult: 'true',
     });
     expect({ raw, people }).toEqual(before);
   });
@@ -183,16 +215,21 @@ describe('TMDb multi title totals', () => {
     { label: 'wrong type', metadata: { total_results: '10' } },
     { label: 'negative', metadata: { total_results: -1 } },
     { label: 'smaller than the raw page', metadata: { total_results: 1 } },
-  ])('uses an unknown total for $label primary count without a person request', async ({ metadata }) => {
-    const http = { get: vi.fn().mockResolvedValue({ results: mixedCountResults, ...metadata }) };
+  ])(
+    'uses an unknown total for $label primary count without a person request',
+    async ({ metadata }) => {
+      const http = { get: vi.fn().mockResolvedValue({ results: mixedCountResults, ...metadata }) };
 
-    await expect(searchTitles(http, 'Synthetic Title')).resolves.toEqual({
-      results: [countedCard], totalResults: null,
-    });
-    expect(http.get).toHaveBeenCalledExactlyOnceWith('/search/multi', {
-      query: 'Synthetic Title', include_adult: 'true',
-    });
-  });
+      await expect(searchTitles(http, 'Synthetic Title')).resolves.toEqual({
+        results: [countedCard],
+        totalResults: null,
+      });
+      expect(http.get).toHaveBeenCalledExactlyOnceWith('/search/multi', {
+        query: 'Synthetic Title',
+        include_adult: 'true',
+      });
+    },
+  );
 
   // Branch coverage: refuses invalid person metadata and implausible title-count differences.
   it.each([
@@ -202,24 +239,32 @@ describe('TMDb multi title totals', () => {
     { label: 'fewer titles than visible', response: { total_results: 10 } },
     { label: 'negative difference', response: { total_results: 11 } },
   ])('preserves cards with an unknown total for $label', async ({ response }) => {
-    const http = { get: vi.fn()
-      .mockResolvedValueOnce({ results: mixedCountResults, total_results: 10 })
-      .mockResolvedValueOnce(response) };
+    const http = {
+      get: vi
+        .fn()
+        .mockResolvedValueOnce({ results: mixedCountResults, total_results: 10 })
+        .mockResolvedValueOnce(response),
+    };
 
     await expect(searchTitles(http, 'Synthetic Title')).resolves.toEqual({
-      results: [countedCard], totalResults: null,
+      results: [countedCard],
+      totalResults: null,
     });
     expect(http.get).toHaveBeenCalledTimes(2);
   });
 
   // Branch coverage: isolates person-count transport errors from a successful primary search.
   it('keeps valid title cards when the person-count request fails without retrying', async () => {
-    const http = { get: vi.fn()
-      .mockResolvedValueOnce({ results: mixedCountResults, total_results: 10 })
-      .mockRejectedValueOnce(createTmdbError('UPSTREAM_FAILED')) };
+    const http = {
+      get: vi
+        .fn()
+        .mockResolvedValueOnce({ results: mixedCountResults, total_results: 10 })
+        .mockRejectedValueOnce(createTmdbError('UPSTREAM_FAILED')),
+    };
 
     await expect(searchTitles(http, 'Synthetic Title')).resolves.toEqual({
-      results: [countedCard], totalResults: null,
+      results: [countedCard],
+      totalResults: null,
     });
     expect(http.get).toHaveBeenCalledTimes(2);
   });
@@ -228,14 +273,21 @@ describe('TMDb multi title totals', () => {
   it.each([
     { total: 0, people: 0, expected: 0 },
     { total: 10, people: 3, expected: 7 },
-  ])('keeps the computed total $expected for an empty first page', async ({ total, people, expected }) => {
-    const http = { get: vi.fn()
-      .mockResolvedValueOnce({ results: [], total_results: total })
-      .mockResolvedValueOnce({ total_results: people }) };
+  ])(
+    'keeps the computed total $expected for an empty first page',
+    async ({ total, people, expected }) => {
+      const http = {
+        get: vi
+          .fn()
+          .mockResolvedValueOnce({ results: [], total_results: total })
+          .mockResolvedValueOnce({ total_results: people }),
+      };
 
-    await expect(searchTitles(http, 'Synthetic Title')).resolves.toEqual({
-      results: [], totalResults: expected,
-    });
-    expect(http.get).toHaveBeenCalledTimes(2);
-  });
+      await expect(searchTitles(http, 'Synthetic Title')).resolves.toEqual({
+        results: [],
+        totalResults: expected,
+      });
+      expect(http.get).toHaveBeenCalledTimes(2);
+    },
+  );
 });

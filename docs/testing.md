@@ -36,13 +36,13 @@ Tests, coverage, lint and typecheck are different checks. Lint/typecheck do not 
 
 ## Boundaries and locations
 
-| Scope | Location | Runner | Actual boundary |
-| --- | --- | --- | --- |
-| Unit | `tests/unit` | Vitest | Cohesive validation, service, mapper, parameter, error or utility behavior |
-| Controlled TMDb integration | `tests/integration/tmdb` when needed | Vitest | Real internal flow with controlled outbound transport; directory convention, not an inventory claim |
-| Search handler/session HTTP integration | `tests/integration/search` | Vitest | Real HTTP requests to an isolated H3 server mounting the production handler and session store |
-| Running Nuxt HTTP integration | `tests/integration/http` | Playwright | Requests against a running Nuxt server |
-| Browser end-to-end | `tests/e2e` when agreed | Playwright | Browser journeys, rendering and browser-enforced behavior; no general expansion authorized |
+| Scope                                   | Location                             | Runner     | Actual boundary                                                                                     |
+| --------------------------------------- | ------------------------------------ | ---------- | --------------------------------------------------------------------------------------------------- |
+| Unit                                    | `tests/unit`                         | Vitest     | Cohesive validation, service, mapper, parameter, error or utility behavior                          |
+| Controlled TMDb integration             | `tests/integration/tmdb` when needed | Vitest     | Real internal flow with controlled outbound transport; directory convention, not an inventory claim |
+| Search handler/session HTTP integration | `tests/integration/search`           | Vitest     | Real HTTP requests to an isolated H3 server mounting the production handler and session store       |
+| Running Nuxt HTTP integration           | `tests/integration/http`             | Playwright | Requests against a running Nuxt server                                                              |
+| Browser end-to-end                      | `tests/e2e` when agreed              | Playwright | Browser journeys, rendering and browser-enforced behavior; no general expansion authorized          |
 
 - Keep `src/lib` and `server/services` framework-free. H3 helpers belong in `server/utils`, thin Nitro handlers in `server/api`: validate, delegate, map errors, respond.
 - Inject external transports. Unit tests do not access the real network. Controlled integrations mock external model generation or outbound TMDb transport, not internal application modules. Never mock the module under test. Isolated HTTP tests use actual loopback HTTP, not live external providers.

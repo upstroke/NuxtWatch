@@ -1,12 +1,26 @@
 /** Exercises the real search handler and sessions over an isolated H3 HTTP server. */
 import { createServer } from 'node:http';
 import type { Server } from 'node:http';
-import { createApp, createError, defineEventHandler, readBody, setResponseHeader, toNodeListener } from 'h3';
+import {
+  createApp,
+  createError,
+  defineEventHandler,
+  readBody,
+  setResponseHeader,
+  toNodeListener,
+} from 'h3';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { searchResponseSchema } from '@lib/schemas/search';
-import type { MediaTypeQuestion, SearchClarifyRequest, SearchExecuteRequest, SearchProposal } from '@lib/schemas/search';
+import type {
+  MediaTypeQuestion,
+  SearchClarifyRequest,
+  SearchExecuteRequest,
+  SearchProposal,
+} from '@lib/schemas/search';
 
-const model = vi.hoisted(() => ({ generate: vi.fn<(...args: unknown[]) => Promise<{ text: string }>>() }));
+const model = vi.hoisted(() => ({
+  generate: vi.fn<(...args: unknown[]) => Promise<{ text: string }>>(),
+}));
 vi.mock('ai', () => ({ generateText: model.generate }));
 const upstream = vi.fn<(...args: unknown[]) => Promise<unknown>>();
 const runtime = vi.fn<() => unknown>();
@@ -26,11 +40,14 @@ function installGlobals() {
 function client(initialCookie = '') {
   let cookie = initialCookie;
   return {
-    get cookie() { return cookie; },
+    get cookie() {
+      return cookie;
+    },
     async post(body: unknown) {
       const response = await fetch(`${origin}/api/search`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json',
-          ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(body),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(cookie ? { Cookie: cookie } : {}) },
+        body: JSON.stringify(body),
       });
       const received = response.headers.get('set-cookie');
       if (received) cookie = received.split(';', 1)[0] ?? '';
@@ -61,10 +78,13 @@ function propose(proposal: SearchProposal) {
 }
 
 async function openQuestion(c: ReturnType<typeof client>) {
-  propose({ status: 'ready', changes: [
-    { field: 'title', operation: 'set', value: 'Synthetic Film' },
-    { field: 'year', operation: 'set', value: 2021 },
-  ] });
+  propose({
+    status: 'ready',
+    changes: [
+      { field: 'title', operation: 'set', value: 'Synthetic Film' },
+      { field: 'year', operation: 'set', value: 2021 },
+    ],
+  });
   const result = await success(await c.post({ action: 'submit', userText: 'Synthetic Film 2021' }));
   if (result.status !== 'not_executed' || result.question?.kind !== 'select_media_type') {
     throw new Error('Expected a bound media question');
@@ -73,11 +93,18 @@ async function openQuestion(c: ReturnType<typeof client>) {
 }
 
 function selection(question: MediaTypeQuestion): SearchClarifyRequest {
-  return { action: 'clarify', requestId: question.requestId, revision: question.revision,
-    questionId: question.questionId, answer: { type: 'selection', value: 'movie' } };
+  return {
+    action: 'clarify',
+    requestId: question.requestId,
+    revision: question.revision,
+    questionId: question.questionId,
+    answer: { type: 'selection', value: 'movie' },
+  };
 }
 
-function execution(binding: Pick<SearchExecuteRequest, 'requestId' | 'revision'>): SearchExecuteRequest {
+function execution(
+  binding: Pick<SearchExecuteRequest, 'requestId' | 'revision'>,
+): SearchExecuteRequest {
   return { action: 'execute', requestId: binding.requestId, revision: binding.revision };
 }
 
@@ -90,7 +117,10 @@ beforeAll(async () => {
   server = instance;
   await new Promise<void>((resolve, reject) => {
     instance.once('error', reject);
-    instance.listen(0, '127.0.0.1', () => { instance.off('error', reject); resolve(); });
+    instance.listen(0, '127.0.0.1', () => {
+      instance.off('error', reject);
+      resolve();
+    });
   });
   const address = instance.address();
   if (!address || typeof address === 'string') throw new Error('Missing HTTP test address');
@@ -107,15 +137,23 @@ beforeEach(() => {
   installGlobals();
 });
 
-afterEach(() => { vi.unstubAllGlobals(); });
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 afterAll(async () => {
   const instance = server;
   try {
-    if (instance) await new Promise<void>((resolve, reject) => {
-      instance.close((error) => { if (error) reject(error); else resolve(); });
-      instance.closeAllConnections();
-    });
-  } finally { vi.unstubAllGlobals(); }
+    if (instance)
+      await new Promise<void>((resolve, reject) => {
+        instance.close((error) => {
+          if (error) reject(error);
+          else resolve();
+        });
+        instance.closeAllConnections();
+      });
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });
 
 describe('Search HTTP and session boundary', () => {
@@ -124,8 +162,14 @@ describe('Search HTTP and session boundary', () => {
     { label: 'unknown action', body: { action: 'unknown' } },
     { label: 'blank submit', body: { action: 'submit', userText: ' ' } },
     { label: 'missing execute binding', body: { action: 'execute' } },
-    { label: 'missing question binding', body: { action: 'clarify', answer: { type: 'selection', value: 'movie' } } },
-    { label: 'client-owned criteria', body: { action: 'submit', userText: 'Synthetic Film', criteria: { mediaType: 'movie' } } },
+    {
+      label: 'missing question binding',
+      body: { action: 'clarify', answer: { type: 'selection', value: 'movie' } },
+    },
+    {
+      label: 'client-owned criteria',
+      body: { action: 'submit', userText: 'Synthetic Film', criteria: { mediaType: 'movie' } },
+    },
   ])('SEARCH-HTTP-001: rejects $label', async ({ body }) => {
     const c = client();
     const response = await c.post(body);
@@ -139,7 +183,9 @@ describe('Search HTTP and session boundary', () => {
 
   // Statement coverage: reset initializes cookie-bound defaults without any provider configuration.
   it('SEARCH-HTTP-002: creates default criteria and the HTTP session cookie', async () => {
-    runtime.mockImplementation(() => { throw new Error('Configuration must not be read'); });
+    runtime.mockImplementation(() => {
+      throw new Error('Configuration must not be read');
+    });
     const c = client();
     const response = await c.post({ action: 'reset' });
     expect(await success(response)).toEqual({ status: 'reset', criteria: { mediaType: 'all' } });
@@ -171,9 +217,14 @@ describe('Search HTTP and session boundary', () => {
     expect(model.generate).toHaveBeenCalledTimes(1);
     expect(upstream).not.toHaveBeenCalled();
     const body = execution(clarified);
-    expect(await success(await c.post(body))).toMatchObject({ status: 'completed',
-      requestId: clarified.requestId, revision: clarified.revision, criteria: clarified.criteria,
-      results: [], totalResults: 0 });
+    expect(await success(await c.post(body))).toMatchObject({
+      status: 'completed',
+      requestId: clarified.requestId,
+      revision: clarified.revision,
+      criteria: clarified.criteria,
+      results: [],
+      totalResults: 0,
+    });
     await failure(await c.post(body), 409);
     expect(model.generate).toHaveBeenCalledTimes(1);
     expect(upstream).toHaveBeenCalledTimes(1);
@@ -184,17 +235,25 @@ describe('Search HTTP and session boundary', () => {
     const a = client();
     const b = client();
     const question = await openQuestion(a);
-    expect(await success(await b.post({ action: 'reset' })))
-      .toEqual({ status: 'reset', criteria: { mediaType: 'all' } });
+    expect(await success(await b.post({ action: 'reset' }))).toEqual({
+      status: 'reset',
+      criteria: { mediaType: 'all' },
+    });
     expect(a.cookie).not.toBe(b.cookie);
     await failure(await b.post(selection(question)), 409);
     await failure(await b.post(execution(question)), 409);
-    expect(await success(await a.post(selection(question)))).toMatchObject({ status: 'clarified',
-      criteria: { title: 'Synthetic Film', mediaType: 'movie', year: 2021 } });
+    expect(await success(await a.post(selection(question)))).toMatchObject({
+      status: 'clarified',
+      criteria: { title: 'Synthetic Film', mediaType: 'movie', year: 2021 },
+    });
     propose({ status: 'ready', changes: [] });
-    expect(await success(await b.post({ action: 'submit', userText: 'Synthetic empty edit' })))
-      .toMatchObject({ status: 'not_executed', criteria: { mediaType: 'all' },
-        decision: { status: 'needs_clarification', field: 'title' } });
+    expect(
+      await success(await b.post({ action: 'submit', userText: 'Synthetic empty edit' })),
+    ).toMatchObject({
+      status: 'not_executed',
+      criteria: { mediaType: 'all' },
+      decision: { status: 'needs_clarification', field: 'title' },
+    });
     expect(model.generate).toHaveBeenCalledTimes(2);
     expect(upstream).not.toHaveBeenCalled();
   });
@@ -204,15 +263,19 @@ describe('Search HTTP and session boundary', () => {
     const c = client();
     const question = await openQuestion(c);
     const oldCookie = c.cookie;
-    expect(await success(await c.post({ action: 'reset' })))
-      .toEqual({ status: 'reset', criteria: { mediaType: 'all' } });
+    expect(await success(await c.post({ action: 'reset' }))).toEqual({
+      status: 'reset',
+      criteria: { mediaType: 'all' },
+    });
     expect(c.cookie).not.toBe(oldCookie);
     await failure(await c.post(selection(question)), 409);
     await failure(await c.post(execution(question)), 409);
     const old = client(oldCookie);
     await failure(await old.post(execution(question)), 410);
-    expect(await success(await old.post({ action: 'reset' })))
-      .toEqual({ status: 'reset', criteria: { mediaType: 'all' } });
+    expect(await success(await old.post({ action: 'reset' }))).toEqual({
+      status: 'reset',
+      criteria: { mediaType: 'all' },
+    });
     expect(old.cookie).not.toBe(oldCookie);
     expect(old.cookie).not.toBe(c.cookie);
     expect(model.generate).toHaveBeenCalledTimes(1);

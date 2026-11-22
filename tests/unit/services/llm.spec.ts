@@ -19,7 +19,8 @@ describe('Search LLM boundary', () => {
   it('serializes the current request separately from nonempty system instructions', async () => {
     const generate = proposalGenerator({ status: 'ready', changes: [] });
     await expect(parseSearchProposal(config, input, generate)).resolves.toEqual({
-      status: 'ready', changes: [],
+      status: 'ready',
+      changes: [],
     });
 
     expect(generate).toHaveBeenCalledTimes(1);
@@ -61,9 +62,12 @@ describe('Search LLM boundary', () => {
       userText: input.userText,
     });
     for (const value of [
-      input.userText, clarification.originalUserText, clarification.question,
+      input.userText,
+      clarification.originalUserText,
+      clarification.question,
       ...clarification.turns.flatMap((turn) => [turn.question, turn.answer]),
-    ]) expect(request.system).not.toContain(value);
+    ])
+      expect(request.system).not.toContain(value);
   });
 
   // Statement coverage: validates requested edits without applying them to confirmed input.
@@ -106,21 +110,38 @@ describe('Search LLM boundary', () => {
   // Branch coverage: rejects model-selected endpoints and contradictory or unsupported edits.
   it.each([
     { label: 'provider endpoint', value: { status: 'ready', endpoint: '/search/multi' } },
-    { label: 'duplicate field', value: { status: 'ready', changes: [
-      { field: 'year', operation: 'set', value: 2020 },
-      { field: 'year', operation: 'set', value: 2021 },
-    ] } },
-    { label: 'unsupported operation', value: { status: 'ready', changes: [
-      { field: 'title', operation: 'add', value: 'Synthetic Film' },
-    ] } },
-    { label: 'invalid media scope', value: { status: 'ready', changes: [
-      { field: 'mediaType', operation: 'set', value: 'person' },
-    ] } },
-    { label: 'partial edits during clarification', value: {
-      status: 'needs_clarification', message: 'Synthetic question', changes: [
-        { field: 'year', operation: 'set', value: 2021 },
-      ],
-    } },
+    {
+      label: 'duplicate field',
+      value: {
+        status: 'ready',
+        changes: [
+          { field: 'year', operation: 'set', value: 2020 },
+          { field: 'year', operation: 'set', value: 2021 },
+        ],
+      },
+    },
+    {
+      label: 'unsupported operation',
+      value: {
+        status: 'ready',
+        changes: [{ field: 'title', operation: 'add', value: 'Synthetic Film' }],
+      },
+    },
+    {
+      label: 'invalid media scope',
+      value: {
+        status: 'ready',
+        changes: [{ field: 'mediaType', operation: 'set', value: 'person' }],
+      },
+    },
+    {
+      label: 'partial edits during clarification',
+      value: {
+        status: 'needs_clarification',
+        message: 'Synthetic question',
+        changes: [{ field: 'year', operation: 'set', value: 2021 }],
+      },
+    },
   ])('rejects $label without altering the input', async ({ value }) => {
     const before = structuredClone(input);
     await expect(parseSearchProposal(config, input, proposalGenerator(value))).rejects.toThrow();

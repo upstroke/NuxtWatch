@@ -17,13 +17,13 @@ Ausgangspunkt sind [TMDb-Analyse](tmdb-api-analysis.md) und [Suchbeispiele](tmdb
 
 Bestätigte Kriterien bleiben erhalten, sofern nicht ausdrücklich geändert. Das gemeinsame Objekt beschreibt Titel, Medientyp und optionales Einzeljahr, keine Endpunkte.
 
-| Kriterien | Verhalten |
-| --- | --- |
-| Titel fehlt | Bei gemeinter Titelstrecke Titel klären; andere Absichten nicht umdeuten |
-| Titel, `all`, kein Jahr | Multi; keine optionale Typ-/Jahresfrage |
-| Titel, `movie`, optional Jahr | Movie mit `primary_release_year` |
-| Titel, `tv`, optional Jahr | TV mit `first_air_date_year` |
-| Titel, Jahr, `all` | Gebundene Auswahl `movie` oder `tv`; keine Treffersuche |
+| Kriterien                     | Verhalten                                                                |
+| ----------------------------- | ------------------------------------------------------------------------ |
+| Titel fehlt                   | Bei gemeinter Titelstrecke Titel klären; andere Absichten nicht umdeuten |
+| Titel, `all`, kein Jahr       | Multi; keine optionale Typ-/Jahresfrage                                  |
+| Titel, `movie`, optional Jahr | Movie mit `primary_release_year`                                         |
+| Titel, `tv`, optional Jahr    | TV mit `first_air_date_year`                                             |
+| Titel, Jahr, `all`            | Gebundene Auswahl `movie` oder `tv`; keine Treffersuche                  |
 
 Nicht genannter Typ und ausdrücklich Filme und Serien bedeuten `all`, sofern kein bestätigter anderer Typ fortgilt. Ausdrückliche Änderung auf beide Medien ist erlaubt. Mit Jahr ist `all` nur Zwischenstand: Titel/Jahr erhalten, Typ auswählen, danach Execute. Keine geratenen Typen, entfernten Jahre, zusammengeführten Movie-/TV-Listen oder eigene Jahres-Nachfilterung. Dies ist eine Produktentscheidung, keine grundsätzliche API-Unmöglichkeit. Mehrfachtreffer allein sind kein Pflichtklärungsgrund. Jahresbereiche sind nicht umgesetzt; genaue Daten nicht ungefragt verkürzen. Discover ersetzt keinen freien Titelabgleich.
 

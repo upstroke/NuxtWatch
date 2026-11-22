@@ -16,12 +16,12 @@ Clarify sucht nicht; angebotene Auswahl ohne LLM, Freitext über gemeinsame Inte
 
 Allgemeiner Testumbau war zurückgestellt; die folgenden Blöcke wurden anschließend separat vereinbart und einzeln freigegeben. Kein pauschales Löschen, keine Coverage-Ausschlüsse oder Kompatibilitätsschichten. Keine Behauptung eines vollständigen projektweiten Testbestandsaudits. Die priorisierten Lücken im vereinbarten Suchbereich wurden durch die gezielten Blöcke bearbeitet.
 
-| Commit | Änderung und Nachweis |
-| --- | --- |
-| `8172f08` | Titeladapter: Movie/TV mit/ohne Jahr, direkte Zahlen, Multi minus Person, fehlende/unplausible Metadaten, isolierter Personen-Zählungsfehler, leere Seiten; Testlauf vom Nutzer erfolgreich bestätigt |
+| Commit    | Änderung und Nachweis                                                                                                                                                                                                                                             |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `8172f08` | Titeladapter: Movie/TV mit/ohne Jahr, direkte Zahlen, Multi minus Person, fehlende/unplausible Metadaten, isolierter Personen-Zählungsfehler, leere Seiten; Testlauf vom Nutzer erfolgreich bestätigt                                                             |
 | `0e0e002` | Echter Flow mit Matrix/Vorschlagsvalidierung/Adapter: Kriterienkopie/-erhalt, ausdrückliche Änderungen/Jahrentfernung, Medien-/Freitextklärung ohne Suche, Execute, Altbindungen, Reservierung, expliziter Neuversuch nach Providerfehler; Nutzer bestätigt Tests |
-| `e885a7c` | Echter Handler und echte Sessionverwaltung über isolierten H3-HTTP-Server: Validierung, Cookie, Sessiontrennung, Reset, Konflikte, Antwortvertrag und no-store; Nutzer bestätigt Tests |
-| `d6e071c` | Initialisierungsprüfung des Provider-Gates vor Ausführungsstart statt Throw im finally; Freigabe im finally erhalten, keine Regelabschaltung |
+| `e885a7c` | Echter Handler und echte Sessionverwaltung über isolierten H3-HTTP-Server: Validierung, Cookie, Sessiontrennung, Reset, Konflikte, Antwortvertrag und no-store; Nutzer bestätigt Tests                                                                            |
+| `d6e071c` | Initialisierungsprüfung des Provider-Gates vor Ausführungsstart statt Throw im finally; Freigabe im finally erhalten, keine Regelabschaltung                                                                                                                      |
 
 Interne Suchmodule werden nicht gemockt. Kontrolliert werden äußere Modellgenerierung und TMDb-Transport; im HTTP-Harness Runtime-Konfiguration sowie Nuxt-Autoimports durch echte H3-Implementierungen bereitgestellt. Kein vollständiger Nuxt-/Nitro-/Browserlauf.
 
@@ -31,16 +31,16 @@ Am 22. November 18:17 CET bestätigt der Nutzer nach der Lint-Korrektur Tests, L
 
 Nutzerlauf am 22. November 2026 gegen `http://localhost:3000`, Bericht `search-flow-audit-report.json`, 17:23:14.748Z bis 17:23:31.397Z (18:23 CET). Acht PASSED, null FAILED, null BLOCKED. Konsolenausgabe und JSON-Bericht in der Unterhaltung geprüft. Bericht enthält Commit `d6e071ca8e5a2f28ccf14831c1d7e5f547f46e69`; vom Aufrufer übergeben, nicht gegen den laufenden Server verifiziert. Kein vom Assistant gestarteter Live-Lauf.
 
-| Fall | Beobachtung |
-| --- | --- |
-| LIVE-001 | Neuer Submit bei offener Frage ersetzt Auftrag; alte Antwort 409, neue Frage beantwortbar |
-| LIVE-002 | Falsche Request-ID, Frage-ID und Revision jeweils 409; gültige Antwort danach nutzbar |
-| LIVE-003 | Doppelte Klärungsantwort 409; bestätigte Revision danach erfolgreich ausführbar |
-| LIVE-004 | Reset setzt Ausgangskriterien; alte Bindungen unter neuem Cookie 409, altes Cookie 410 |
-| LIVE-005 | Neuer Submit invalidiert zuvor vorbereitetes Execute; alter Aufruf 409, neue Frage nutzbar |
-| LIVE-006 | Erstes Execute completed; Wiederholung derselben Revision 409 |
+| Fall     | Beobachtung                                                                                      |
+| -------- | ------------------------------------------------------------------------------------------------ |
+| LIVE-001 | Neuer Submit bei offener Frage ersetzt Auftrag; alte Antwort 409, neue Frage beantwortbar        |
+| LIVE-002 | Falsche Request-ID, Frage-ID und Revision jeweils 409; gültige Antwort danach nutzbar            |
+| LIVE-003 | Doppelte Klärungsantwort 409; bestätigte Revision danach erfolgreich ausführbar                  |
+| LIVE-004 | Reset setzt Ausgangskriterien; alte Bindungen unter neuem Cookie 409, altes Cookie 410           |
+| LIVE-005 | Neuer Submit invalidiert zuvor vorbereitetes Execute; alter Aufruf 409, neue Frage nutzbar       |
+| LIVE-006 | Erstes Execute completed; Wiederholung derselben Revision 409                                    |
 | LIVE-007 | Gleichzeitig abgesendet: einmal completed/200, einmal 409; keine garantierte interne Überlappung |
-| LIVE-008 | Filme und Serien mit Jahr erzeugt Medienfrage; Execute davor 409, Auswahl clarified |
+| LIVE-008 | Filme und Serien mit Jahr erzeugt Medienfrage; Execute davor 409, Auswahl clarified              |
 
 Alle protokollierten Antworten tragen Cache-Control: no-store. Die drei erfolgreichen Execute-Antworten enthalten jeweils drei Karten; kein allgemeiner Treffer-/Gesamtzahlvertrag aus dieser Stichprobe. Der Audit prüft benötigte Antwortfelder, nicht das vollständige gemeinsame Schema.
 
