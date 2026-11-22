@@ -1,5 +1,5 @@
 /** Version of the fixed parser instructions, independent of model/provider choice. */
-export const PARSER_INSTRUCTIONS_VERSION = '1.5.1';
+export const PARSER_INSTRUCTIONS_VERSION = '1.5.2';
 
 /** Fixed trusted instructions; user and catalog text must never be interpolated here. */
 export const PARSER_INSTRUCTIONS = `# Search preparation candidate 0.1
@@ -24,9 +24,7 @@ The application currently supports:
 - A movie title search with an optional single year.
 - A TV title search with an optional single year.
 
-A title and year with mediaType all require a decision between movie and tv before searching. Ask which media type the user wants; do not guess or remove the year to avoid this limitation.
-
-Before returning ready, check the criteria that would result from the requested edits. If they contain a title and a year, and neither the confirmed criteria nor an explicit media-category request in userText selects movie or tv, return needs_clarification asking whether to search for a movie or a TV series. Do not add movie or tv merely to make the search executable. A title, a year, or your knowledge of a work is not an explicit media-category request. In this case return only status and message, with no changes.
+The application matrix evaluates search-path coverage, and the application flow owns the resulting bound media-type question. A title and year with mediaType all cannot be executed until the user selects movie or tv. Do not ask this application-owned question yourself. Instead, return ready with all representable requested criterion changes, preserving the title and year. This also applies when the user explicitly requests both movies and TV: represent that scope as all in the proposal, so the application can require a selection before execution. Never guess movie or tv or remove the year to make the search executable. A title, a year, or your knowledge of a work is not an explicit media-category request.
 
 These are application capabilities, not universal rules about movie databases. Do not plan provider endpoints.
 
@@ -65,10 +63,10 @@ Each change has exactly:
 
 Use at most three changes, with each field appearing at most once. Include only values that differ from the confirmed state. Use an empty changes array when no edit is required. Do not use null for title or mediaType.
 
-When a necessary decision is unresolved:
+When a necessary linguistic or intent decision is unresolved, rather than the application-owned media selection for title plus year:
 {"status":"needs_clarification","message":"A specific question"}
 
-When the requested search cannot be represented using the supported criteria and search paths:
+When the requested conditions cannot be represented using the supported criteria (not merely when title plus year requires the application-owned media selection):
 {"status":"unsupported","message":"A specific explanation"}
 
 Messages must be nonempty and in the user's language.
@@ -77,14 +75,17 @@ For needs_clarification and unsupported, do not include changes. The application
 
 Do not output additional properties, people, keywords, genre IDs, provider IDs, internal references, revisions, bindings, execution flags or search results.
 
-ready is a proposal status, not permission to execute a search. No provider calls, tool loops, automatic retries or implicit execution.
+ready means the requested edits are representable, not that the resulting search is executable. The application evaluates executability and requires movie or tv before executing a title search with a year. No provider calls, tool loops, automatic retries or implicit execution.
 
 ## Examples
 
 These examples illustrate edits, not catalog facts. Apply the rules to the actual input.
 
 Input: {"context":{"currentFilters":{"mediaType":"all"}},"userText":"Finde Sonnenpfad von 1999"}
-Output: {"status":"needs_clarification","message":"Möchtest du nach einem Film oder einer Serie mit dem Titel Sonnenpfad aus dem Jahr 1999 suchen?"}
+Output: {"status":"ready","changes":[{"field":"title","operation":"set","value":"Sonnenpfad"},{"field":"year","operation":"set","value":1999}]}
+
+Input: {"context":{"currentFilters":{"mediaType":"movie"}},"userText":"Finde Filme und Serien mit dem Titel Sonnenpfad von 1999"}
+Output: {"status":"ready","changes":[{"field":"title","operation":"set","value":"Sonnenpfad"},{"field":"mediaType","operation":"set","value":"all"},{"field":"year","operation":"set","value":1999}]}
 
 Input: {"context":{"currentFilters":{"mediaType":"all"}},"userText":"Finde den Film Sonnenpfad von 1999"}
 Output: {"status":"ready","changes":[{"field":"title","operation":"set","value":"Sonnenpfad"},{"field":"mediaType","operation":"set","value":"movie"},{"field":"year","operation":"set","value":1999}]}
