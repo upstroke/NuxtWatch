@@ -10,6 +10,7 @@ import { searchTitles } from '../tmdb/title-search';
 import { parseSearchProposal } from './llm';
 import type { ClarificationTurn, LlmConfig, ParserInput } from './llm';
 import { evaluateSearchPaths } from './matrix';
+import { searchTexts } from './texts';
 
 type SearchDecision =
   | {
@@ -72,7 +73,7 @@ function decideSearch(criteria: SearchCriteria): SearchDecision {
     return {
       status: 'needs_clarification',
       field: 'title',
-      message: 'Welchen Titel möchtest du suchen?',
+      message: searchTexts.clarification.titleRequired,
     };
   }
 
@@ -143,7 +144,7 @@ function openSearchRequest(
 function questionText(question: SearchQuestion): string {
   return question.kind === 'free_text'
     ? question.message
-    : 'Möchtest du einen Film oder eine Serie suchen?';
+    : searchTexts.clarification.mediaTypeRequiredForYear;
 }
 
 function bindQuestion(
