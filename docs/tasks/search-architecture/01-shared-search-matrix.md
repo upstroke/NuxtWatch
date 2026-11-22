@@ -1,85 +1,93 @@
 # Task 01 – Gemeinsame Suchmatrix und Ablaufsteuerung
 
-Status: in Umsetzung, nicht vollständig fachlich abgenommen. Stand: 22. November 2026. Codebezug: `ed031e3`, Branch: `feat/shared-search-architecture`.
+Status: in Umsetzung, nicht vollständig fachlich abgenommen. Stand: 22. November 2026. Codebezug `a806145`, Branch `feat/shared-search-architecture`.
 
-Grundlagen: [Konzept und Hindernismatrix](../../sucharchitektur-konzept.md), [Zielstruktur](zielstruktur.md), [Arbeitsstand](README.md), [TMDb-Analyse](../../tmdb-api-analysis.md), [geprüfte Requests](../../tmdb-search-examples.md), [Prüfregeln](../../testing.md). Keine zweite vollständige Regelmatrix.
+Grundlagen: [Konzept/Hindernismatrix](../../sucharchitektur-konzept.md), [Zielstruktur](zielstruktur.md), [Arbeitsstand](README.md), [TMDb-Analyse](../../tmdb-api-analysis.md), [Requests](../../tmdb-search-examples.md), [Prüfregeln](../../testing.md). Keine zweite vollständige Regelmatrix.
 
 ## Ziel und Umfang
 
-Bestehende Suche gemäß Zielstruktur ordnen und vorhandene Titelwege über dieselbe Hindernismatrix bewerten. Titel ist Abnahmefall der gemeinsamen Architektur, kein eigener Parser. Erst nach Abschluss dieses Durchstichs nächsten konkreten Anwendungsfall wählen; Keyword ist möglich, nicht beauftragt.
+Bestehende Suche gemäß Zielstruktur ordnen, Titelwege gemeinsam bewerten. Titel ist Abnahmefall gemeinsamer Architektur, kein eigener Parser. Nächsten Anwendungsfall erst nach Abschluss auswählen; Keyword möglich, nicht beauftragt.
 
-Umfang: gemeinsamer Coordinator, Hindernisbewertung, zusammengehörige externe Verträge, zentrale Anwendungstexte und nötige Terminaldarstellung. Sessionbindung, JSON-Interpretation und Provideradapter erhalten. Gesamtzählung nachträglich ausdrücklich beauftragt: nur Multi benötigt eine zusätzliche Personenabfrage; Movie/TV verwenden direkte Gesamtzahlen. Keine neue Keyword-/Personen-/Discovery-Suchstrecke, Jahresbereiche, Datenbank, Regel-Engine, vollständige Internationalisierung, Web-UI oder neuer Modellvergleich. Personenzählung ist keine Personensuchoberfläche.
+Umfang: gemeinsamer Coordinator, Hindernisbewertung, externe Verträge, zentrale Texte und nötige Terminaldarstellung. Sessionbindung, JSON-Interpretation und Adapter erhalten. Gesamtzählung ausdrücklich nachbeauftragt: Multi zusätzliche Personenabfrage, Movie/TV direkte Zahlen; keine Personensuchoberfläche. Medienfragekorrektur mit `0715d10`/`a806145` ebenfalls ausdrücklich beauftragt. Keine neue Keyword-/Personen-/Discovery-Strecke, Jahresbereiche, Datenbank, Regel-Engine, vollständige i18n, Web-UI oder Modellvergleich.
 
-## Prüfvereinbarung und freigegebene Ausnahmen
+## Verbindliche Medienklärung
 
-Allgemeiner Testausbau bleibt bis zum abschließenden Audit zurückgestellt. Keine vorsorgliche Testmigration, pauschale Löschung, geänderten Ausschlüsse oder Coverage-/Checkkonfiguration zum Verbergen von Fehlern. Kriterien per Codeprüfung und dokumentierten Terminalfällen prüfen; grüne Checks ersetzen keine fachliche Abnahme.
+LLM interpretiert, Matrix bewertet Kriterien-/Umfangsabdeckung, Flow bestimmt nächsten Schritt und bindet Frage, `texts.ts` formuliert, Oberfläche zeigt an. Keine zusätzlichen Koordinationsschichten.
 
-Einzelentscheidungen am 22. November:
+Titel bei `all` ohne Jahr → Multi. Titel + Jahr + `all` → verpflichtend Film/Serie auswählen, auch bei ausdrücklich „Filme und Serien“. `all` nur ungeklärter Zwischenstand; vor Ausführung Nutzerauswahl nach `movie`/`tv` übernehmen, Titel/Jahr erhalten. LLM errät keinen Typ, entfernt kein Jahr und stellt diese Pflicht-Anwendungsfrage nicht vorweg. `ready` beim LLM bedeutet darstellbarer Vorschlag, nicht Ausführbarkeit. Explizite Einzeltypen optional mit Jahr → Movie/TV. Bestehende bestätigte Kriterien nur auf ausdrücklichen Wunsch ändern. Keine Listen-Zusammenführung/Jahres-Nachfilterung.
 
-- Zwei veraltete Submission-Testdateien auf Nutzerwunsch entfernt; Ersatzabsicherung offen.
-- In `title-search.spec.ts` zunächst nur `include_adult: 'true'` zur Multi-Aufruferwartung ergänzt.
-- In `search-parser.spec.ts` nur Import von `search/parser` auf `search/llm` umgestellt; Erwartungen/Testumfang erhalten.
-- Mit `ed031e3` bestehende Arrayzugriffe/-erwartungen im Titeladaptertest minimal auf `.results` umgestellt; Fälle, Mocks, Fehlererwartungen erhalten, keine Suchlogik geändert. Veralteten Lückenkommentar entfernt. Der umfangreichere Entwurf neuer Zählungstests wurde nicht committed.
-- Vorhandene Tests auf Nutzerauftrag ausgeführt und Ergebnisse als Nutzerbericht erfasst. Letzte grüne Rückmeldung 08:29 CET nach `794788f`; keine Freigabe allgemeinen Testausbaus und kein Prüfnachweis für die späteren Änderungen.
+Strukturierte Frage enthält seit `a806145` Pflichtfeld `message`, Optionen und Bindung. Zentraler Text: „Bei einer Titelsuche mit Jahresangabe musst du zwischen Film und Serie wählen. Möchtest du nach einem Film oder einer Serie suchen?“ Flow bindet Text; Anzeige/Klärungskontext nutzen ihn. CLI validiert und zeigt statt eigener fachlicher Formulierung. Keine Optionen aus Modellprosa. Auswahl ohne LLM, Freitext über gemeinsame Interpretation; Clarify sucht nie, erst Execute nach Klärung.
+
+## Prüfvereinbarung
+
+Allgemeiner Testausbau bis abschließendem Audit zurückgestellt. Keine vorsorgliche Migration, pauschale Löschung, Ausschluss-/Coverage-/Checkkonfigurationsänderung zum Verbergen von Fehlern. Gezielte Codeprüfung und dokumentierte manuelle Fälle; grüne Checks kein fachlicher Nachweis. Race-Fälle ohne passende Prüfung offen.
+
+Freigegebene Ausnahmen am 22. November:
+
+- Zwei veraltete Submission-Tests entfernt; Ersatzabsicherung offen.
+- `title-search.spec.ts`: zunächst nur `include_adult: 'true'` zur Multi-Erwartung.
+- `search-parser.spec.ts`: nur Import `search/parser` → `search/llm`, Fälle erhalten.
+- `ed031e3`: bestehende Adapter-Arrayzugriffe/-erwartungen minimal auf `.results`, Fälle/Mocks/Fehlererwartungen erhalten, veralteten Lückenkommentar entfernt. Kein Logik-/Testausbau, umfangreicher Zählungstestentwurf nicht committed.
+- Vorhandene Tests auf Nutzerauftrag ausgeführt; letzte grüne Nutzerbestätigung 08:29 CET nach `794788f`. Keine Freigabe allgemeinen Testausbaus, kein Nachweis späterer Änderungen.
 
 ## Umsetzungsschritte
 
-- [ ] Vollständige Struktur-/Aufruferprüfung abschließen; bisher gezielte Dateien, kein vollständiger repositoryweiter Produktionsimportscan.
-- [x] Koordination in `flow.ts` zusammenführen, HTTP/Session anbinden; Workflow/Coordinator/Submit entfernen.
-- [ ] Matrix vollständig fachlich prüfen und manuell abnehmen.
-- [x] Kriterien-, Vorschlags-, Frage-, Aktions- und Antwortverträge in `src/lib/schemas/search.ts` konsolidieren; fünf geprüfte Produktionsdateien direkt umstellen, vier Schema-Re-Exports entfernen.
-- [x] HTTP-Zielpfad `server/api/search/index.post.ts` herstellen; URL beibehalten, alte Datei im zuvor geprüften API-Verzeichnis nicht vorhanden.
-- [x] Gemeinsame Interpretation/Validierung in `llm.ts` zusammenführen; Flow/freigegebenen Testimport umstellen, Parsermodul entfernen.
-- [x] Klärungs-/HTTP-/Sessiontexte in `texts.ts`, reine Terminaltexte lokal in `terminalTexts` bündeln; vollständige AC9-Prüfung offen.
-- [x] Bestehenden TMDb-Titeladapter ohne zusätzlichen Titel-Wrapper wiederverwenden.
-- [x] Kompakte Terminaltreffer und getrennte Gesamtzahlanzeige implementieren; Live-Abnahme der neuen Gesamtzählung offen.
-- [x] Konkrete Adapter-Testinkompatibilität durch minimale `.results`-Anpassung auflösen; keine zusätzliche Zählungsabsicherung.
-- [ ] Offene fachliche Codeprüfung/manuelle Fälle fortführen; neue Checks nach `ed031e3` protokollieren.
-- [ ] Findings in Konzept/Matrix/Zielstruktur zurückführen und Architekturabschluss bewerten; nächsten Suchweg erst gesondert auswählen.
-- [ ] Als letzter Arbeitspunkt nach Architekturumbau und manuellen Durchstichen: Audit der bestehenden Tests durchführen und priorisierten Anpassungsbedarf dokumentieren; konkrete Teständerungen anschließend separat vereinbaren.
+- [ ] Vollständige Struktur-/Produktionsimportprüfung abschließen; bisher gezielte Prüfung.
+- [x] Flow zusammenführen, HTTP/Session anbinden, Workflow/Coordinator/Submit entfernen.
+- [ ] Matrix vollständig fachlich prüfen/manuell abnehmen.
+- [x] Suchverträge konsolidieren, fünf geprüfte Produktionsdateien direkt umstellen, vier Re-Exports entfernen.
+- [x] HTTP-Zielpfad herstellen; URL erhalten.
+- [x] Interpretation/Validierung nach `llm.ts`, Flow/Testimport umstellen, Parsermodul entfernen.
+- [x] Zentrale Servertexte/lokale Terminaltexte; vollständige AC9-Prüfung offen.
+- [x] Bestehenden Titeladapter ohne Wrapper wiederverwenden.
+- [x] Kompakte Treffer und getrennte Gesamtzahl implementieren; Live-Abnahme offen.
+- [x] Bestehende Adaptertests minimal auf `.results` anpassen, keine Zählungsabsicherung.
+- [x] Promptzuständigkeit korrigieren (`0715d10`, Version `1.5.2`).
+- [x] Medienfragetext über Schema/Flow/Terminal durchreichen (`a806145`).
+- [ ] Aktuelle Checks und manuelle Regression nach `a806145` protokollieren.
+- [ ] Findings zurückführen und Architekturabschluss bewerten, nächsten Weg separat wählen.
+- [ ] Zuletzt bestehenden Testbestand auditieren; konkrete Änderungen anschließend vereinbaren.
 
-Abgehakte Umbauten sind Umsetzungsstatus, keine automatische fachliche Abnahme. Der letzte Auditpunkt wird jetzt nur eingeplant.
+Abgehakt bedeutet umgesetzt, nicht fachlich abgenommen.
 
 ## Abnahmekriterien
 
 | ID | Beobachtbares Kriterium | Prüfung |
 | --- | --- | --- |
-| AC1 | Produktionsdateien entsprechen Zielstruktur; keine abgelösten Koordinationsschichten/alten Produktionsimporte. Testinkompatibilitäten und entfernte Tests als Lücken erfasst. | Codeprüfung, Typecheck |
-| AC2 | Passende Wege gegen denselben Stand bewerten. Kein bestätigtes Kriterium entfällt, Umfang nicht verengt, keine mehrfachen Fachregeln. | Codeprüfung, manuelle Fälle |
-| AC3 | Titel allein über Multi, keine Frage nach optionalem Typ/Jahr. | Terminal, Wegwahl im Code |
-| AC4 | Expliziter Film/Serie nutzt Movie/TV; Jahr über `primary_release_year`/`first_air_date_year`. | Terminal, Parameterabbildung |
-| AC5 | Titel/Jahr ohne Typ liefert gebundene Frage, keinen Trefferaufruf; gewählte Strategie. | Terminal, Übergang im Code |
-| AC6 | Angebotene Auswahl ohne LLM; Freitext erhält ursprünglichen Wunsch/Fragekontext. Titel/Jahr erhalten oder ausdrücklich korrigiert. | Terminal, Codeprüfung |
-| AC7 | Clarify sucht nicht; ausdrückliches Execute verwendet bestätigten gebundenen Stand ohne erneute LLM-Interpretation. | Terminal, Codeprüfung |
-| AC8 | Alte Antworten überschreiben keinen neuen Stand; wiederholte/parallele Starts reservierter Revision ohne zweiten Trefferaufruf. | Codeprüfung, reproduzierte Fälle; ungeprüfte Rennen offen |
-| AC9 | Anwendungstexte zentral, Gründe/Formulierung getrennt, keine i18n-Infrastruktur auf Vorrat. | Codeprüfung |
-| AC10 | Terminal zeigt Kriterien, Fragen, kompakte Treffer und getrennte Seiten-/Gesamtzahl. Zählung unbekannt → nicht verfügbar, leere Seite ≠ automatisch null insgesamt. Fehler/leer/Treffer unterscheidbar; keine Altresultate als neu. | Terminal, Adapterprüfung |
-| AC11 | Typecheck/Lint protokolliert; manuelle Fälle/offene Punkte einzeln ausgewiesen. Allgemeiner Testausbau bis abschließendem Audit zurückgestellt. | Prüfprotokoll |
+| AC1 | Produktionsdateien gemäß Zielstruktur, keine alten Schichten/Importe; Testlücken erfasst | Codeprüfung, Typecheck |
+| AC2 | Wege gegen denselben Stand, alle bestätigten Kriterien/Umfang erhalten, keine mehrfachen Fachregeln | Code, manuelle Fälle |
+| AC3 | Titel allein bei all über Multi, keine optionale Typ-/Jahresfrage | Terminal, Wegwahl im Code |
+| AC4 | Expliziter Film/Serie über Movie/TV, Jahr über primary_release_year/first_air_date_year | Terminal, Parameterabbildung |
+| AC5 | Titel/Jahr/all erzeugt gebundene Anwendungsfrage mit Film-/Serienoptionen und zentralem Text, kein Trefferaufruf; auch ausdrücklich Filme und Serien/Jahr | Terminal, Übergang im Code |
+| AC6 | Auswahl ohne LLM wechselt zu movie/tv; Freitext erhält Wunsch/Fragekontext; Titel/Jahr erhalten oder ausdrücklich korrigiert | Terminal, Code |
+| AC7 | Clarify sucht nicht, Execute nutzt bestätigten gebundenen Stand ohne erneutes LLM | Terminal, Code |
+| AC8 | Alte Antworten überschreiben nichts; wiederholte/parallele Starts reservierter Revision ohne zweiten Trefferaufruf | Reproduzierte Fälle, Code; ungeprüfte Rennen offen |
+| AC9 | Gründe/Formulierung getrennt; zentrale Anwendungsfrage via message bis CLI/Klärungskontext; keine doppelte Medienfrage im Client/i18n auf Vorrat | Codeprüfung |
+| AC10 | Kriterien/Fragen/kompakte Treffer, Seiten-/Gesamtzahl getrennt; unbekannt nicht verfügbar, leere Seite nicht automatisch null; Fehler/leer/Treffer und Altresultate unterscheidbar | Terminal, Adapter |
+| AC11 | Aktuelle Typecheck-/Lint-Ergebnisse und manuelle offene Abnahmen einzeln dokumentiert; Testausbau bis Audit zurückgestellt | Protokoll |
 
-AC10 um die ausdrücklich beauftragte Gesamtzahlanzeige erweitert; daraus keine rückwirkende Abnahme ableiten.
+Gesamtzahl ausdrücklich nachbeauftragt; keine rückwirkende Abnahme.
 
-## Manuelle Fälle und tatsächliche Beobachtungen
+## Historische manuelle Beobachtungen
 
-Je Fall Ausgangskriterien, Eingabe/Aktion, Kriterien/Frage, belegte Wegwahl und Suchstart erfassen. Keine feste Live-Trefferzahl voraussetzen, keine Zugangsdaten committen. Providerparameter nicht allein aus Terminalausgabe ableiten.
-
-Nutzer-Mitschnitt am 22. November um 08:39 CET, Aufruf `node scripts/search.mjs http://localhost:3000`. Exakter lokaler Commit nicht genannt; vor `e06cb2c`, daher kein Nachweis der integrierten Gesamtzählung. Zahlen sind beobachtete Antwortgrößen, keine dauerhaften Erwartungen.
+Nutzermitschnitt 22. November 08:39 CET, `node scripts/search.mjs http://localhost:3000`; lokaler SHA unbekannt, vor `e06cb2c` und vor beiden Medienfragecommits. Zahlen beobachtet, keine dauerhaften Erwartungen. Je neuem Fall Ausgangskriterien, Eingabe/Aktion, resultierenden Stand/Frage, belegte Wegwahl und Suchstart erfassen. Providerparameter nicht allein aus Anzeige ableiten, keine Zugangsdaten committen.
 
 | Fall | Beobachtung | Restprüfung |
 | --- | --- | --- |
-| 1: Reset, nur Titel | Reset → all. Inception → Inception/all, direkte Suche ohne Rückfrage, 13 Treffer. | Wegwahl ergänzend im Code; Regression nach Zählungsänderung offen. |
-| 2: Film/Serie | Inception/movie → 12 Filme; Dark/tv → 20 Serien. | Provideraufrufe nicht allein aus Anzeige bewiesen. |
-| 3: Einzeljahr | Exakte Eingabe `suche den Film Inceptionvon 2010` → Inception/movie/2010, drei Treffer. Dark mit Erstausstrahlung 2017 → Dark/tv/2017, 17 Treffer, angezeigte Datumswerte 2017. | Jahresparameter im Code/Diagnose separat belegen. |
-| 4: Strukturierte Auswahl | Nicht erreicht: Dune/2021 erzeugte freie LLM-Frage statt nummerierter Optionen. | Angebotene Medienauswahl, `/select NUMMER` und Execute weiterhin offen. |
-| 5: Freie Antwort/Korrektur | Zweimal Dune/2021 ohne Typ: Kriterien zunächst nur all, LLM fragt nach Film/Serie. `Film` bzw. `Ich meine den Film` → Dune/movie/2021 und ready, keine automatische Suche. | Explizite Jahreskorrektur und Execute nicht dokumentiert; Bindungs-IDs nicht sichtbar. |
-| 6: Neuer Auftrag/Reset | Reset nach ready sichtbar, nicht während offener Frage. | `/submit TEXT`/Reset während offener Frage und gezieltes Wiederabsenden alter Bindung; verzögerte Antworten nur bei Reproduktion abhaken. |
-| 7: Ausführung/Wiederholung | Kein `/execute` im Mitschnitt. | Execute nach Klärung/Erfolg, kontrollierter Fehler mit ausdrücklichem neuen Versuch, Parallelstarts gesondert. Lokale CLI-Ablehnung ist kein Beweis serverseitiger Reservierung. |
-| 8: Darstellung | Trefferlisten Film/Serie, Datum/ID, fehlendes Datum als `—`, Antwortzahl sichtbar. | Leerliste, technischer Fehler, Altresultate und integrierte Gesamtzahl samt Ausfallpfad offen. |
+| 1 Reset/Titel | Reset → all; Inception/all direkt ohne Frage, 13 Treffer | Codeweg/Regression nach Änderungen |
+| 2 Film/Serie | Inception/movie zwölf, Dark/tv 20 Treffer | Provideraufrufe separat |
+| 3 Einzeljahr | `suche den Film Inceptionvon 2010` → Inception/movie/2010, drei Treffer; Dark/tv/2017, 17 Treffer, Datumswerte 2017 | Jahresparameter separat |
+| 4 Auswahl | Nicht erreicht: Dune/2021 freie LLM-Frage statt Optionen | Nach a806145 beide all/Jahr-Varianten, Text/Optionen, /select und Execute |
+| 5 Freitext | Dune/2021 zweimal zunächst nur all, LLM fragt; Film bzw. Ich meine den Film → Dune/movie/2021 ready, keine Suche | Aktuelle Regression, Jahreskorrektur, Bindung/Execute |
+| 6 Neuer Auftrag/Reset | Reset nach ready gesehen, nicht bei offener Frage | Submit/Reset bei offener Frage, alte Bindung, verzögerte Antwort reproduzieren |
+| 7 Ausführung | Kein Execute dokumentiert | Execute, Wiederholung, kontrollierter Fehler/Neuver such, Parallelstarts; CLI-Ablehnung beweist keine Serverreservierung |
+| 8 Darstellung | Film/Serie, Datum/ID, fehlendes Datum als —, Antwortzahl sichtbar | Leer/Fehler/Altresultate, integrierte Gesamtzahl/Ausfallpfad |
 
-Nachweise sind Nutzerläufe, keine vom Assistenten ausgeführten Terminalfälle. Keine vollständige Task-/Race-Abnahme aus den beobachteten Erfolgsfällen.
+Historischer JSON-Stand `81dc0e8`: Morgenbogen/1999 mit freien Film-/Serienantworten → movie/1999 bzw. tv/1999, explizite Jahreskorrektur → movie/2001; Titel erhalten, ready ohne Suche. Execute ungeprüft, frühere Fehlerursache nicht isoliert. Kein aktueller Regressionsnachweis. Keine eigenen Terminalfälle und keine Vollabnahme aus diesen Nutzerläufen.
 
 ## Separater API-Zählversuch
 
-Nutzer-Rückmeldung am 22. November um 09:13 CET; Parameter `language=de-DE`, `include_adult=true`, `page=1`. Vier Endpunkte pro Suchtext, verglichen wurde `total_results`, nicht die erste Seitenlänge.
+Nutzerrückmeldung 09:13 CET, language=de-DE, include_adult=true, page=1. Verglichen total_results, nicht Seitenlänge.
 
 | Suchtext | Multi | Movie | TV | Person | Multi − Person | Movie + TV |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -89,88 +97,84 @@ Nutzer-Rückmeldung am 22. November um 09:13 CET; Parameter `language=de-DE`, `i
 | Tom Hanks | 10 | 8 | 1 | 1 | 9 | 9 |
 | Batman | 248 | 185 | 24 | 39 | 209 | 209 |
 
-In allen fünf Fällen Abweichung null. Positiver Stichprobenbefund, kein dokumentierter API-Vertrag oder Mengen-/ID-Vergleich. Die daraufhin beauftragte Implementierung zählt nur bei Multi zusätzlich Personen; keine Implementierung getrennter Movie-/TV-Listen. Kein integrierter Live-Nachweis nach `e06cb2c`/`ed031e3`.
+Abweichung in allen fünf Fällen null; Stichprobe, kein API-Vertrag oder Mengen-/ID-Vergleich. Implementiert nur zusätzliche Personenzählung bei Multi, keine getrennten Ergebnislisten. Kein integrierter Live-Nachweis nach e06cb2c.
 
 ## Prüfprotokoll
 
-| Kriterium | Status | Beleg / Lücke |
+| Kriterium | Status | Beleg/Lücke |
 | --- | --- | --- |
-| AC1 | Teilweise geprüft | Module/Verträge konsolidiert, HTTP-Zielpfad vorhanden. Vollständiger Produktionsimportscan und aktuelle Checks nach ed031e3 offen. |
-| AC2 | Nicht vollständig geprüft | Matrix implementiert; vollständige Kriterienabdeckung nicht abgenommen. |
-| AC3 | Teilweise geprüft | Nutzerlauf 08:39: Inception/all direkt, keine Typ-/Jahresfrage. Vollständiger Code-/Regressionsnachweis offen. |
-| AC4 | Teilweise geprüft | Film/Serie, jeweils auch mit Jahr, sichtbar korrekt übernommen/gesucht. Parameterabbildung separat prüfen. |
-| AC5 | Teilweise geprüft | Dune/2021 führt zur freien LLM-Frage, keine sichtbare Suche. Strukturierter Anwendungspfad und Bindungsprüfung nicht belegt. |
-| AC6 | Teilweise geprüft | Zwei freie Filmantworten rekonstruieren Dune/2021 bis ready. Strukturierte Auswahl ohne LLM, Jahreskorrektur und Bindungsprüfung offen. |
-| AC7 | Teilweise geprüft | Nach freier Klärung keine automatische Suche, Execute-Hinweis sichtbar. Ausdrückliches Execute nicht durchlaufen. |
-| AC8 | Nicht geprüft | Kein gezielter Altbindungs-/Wiederholungs-/Parallelitätsnachweis. |
-| AC9 | Teilweise geprüft | Server-/Terminalkataloge implementiert, freie Nachrichten separat. Vollständige Textzuordnungsprüfung offen. |
-| AC10 | Teilweise geprüft | Erfolgsansicht samt fehlendem Datum manuell gesehen, jedoch vor Gesamtzählung. Leere/Fehler-/Altzustände und integrierte Zählung offen. |
-| AC11 | Teilweise geprüft | Letzte grüne Nutzerbestätigung nach 794788f; neue Checks offen. Manuelle Teilnachweise jetzt einzeln erfasst, nicht vollständig. |
+| AC1 | Teilweise geprüft | Gezielte Struktur-/Vertragsprüfung; Vollscan/aktuelle Checks offen |
+| AC2 | Teilweise geprüft | Implementiert, vollständige Kriterienabdeckung offen |
+| AC3 | Teilweise geprüft | Historischer Inception/all-Lauf, aktuelle Regression offen |
+| AC4 | Teilweise geprüft | Historische Typ-/Jahrübernahme sichtbar; Parameter separat prüfen |
+| AC5 | Teilweise geprüft | Historisch freie Frage ohne sichtbare Suche; Anwendungspfad jetzt korrigiert, Live-Nachweis offen |
+| AC6 | Teilweise geprüft | Historische freie Antworten bis ready; aktuelle Auswahl/Erhalt/Korrektur/Bindung offen |
+| AC7 | Teilweise geprüft | Historisch Clarify ohne Suche; Execute nicht durchlaufen |
+| AC8 | Nicht geprüft | Altbindung/Wiederholung/Parallelität offen |
+| AC9 | Teilweise geprüft | Kataloge und Textdurchreichung implementiert; vollständige Zuordnungsprüfung offen |
+| AC10 | Teilweise geprüft | Historische Erfolgsansicht, vor Zählung; weitere Zustände/aktuelle Live-Abnahme offen |
+| AC11 | Teilweise geprüft | Historische grüne Meldung nach 794788f; aktuelle Checks/manuelle Fälle offen |
 
-Statuskategorien: nicht geprüft, teilweise geprüft, erfüllt, fehlgeschlagen, blockiert. Keine Vollabnahme aus Review/grünen Tests; „nicht vollständig geprüft“ beschreibt die offene AC2-Prüfung, nicht einen erfolgreichen Abschluss.
+Statuskategorien: nicht geprüft, teilweise geprüft, erfüllt, fehlgeschlagen, blockiert. Keine Vollabnahme aus Review/grünen Tests.
 
 | Check | Letzter gemeldeter Stand |
 | --- | --- |
-| Typecheck | Nach `794788f` laut Nutzer erfolgreich, Rückmeldung 08:29 CET. Nach `e06cb2c`/`ed031e3` offen. |
-| Lint | Dieselbe Rückmeldung und Grenze. |
-| Vorhandene Tests | Dieselbe Rückmeldung; minimale `.results`-Anpassung ed031e3 noch nicht durch neuen Lauf bestätigt. |
-| Manuelle Terminal-Abnahme | Teilnachweise 08:39 für damaligen CLI-Stand; offene Fälle siehe Tabelle. |
-| Integrierte Gesamtzählung | Implementiert, noch kein manueller App-Durchstich; separater API-Zählversuch kein Ersatz. |
+| Typecheck | Nutzerbestätigung 08:29 CET nach 794788f; spätere Änderungen einschließlich 0715d10/a806145 offen |
+| Lint | Dieselbe Rückmeldung/Grenze |
+| Vorhandene Tests | Dieselbe Rückmeldung; ed031e3 und spätere Änderungen nicht durch neuen Lauf bestätigt |
+| Terminal | Historische Teilnachweise 08:39, kein neuer Durchstich nach Medienfragekorrektur |
+| Gesamtzählung | Implementiert, integrierter Live-Nachweis fehlt; API-Stichprobe kein Ersatz |
 
-Keine eigenen Tool-Läufe der Projektbefehle. Keine konkreten Befehle, Testzahlen, Coverage oder Browser-/HTTP-Suite aus pauschaler Bestätigung ableiten. Uhrzeiten bezeichnen Rückmeldungen, keine gemessenen Laufzeitpunkte.
-
-Historisch: TS2345 im HTTP-Handler mit `6861dff` korrigiert, danach Typecheck erfolgreich. Multi-Parametererwartung mit `07200b5` korrigiert, danach alle drei Checks grün gemeldet. Weitere grüne Meldung nach `9010afb` um 08:14 CET, zuletzt nach `794788f` um 08:29 CET. Nicht auf spätere Commits übertragen.
+Keine eigenen Projektbefehlsläufe. Keine Befehle/Zahlen/Coverage/Browser- oder HTTP-Suite aus pauschaler Rückmeldung ableiten. Uhrzeiten sind Rückmeldungen, keine gemessenen Laufzeitpunkte. Historisch TS2345 mit 6861dff korrigiert, danach Typecheck erfolgreich; Multi-Erwartung mit 07200b5 korrigiert, danach alle drei Checks grün gemeldet. Weitere grüne Meldung nach 9010afb um 08:14, zuletzt nach 794788f um 08:29 CET.
 
 ## Umsetzungschronik
 
 | Commit | Änderung |
 | --- | --- |
-| `2e9a27b` | Gemeinsame Matrix. |
-| `377b977`, `26312c4` | Flow zusammengeführt, HTTP/Session angebunden. |
-| `235e0d2`, `63ab5df`, `932e41d` | Workflow, Submit, Coordinator entfernt. |
-| `6861dff` | HTTP-Ergebnistyp für Submit/Execute ohne Cast korrigiert. |
-| `25aaf44`, `7940ca3` | Zwei alte Submission-Testdateien auf Wunsch entfernt. |
-| `3f87bd7`, `5cf625f` | Vorschlagsvertrag und übrige Suchverträge konsolidiert. |
-| `464649b` | HTTP/Flow/Parser/Matrix/Titeladapter auf direkte Schemaimporte umgestellt. |
-| `49ad728`, `3e3027e`, `51f8810`, `5244cb3` | Vier Schema-Re-Exports entfernt. |
-| `07200b5` | Bestehende Titeltest-Erwartung um include_adult ergänzt. |
-| `d70769e`, `9010afb` | Parserfunktion/Typen nach LLM, Flow/Testimport umgestellt, altes Parsermodul entfernt. |
-| `83b393f` | Terminaltabelle, Trefferfeldvalidierung, Leermeldung, Antwortzahl. |
-| `22f6cd2` | Sieben HTTP-/zwei Sessionmeldungen zentralisiert, Wortlaut/Codes/Kontrollfluss erhalten. |
-| `794788f` | Lokaler Terminaltextkatalog; Befehle/HTTP/Bindung unverändert. |
-| `664851a` | Vorherigen Arbeitsstand und grüne Nutzerchecks dokumentiert. |
-| `e06cb2c` | Adapter liefert results/totalResults; Multi minus Personen, direkte Movie-/TV-Zahlen, null bei Zählungsfehler; Flow/HTTP/CLI durchgereicht. |
-| `ed031e3` | Nur bestehende Adaptertests auf .results angepasst und veralteten Lückenkommentar entfernt; kein Testausbau, keine Logikänderung. |
+| 2e9a27b | Gemeinsame Matrix |
+| 377b977, 26312c4 | Flow zusammenführen, HTTP/Session anbinden |
+| 235e0d2, 63ab5df, 932e41d | Workflow/Submit/Coordinator entfernen |
+| 6861dff | HTTP-Ergebnistyp ohne Cast korrigieren |
+| 25aaf44, 7940ca3 | Zwei alte Submission-Tests auf Wunsch entfernen |
+| 3f87bd7, 5cf625f | Suchverträge konsolidieren |
+| 464649b | Fünf Produktionsdateien auf direkte Schemaimporte |
+| 49ad728, 3e3027e, 51f8810, 5244cb3 | Vier Re-Exports entfernen |
+| 07200b5 | Titeltesterwartung include_adult |
+| d70769e, 9010afb | Interpretation/Typen nach LLM, Imports umstellen, Parser entfernen |
+| 83b393f | Kompakte Terminaltreffer |
+| 22f6cd2 | Sieben HTTP-/zwei Sessionmeldungen zentral, Wortlaut/Codes/Kontrollfluss erhalten |
+| 794788f | Lokale Terminaltexte, Befehle/HTTP/Bindung erhalten |
+| 664851a | Früheren Arbeitsstand/grüne Nutzerchecks dokumentieren |
+| e06cb2c | results/totalResults durch Adapter/Flow/HTTP/CLI, Multi minus Personen, null bei Zählfehler |
+| ed031e3 | Bestehende Adaptertests nur auf .results, Lückenkommentar entfernen |
+| 0715d10 | Prompt 1.5.2: Pflicht-Medienfrage der Anwendung überlassen, Regeln/Beispiele anpassen |
+| a806145 | Zentralen Medienfragetext via Pflichtfeld message an Flow/Terminal/Klärungskontext binden |
 
-Ursprüngliche Commits für HTTP-Zielpfad/Klärungstexte mangels ermitteltem Commitbeleg nicht nachgetragen. LLM-Umbau erhält Prompt/JSON-Kontext, Generator-Injektion, JSON-/Schema-Prüfung, Konfigurations-/Leerantwortfehler, `maxOutputTokens: 256`, `maxRetries: 0`. Kriterienübernahme/Ausführung im Flow, Vorschlagsvertrag im Schema.
+Ursprüngliche Commits für HTTP-Zielpfad/Klärungstexte mangels ermitteltem Beleg nicht nachgetragen. LLM-Modulumbau erhielt JSON-Kontext, Generator-Injektion, JSON-/Schemaprüfung, Konfigurations-/Leerantwortfehler, maxOutputTokens 256, maxRetries 0; spätere Promptkorrektur separat ausgewiesen. Kriterienübernahme/Ausführung im Flow, Vorschlagsvertrag im Schema.
 
-## Textzuordnung, Klärung und Gesamtzahl
+## Textzuordnung und Gesamtzahl
 
-`texts.ts` enthält Klärungs-/HTTP-/Sessionformulierungen. Flow/Matrix entscheiden fachlich; freie LLM-Nachrichten bleiben separat. Strukturierte Medienfrage enthält Optionen statt Anzeigetext; CLI beschriftet sie lokal. Aus freier Modellprosa keine Auswahloptionen ableiten. Im Nutzerlauf stellte das LLM die Medienfrage vor Kriterienübernahme, daher kam der Anwendungsauswahlpfad nicht zum Zug. Kein Auftrag, diesen Pfad jetzt durch Prompt-/Vertragsumbau zu erzwingen. Eine Auswahl konkreter Treffer ist nicht implementiert; das diesbezügliche Missverständnis wurde geklärt, keine Änderung der Suchstrategie beauftragt.
+Die frühere Feststellung „kein Auftrag zur Prompt-/Vertragskorrektur“ ist durch die ausdrückliche Beauftragung überholt. Historisch fragte das LLM vor Kriterienübernahme; seit 0715d10 soll der darstellbare Vorschlag die Matrix erreichen. Seit a806145 erhält die strukturierte Anwendungsfrage ihren zentralen Text. Umsetzung kein Nachweis zuverlässigen Live-Modellverhaltens. Allgemeine Teilübernahme bei LLM-Klärung weiterhin nicht beauftragt; Auswahl konkreter Treffer nicht implementiert.
 
-`terminalTexts` bündelt Hilfen, Prompts, Fehler, Hinweise, Medienlabels, Tabellenüberschriften und Ausgabevorlagen. Keine Serverimporte, zusätzliche Katalogdatei oder i18n-Infrastruktur. Freie Server-/LLM-Nachrichten unverändert. AC9-Vollprüfung offen.
-
-Gesamtzählung im Titeladapter: Primärantwort/Karten wie bisher validieren; Metadaten separat prüfen. Multi → eine zusätzliche Personenabfrage mit identischem query/adult und gleichen Standardwerten; Differenz nur bei plausiblen Werten, mindestens Anzahl sichtbarer Karten, Personenzahl mindestens Personen auf erster Multi-Seite. Fehler/fehlende Metadaten/unplausible Werte → null, gültige Karten erhalten. Movie/TV ohne Personenaufruf. Kein falscher Rückfall auf ungefilterte Multi-Zahl. Erste Seite bleibt erste Providerseite, keine Auffüllung/Seitennavigation/Neusortierung.
-
-HTTP completed enthält `totalResults: number | null`. CLI zeigt Gesamtzahl oder Nichtverfügbarkeit sowie getrennt angezeigte Titel; leere erste Seite nicht mit null insgesamt verwechseln. Gesamtzahl null ist keine erfolgreiche Zählung. Keine zusätzliche automatisierte Absicherung dieser Logik durch ed031e3; API-Stichprobe bleibt begrenzter empirischer Nachweis.
+Terminaltexte lokal, keine zusätzlichen Serverimporte/Katalogdatei/i18n. Freie Modelltexte separat. Adapter validiert Primärantwort/Karten wie bisher und Metadaten separat. Multi zählt zusätzlich Personen mit gleichem Suchtext/adult/Standardwerten; Differenz nur plausibel, mindestens sichtbare Karten, Personenzahl mindestens Personen erster Multi-Seite. Fehler/fehlende/unplausible Metadaten → null, gültige Karten erhalten. Movie/TV ohne Zusatzaufruf. Kein Rückfall auf ungefilterte Multi-Zahl, keine Auffüllung/Pagination/Neusortierung. Leere erste Seite nicht null insgesamt, null keine erfolgreiche Zählung. Keine zusätzliche automatisierte Absicherung durch ed031e3.
 
 ## Importprüfung und offene Absicherung
 
-Produktionsprüfung bisher gezielt, kein vollständiger Scan. Auf Stand `5244cb3` alle 20 TypeScript-Testdateien gelesen (14 Unit, zwei HTTP, ein Mock, drei Fixtures): keine direkten/relativen/Mock-/dynamischen Verweise auf vier entfernte Suchschemas. Kein Testlauf. Bekannter Parser-Testimport danach ausdrücklich auf llm umgestellt.
+Produktionsprüfung gezielt, kein vollständiger Scan. Auf 5244cb3 alle 20 TypeScript-Testdateien gelesen (14 Unit, zwei HTTP, ein Mock, drei Fixtures): keine direkten/relativen/Mock-/dynamischen Verweise auf vier entfernte Schemas. Kein Testlauf. Parser-Testimport danach ausdrücklich auf llm umgestellt.
 
-| Entfernte Datei | Historischer Grund / Status | Offene Ersatzabsicherung |
+| Entfernte Datei | Historischer Grund | Offene Ersatzabsicherung |
 | --- | --- | --- |
-| `tests/unit/services/search-submission.spec.ts` | Alter Coordinatorimport; auf Wunsch mit 25aaf44 entfernt. | Kriterienkopie, Jahr entfernen, unabhängige Kriterien im neuen Flow. |
-| `tests/integration/tmdb/search-submission.spec.ts` | Alter Submitimport/veraltete Erwartungen; mit 7940ca3 entfernt. | Direktsuche, Klärung ohne Trefferaufruf, vollständige Kriterienabdeckung. |
+| tests/unit/services/search-submission.spec.ts | Alter Coordinatorimport, mit 25aaf44 auf Wunsch entfernt | Kriterienkopie/Jahr entfernen/unabhängige Kriterien |
+| tests/integration/tmdb/search-submission.spec.ts | Alter Submitimport/veraltete Erwartungen, mit 7940ca3 entfernt | Direktsuche/Klärung ohne Trefferaufruf/vollständige Kriterien |
 
-Historisch erwartete der entfernte Integrationstest kein include_adult und lehnte explizite Film-/Serie-Jahr-Suche fälschlich ab. Kennungen `SEARCH-SUBMIT-INT-001` bis `SEARCH-SUBMIT-INT-005` bleiben ausgemustert. Keine Kompatibilitätsmodule, Testausschlüsse oder Prüfkonfigurationsänderungen. Parser-Vertragstest nur im Import geändert. Die neue Adapter-Rückgabeinkompatibilität ist mit ed031e3 im Testcode behoben, nicht mit einem erfolgreichen Lauf bestätigt. Gesamtzählung und neue Flow-/Race-Fälle weiter ohne zusätzliche automatisierte Absicherung.
+Entfernter Integrationstest erwartete historisch kein include_adult und lehnte Film-/Serie-Jahr fälschlich ab. Kennungen SEARCH-SUBMIT-INT-001 bis 005 ausgemustert. Keine Kompatibilitätsmodule/Ausschlüsse/Checkänderungen. Erhaltene Tests ersetzen keine Flow-/Race-/Zählungsabsicherung.
 
 ## Findings und Architekturabschluss
 
-Zielpfad, Kataloge, Terminaldarstellung und Gesamtzählung implementiert. Nächster Architekturschritt: vollständige Produktionsimport-/Strukturprüfung und fachliche Textzuordnung abschließen; konkrete Findings vor weiterem Ausbau beheben. Dann offene manuelle Fälle und Checks fortführen, Findings in gemeinsame Regeln zurückführen. Keine Vollabnahme, Produktionsfreigabe oder neuer Suchweg aus diesem Dokumentationsstand. Der abschließende Testaudit bleibt der letzte Arbeitspunkt.
+Zielpfad, Kataloge, Terminaldarstellung, Zählung und Medienfragekorrektur implementiert. Nächste Prüfung: vollständige Produktionsimporte/Struktur/Textzuordnung, dann aktuelle manuelle Fälle und Checks. Findings in gemeinsame Regeln zurückführen, Architekturabschluss bewerten. Keine Vollabnahme, Produktionsfreigabe oder neuer Suchweg aus diesem Stand.
 
-## Letzter Arbeitspunkt: Audit der bestehenden Tests
+## Letzter Arbeitspunkt: Audit bestehender Tests
 
-- [ ] Erst nach Architekturumbau und manuellen Durchstichen den bestehenden Testbestand auditieren.
+- [ ] Erst nach Architekturumbau und manuellen Durchstichen auditieren.
 
-Auf fachliche Aktualität, passende Grenzen von Matrix/Flow/LLM/Provider/HTTP, Doppelungen und fehlende Zusicherungen prüfen. Offene Kriterienübernahme-/Jahrentfernungs-, Klärungs-, Execute-, Altbindungs-/Reservierungs-/Parallelitäts- und Zählungslücken einbeziehen. Ergebnis: Bestandsbewertung und priorisierte konkrete Anpassungsvorschläge mit Begründung. Keine automatische Gleichsetzung grün = ausreichend abgesichert. Jetzt nur eingeplant; konkrete Teständerungen anschließend gesondert vereinbaren, keine pauschale Freigabe zur Migration, Erweiterung oder Löschung.
+Bestand auf fachliche Aktualität, Grenzen Matrix/Flow/LLM/Provider/HTTP, Doppelungen und fehlende Zusicherungen prüfen. Kriterienübernahme/Jahrentfernung, Klärung/Execute, Altbindungen/Reservierung/Parallelität und Zählung einbeziehen. Ergebnis priorisierte Bestandsbewertung; konkrete Teständerungen separat vereinbaren. Nicht durchgeführt, keine allgemeine Freigabe zur Migration/Erweiterung/Löschung.
