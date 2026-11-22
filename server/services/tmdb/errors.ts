@@ -1,6 +1,13 @@
 export type TmdbErrorCode =
   'MISSING_TOKEN' | 'INVALID_BASE_URL' | 'INVALID_QUERY' | 'UPSTREAM_FAILED' | 'INVALID_RESPONSE';
 
+/** English wording under stable text keys; future translations remain separate from error codes. */
+const tmdbErrorTexts = {
+  invalidQuery: 'Invalid query',
+  configurationUnavailable: 'TMDb configuration unavailable',
+  requestOrResponseInvalid: 'TMDb request or response invalid',
+} as const;
+
 const tmdbErrors = new WeakSet<Error>();
 
 /**
@@ -36,12 +43,12 @@ export function toTmdbHttpError(error: unknown) {
   const code = isTmdbError(error) ? error.code : undefined;
 
   if (code === 'INVALID_QUERY') {
-    return { statusCode: 400, statusMessage: 'Invalid query' };
+    return { statusCode: 400, statusMessage: tmdbErrorTexts.invalidQuery };
   }
 
   if (code === 'MISSING_TOKEN' || code === 'INVALID_BASE_URL') {
-    return { statusCode: 503, statusMessage: 'TMDb configuration unavailable' };
+    return { statusCode: 503, statusMessage: tmdbErrorTexts.configurationUnavailable };
   }
 
-  return { statusCode: 502, statusMessage: 'TMDb request or response invalid' };
+  return { statusCode: 502, statusMessage: tmdbErrorTexts.requestOrResponseInvalid };
 }
