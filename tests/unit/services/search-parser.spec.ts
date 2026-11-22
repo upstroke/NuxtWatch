@@ -1,6 +1,6 @@
 /** Tests the LLM input contract where the parser uses it. */
 import { describe, expect, it, vi } from 'vitest';
-import { parseSearchProposal } from '@server/services/search/parser';
+import { parseSearchProposal } from '@server/services/search/llm';
 
 const config = { provider: 'test', baseUrl: 'http://localhost:1234/v1', model: 'test' };
 

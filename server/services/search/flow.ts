@@ -7,10 +7,9 @@ import type {
 } from '@lib/schemas/search';
 import type { TmdbHttpClient } from '../tmdb/http';
 import { searchTitles } from '../tmdb/title-search';
-import type { LlmConfig } from './llm';
+import { parseSearchProposal } from './llm';
+import type { ClarificationTurn, LlmConfig, ParserInput } from './llm';
 import { evaluateSearchPaths } from './matrix';
-import { parseSearchProposal } from './parser';
-import type { ClarificationTurn, ParserInput } from './parser';
 
 type SearchDecision =
   | {
