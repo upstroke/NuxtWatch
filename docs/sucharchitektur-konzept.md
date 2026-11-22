@@ -60,16 +60,20 @@ Mehrfachtreffer allein sind kein Pflichtklärungsgrund. Jahresbereiche sind nich
 
 ## Aktionen, Zustand und Bindungen
 
-- `submit`: neuer ausdrücklicher Auftrag auf Basis bestätigter Serverkriterien; ersetzt den bisherigen und darf ohne Klärungsbedarf direkt suchen. Kein clientseitiger Ersatzstand.
-- `clarify`: gebundene Antwort übernehmen und erneut bewerten, niemals Treffersuche. Angebotene Medienauswahl ohne LLM; Freitext über gemeinsame Interpretation.
-- `execute`: aktuelle bestätigte Revision erneut prüfen und ausdrücklich ausführen, ohne erneute LLM-Interpretation. Nach Klärung erforderlich.
-- `reset`: neuer Sessionkontext ohne alte Kriterien.
+- `submit`: neuer ausdrücklicher Auftrag auf Basis bestätigter Serverkriterien. Er erhält eine neue `requestId` und ersetzt den bisherigen Auftrag bereits vor dem Modellaufruf. Die bisherigen Kriterien bleiben zunächst erhalten; alte Frage- und Execute-Bindungen sind nicht mehr aktuell. Scheitert die Interpretation, wird der vorherige Auftrag nicht automatisch wiederhergestellt. Ohne verbleibenden Klärungsbedarf darf der neue Auftrag direkt suchen. Kein clientseitiger Ersatzstand.
+- `clarify`: gebundene Antwort prüfen, übernehmen und erneut bewerten, niemals Treffersuche. Angebotene Medienauswahl ohne LLM; Freitext über gemeinsame Interpretation. Der Antwortstatus `clarified` bedeutet, dass die Antwort verarbeitet wurde. Er kann eine Folgefrage enthalten und ist allein keine Ausführungsfreigabe.
+- `execute`: aktuelle bestätigte Revision erneut prüfen und ausdrücklich ausführen, ohne erneute LLM-Interpretation. Nach abgeschlossener Klärung erforderlich. Eine offene Frage oder laufende Freitextklärung blockiert die Ausführung.
+- `reset`: bisherige Sessionzuordnung entfernen und einen neuen Sessionkontext ohne alte Kriterien erzeugen.
 
-Validierte Kriterien können bereits während offener Klärung gespeichert sein; eine offene Frage startet keine Treffersuche. `requestId`, `revision` und `questionId` binden Antworten an Auftrag, Stand und Frage. Verspätete Ergebnisse dürfen keinen neueren Stand überschreiben oder alte Fragen wieder öffnen. Externe Aufrufe müssen dafür nicht abbrechbar sein.
+Validierte Kriterien können bereits während offener Klärung gespeichert sein; eine offene Frage startet keine Treffersuche. Ein gespeicherter Kriterienstand ist nicht automatisch ausführbar.
 
-Submit/Execute teilen die Reservierung vor dem Provideraufruf. Laufende/erfolgreiche Revision nicht erneut starten; technischer Fehler erlaubt ausdrücklichen Neuversuch. Keine Zusicherung für Submit-Idempotenz oder erneute Ergebnisauslieferung.
+`requestId`, `revision` und `questionId` binden Antworten an Auftrag, Stand und Frage. Die Revision gilt innerhalb eines Auftrags und beginnt bei jedem neuen Auftrag mit `1`. Sie wird bei der Übernahme eines Kriterien-/Klärungsergebnisses erhöht, nicht bei jedem HTTP-Aufruf oder Ausführungsergebnis. Unterschiedliche Aufträge sind über ihre Request-ID zu unterscheiden, nicht durch einen Vergleich ihrer Revisionsnummern.
 
-Sessionablage: ein Prozess, 30 Minuten Inaktivität, maximal 1.000 Sessions, nicht neustartfest oder instanzübergreifend. Alte Bindungen im neuen Kontext ergeben `409`; ein nicht mehr vorhandenes altes Cookie ergibt `410`. Browser-Cookierennen sind davon zu unterscheiden. Zugriffsschutz und Betriebsgrenzen vor öffentlichem Betrieb separat bewerten.
+Verspätete Ergebnisse dürfen keinen neueren Stand überschreiben oder alte Fragen wieder öffnen. Vor der Übernahme asynchroner Ergebnisse wird deren Aktualität erneut geprüft. Externe Aufrufe müssen dafür nicht abbrechbar sein. Diese serverseitige Absicherung ist kein vollständiger Nachweis gegen Browser-Cookierennen.
+
+Submit und Execute teilen die Reservierung vor dem Provideraufruf. Eine laufende oder erfolgreiche Revision darf nicht erneut gestartet werden; ein technischer Ausführungsfehler erlaubt einen ausdrücklichen Neuversuch derselben Revision. Ein neuer Submit ist dagegen ein neuer Auftrag und kann dieselben Kriterien erneut ausführen. Keine Zusicherung für Submit-Idempotenz oder erneute Ergebnisauslieferung bei wiederholtem Execute.
+
+Die Sessionablage ist prozesslokal: 30 Minuten Inaktivität, maximal 1.000 Sessions, nicht neustartfest oder instanzübergreifend. Ein mitgesendetes, nicht mehr vorhandenes oder abgelaufenes Sessioncookie führt zu `410`. Nicht anwendbare Frage- oder Execute-Bindungen führen bei gültiger Session und verfügbarer erforderlicher Konfiguration zu `409`. Da die Konfigurationsprüfung teilweise vor der Bindungsprüfung erfolgt, kann fehlende Konfiguration zuvor `503` auslösen. Zugriffsschutz und Betriebsgrenzen vor öffentlichem Betrieb separat bewerten.
 
 ## Karten und Gesamtzahlen
 
