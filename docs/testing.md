@@ -1,58 +1,77 @@
 # Testing
 
-NuxtWatch uses [Vitest](https://vitest.dev/) for unit and integration tests and [Playwright](https://playwright.dev/) for HTTP integration tests and future browser end-to-end tests. The existing suite focuses on TMDb validation, orchestration, mapping, errors, and Nitro routes.
+NuxtWatch uses Vitest for unit and controlled integration tests, including isolated H3 HTTP integrations. Playwright covers HTTP requests against a running Nuxt server and future browser end-to-end tests. Classify a test by the boundary it actually exercises, not merely by the runner.
 
-## Current exception: exploratory search slices
+## Search architecture: historical exception and completion
 
-Decision of 21 November 2026: automated testing work is deferred for the current exploratory search-architecture phase, including [Task 01](tasks/search-architecture/01-shared-search-matrix.md). This scoped decision takes precedence over the regression-test-before-change instruction below for these slices; it is not a permanent project-wide abandonment of tests.
+On 21 November 2026, automated test work was deferred for exploratory search-architecture slices. Acceptance initially used code review and documented terminal walkthroughs, with typecheck and lint recorded separately. That was a scoped, temporary decision, not a permanent project-wide test policy.
 
-- Keep numbered acceptance criteria. Initially assess them through code review and documented manual terminal walkthroughs. Run typecheck and lint as separate technical checks; neither proves functional correctness.
-- Do not add, extend, duplicate or refactor automated tests as part of these exploratory slices. Automated test runs are not a required acceptance step in this phase; report them as deferred/not run rather than passed.
-- Do not delete existing tests wholesale. Record incompatibilities caused by renamed modules or changed contracts in the active task instead of starting an incidental test migration. Do not hide failures through exclusions, changed configuration or unnecessary production compatibility layers.
-- If unchanged tests cause typecheck/lint failures, record the actual failure and cause; do not claim success, silently narrow the check or infer approval to edit tests. Agree any required exception separately.
-- A manual walkthrough or code review is not a full concurrency/race-condition verification. Record which behavior was actually reproduced and leave unverified parts open. Exploratory acceptance is not production-release assurance.
-- Revisit automation after the architecture stabilises under a separate agreement: inventory existing tests first, map each guarantee to a suitable boundary, reuse/consolidate coverage and avoid repeating a full case matrix across layers.
+Subsequently, specific title-adapter, shared-flow and HTTP/session test blocks were separately agreed and approved. [Task 01](tasks/search-architecture/01-shared-search-matrix.md) is now closed in its agreed search/title scope. On 22 November, the user confirmed passing tests, lint and typecheck, then coverage above 80%; the reviewed local live-audit report recorded eight passed, zero failed and zero blocked cases. Attribution, commits and limits are in the task, which remains the verification record. No exact coverage metric, percentage or test count was supplied for the project checks.
 
-The remaining sections retain the general policy and conventions for later automated work and unrelated agreed tasks.
+The old exploratory deferral is no longer a blanket instruction to skip tests for the completed task. It does not authorize broad test migrations or additional work either. Agree any new scoped exception explicitly and record its duration, permitted changes and missing evidence in the relevant task.
+
+Do not delete existing tests wholesale, hide failures through exclusions/configuration, or add unnecessary production compatibility layers. Investigate incompatibilities and agree consequential test changes. Historical retired identifiers remain retired; successful new tests do not retroactively turn older failed or blocked audits into passes.
 
 ## Commands
 
 ```bash
-npm run test
-npm run test:watch
-npm run test:coverage
-npm run test:e2e
+pnpm test
+pnpm test:watch
+pnpm test:coverage
+pnpm test:e2e
+pnpm lint
+pnpm typecheck
 ```
 
-For the current exploratory slices, the planned technical checks are `pnpm typecheck` and `pnpm lint`; the test commands above are documented, not a requirement to run them now.
+Tests, coverage, lint and typecheck are different checks. Lint/typecheck do not prove behavior; coverage is not proof of functional completeness or security. A documented command is not evidence that it ran. Record the actual result, code reference and who executed it; do not transfer historical success to later behavioral changes.
 
 ## When and what to test
 
-- Define observable acceptance criteria before implementation. For new features, first build a working end-to-end slice, then close meaningful automated test gaps before release. Test-driven development is not mandatory. Before changing existing behavior that must be preserved, add a focused regression test if none protects it, except under the scoped exploratory decision above.
-- Organize tests by behavior and boundary, not by task or schema. Before adding a test, identify the concrete failure that existing tests would miss. Reuse, extend, or consolidate existing tests when they protect the same guarantee.
-- Use the smallest scope that reliably detects the relevant failure. Overlap in code exercised is fine if assertions protect different guarantees; do not repeat the same input matrix at several levels. Prefer observable outcomes over implementation details or non-contractual wording. For parser prompts, verify separation of fixed instructions and user input rather than exact wording unless contractual.
-- Do not retest Zod primitives or require a dedicated test per schema. Test important HTTP and LLM input contracts where validation is actually used. Add a focused test for a consequential project-specific default, normalization or cross-field rule if not otherwise covered. See [Typing](typing.md).
-- A missing `questionId` is rejected at the HTTP boundary; a stale revision is rejected by the flow. These are different guarantees, not reasons for duplicate standalone schema tests.
-- Record guarantee → boundary → existing test or gap in the active task. Deferred plans do not authorise implementation now.
+- Define observable acceptance criteria before implementation. For new features, first build a working end-to-end slice, then close meaningful automated test gaps before release. Test-driven development is not mandatory. Before changing existing behavior that must be preserved, add a focused regression test if none protects it, unless a scoped exception is explicitly agreed.
+- Organize tests by behavior and boundary, not by task or schema. Before adding a test, identify the concrete failure that existing tests would miss. Reuse, extend or consolidate existing tests when they protect the same guarantee.
+- Use the smallest scope that reliably detects the relevant failure. Overlap in exercised code is fine when assertions protect different guarantees; do not repeat a full input matrix at several levels. Prefer observable outcomes over implementation details or non-contractual wording. For parser prompts, verify separation of fixed instructions and user input rather than exact wording unless contractual.
+- Do not retest Zod primitives or require a dedicated test per schema. Test important HTTP and LLM contracts where validation is used. Add a focused test for a consequential project-specific default, normalization or cross-field rule if otherwise unprotected. See [Typing](typing.md).
+- A missing questionId is rejected at the HTTP boundary; a stale revision is rejected by the flow. These are different guarantees, not reasons for duplicate standalone schema tests.
+- Record guarantee, boundary, existing coverage and meaningful gaps in the active task. A deferred plan or list of remaining limits does not authorize implementation.
 
 ## Boundaries and locations
 
-| Scope                  | Location                                      | Runner     | Focus                                                                      |
-| ---------------------- | --------------------------------------------- | ---------- | -------------------------------------------------------------------------- |
-| Unit                   | `tests/unit` (`schemas`, `services`, `utils`) | Vitest     | Cohesive validation, service, mapper, parameter, error or utility behavior |
-| Controlled integration | `tests/integration/tmdb` for TMDb             | Vitest     | Real internal flow with controlled outbound transport                      |
-| HTTP integration       | `tests/integration/http`                      | Playwright | HTTP requests to a running Nuxt server                                     |
-| Browser end-to-end     | `tests/e2e`                                   | Playwright | User journeys; do not expand browser coverage for now                      |
+| Scope | Location | Runner | Actual boundary |
+| --- | --- | --- | --- |
+| Unit | `tests/unit` | Vitest | Cohesive validation, service, mapper, parameter, error or utility behavior |
+| Controlled TMDb integration | `tests/integration/tmdb` when needed | Vitest | Real internal flow with controlled outbound transport; directory convention, not an inventory claim |
+| Search handler/session HTTP integration | `tests/integration/search` | Vitest | Real HTTP requests to an isolated H3 server mounting the production handler and session store |
+| Running Nuxt HTTP integration | `tests/integration/http` | Playwright | Requests against a running Nuxt server |
+| Browser end-to-end | `tests/e2e` when agreed | Playwright | Browser journeys, rendering and browser-enforced behavior; no general expansion authorized |
 
 - Keep `src/lib` and `server/services` framework-free. H3 helpers belong in `server/utils`, thin Nitro handlers in `server/api`: validate, delegate, map errors, respond.
-- Inject external transports. Unit tests do not access the real network. Controlled integrations mock outbound TMDb transport, not internal modules. Never mock the module under test.
-- Reusable deterministic data belongs in `tests/fixtures`, shared transport/Nitro doubles in `tests/mocks`.
+- Inject external transports. Unit tests do not access the real network. Controlled integrations mock external model generation or outbound TMDb transport, not internal application modules. Never mock the module under test. Isolated HTTP tests use actual loopback HTTP, not live external providers.
+- The search HTTP harness supplies Nuxt-autoimported H3 helpers with their actual H3 implementations and controls runtime configuration. It does not verify Nuxt startup, Nitro route discovery or production middleware. See [search integration details](../tests/integration/search/README.md).
+- Explicitly resent cookie values verify session ownership, not browser enforcement of SameSite, HttpOnly, Secure or cookie ordering. Header assertions and browser-policy checks are different evidence.
+- Reusable deterministic data belongs in `tests/fixtures`, shared transport/Nitro doubles in `tests/mocks`. Do not add generic test infrastructure without concrete reuse.
+
+## Current targeted search guarantees
+
+- `tests/unit/services/title-search.spec.ts`: endpoint/year mapping, cards, direct and Multi/person totals, absent or implausible metadata, isolated count failures and empty pages.
+- `tests/unit/services/search-flow.spec.ts`: actual flow/matrix/proposal validation/adapter with controlled outer boundaries; criteria preservation/edits, clarification, execute, bindings, reservation and explicit retry after failure.
+- `tests/integration/search/search-http.spec.ts`: HTTP validation/serialization, cookie-bound ownership, independent clients, reset, conflicts, response contracts and no-store.
+
+These blocks are complementary. A controlled failure test does not establish that the same real provider failure was reproduced live. A successful local model example does not establish general semantic reliability.
+
+## Live audits, concurrency and security
+
+Live audits exercise a running application with real configured providers and must be explicitly scoped. Use synthetic inputs and independent session contexts. Do not persist credentials, cookies, raw errors or real user conversations. Distinguish PASSED, FAILED and BLOCKED; blocked or unreproduced cases are not passes. Do not imply that a locally supplied script or report is versioned when it is not.
+
+Concurrent client dispatch alone does not prove internal server overlap or an exact provider call count. Deterministic gates can test reservation on a controlled boundary; delayed-response, session-lifetime, browser and multi-instance checks need their own setup and evidence. Do not claim a full race audit from normal walkthroughs.
+
+Prompt-injection testing remains a separate security concern, not an outcome of the completed functional search tests. Use controlled model outputs to test application boundaries even when the model misbehaves, and separately agreed adversarial real-model inputs to assess model behavior. Schema-valid output may still violate intent; prompt wording alone is not a defense guarantee. Record specific attempted attacks and observed effects, not a blanket claim of injection resistance.
 
 ## Identifiers and coverage
 
-- Each unit `it` starts with `// Statement coverage:` for an execution path or `// Branch coverage:` for a conditional/error/fallback/boundary. HTTP integrations do not require these comments.
-- Integration tests use stable unique identifiers such as `TMDB-INT-001`; HTTP test titles include `TMDB-INT-…`. Browser journeys use identifiers such as `SEARCH-001` and link to acceptance criteria, e.g. `SEARCH-001-AC1`. Never reuse retired identifiers.
-- V8 coverage applies to `src/lib/**` and `server/**`. The global statement threshold is currently 80%; `vitest.config.ts` is authoritative. Thresholds are minimums, not per-file goals. Do not change thresholds/exclusions to mask deferred work; no coverage target or coverage run is required for the exploratory slices.
+- Begin each unit test case with a coverage-intent comment: `// Statement coverage:` for an execution path or `// Branch coverage:` for a conditional/error/fallback/boundary. Vitest controlled integrations use the same convention; HTTP Playwright tests do not require these comments.
+- Use stable scenario identifiers for integrations. Existing TMDb cases use `TMDB-INT-…`; the search HTTP suite uses `SEARCH-HTTP-001` through `SEARCH-HTTP-006`, with descriptive parameterized variants in its validation group. Keep variant titles distinct and never reuse retired identifiers for unrelated scenarios.
+- Browser journeys use identifiers such as `SEARCH-001` linked to acceptance criteria, for example `SEARCH-001-AC1`. Do not relabel handler-only checks as browser journeys.
+- V8 coverage applies to `src/lib/**` and `server/**`. The global statement threshold is 80%; `vitest.config.ts` is authoritative. Thresholds are minimums, not per-file goals. Do not change thresholds or exclusions to conceal missing coverage. A broad user report of coverage above 80% does not identify an exact metric or percentage.
 
 ## Import aliases
 
