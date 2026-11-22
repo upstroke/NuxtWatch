@@ -1,6 +1,6 @@
 # TMDb API analysis
 
-Updated 21 November 2026. API research and candidate flows for NuxtWatch, not a claim that every endpoint is implemented or live-verified. [Observed title-search requests](tmdb-search-examples.md) are already available; the former statement that no requests had been verified is obsolete. The [search concept](sucharchitektur-konzept.md) defines current product rules, implementation scope and verification limits.
+Updated 21 November 2026. API research and candidate flows for NuxtWatch, not a claim that every endpoint is implemented or live-verified. [Observed title-search requests](tmdb-search-examples.md) are already available; the former statement that no requests had been verified is obsolete. The [search concept](search-architecture-concept.md) defines current product rules, implementation scope and verification limits.
 
 ## Evidence and current title scope
 

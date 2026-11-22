@@ -10,4 +10,4 @@ Use server-side TMDb `GET /3/trending/all/week` for the initial cards, with the 
 
 Loading the home screen does not call the LLM, create a search request, prefill criteria or mutate the shared search object. An empty search object does not itself request Trending. Explicit daily trends in a later search flow are different from the weekly home-screen default.
 
-The shared search and clarification flow, current implementation scope and verification limits are defined in the [search concept](sucharchitektur-konzept.md). The text-based terminal remains an alternative search interface; it does not need to recreate the home screen.
+The shared search and clarification flow, current implementation scope and verification limits are defined in the [search concept](search-architecture-concept.md). The text-based terminal remains an alternative search interface; it does not need to recreate the home screen.
