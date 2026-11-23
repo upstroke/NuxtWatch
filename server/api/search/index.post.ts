@@ -14,16 +14,19 @@ import { isTmdbError, toTmdbHttpError } from '@server/services/tmdb/errors';
 import { getTmdbConfig } from '@server/utils/tmdb';
 import { getSearchSession } from '@server/utils/search-session';
 
+/** Validates outgoing search data and rejects violations of the public response contract. */
 function parseSearchResponse(value: unknown) {
   const response = searchResponseSchema.safeParse(value);
   if (!response.success)
     throw createError({ statusCode: 500, statusMessage: searchTexts.http.invalidResponse });
   return response.data;
 }
+/** Maps provider failures and other processing errors to sanitized HTTP errors. */
 function throwSearchHttpError(error: unknown): never {
   if (isTmdbError(error)) throw createError(toTmdbHttpError(error));
   throw createError({ statusCode: 502, statusMessage: searchTexts.http.processingFailed });
 }
+/** Converts rejected or superseded execution outcomes to conflicts and validates other outcomes. */
 function executionResponse(
   result: Awaited<ReturnType<typeof executeSearch>> | Awaited<ReturnType<typeof submitForSession>>,
 ) {
@@ -36,6 +39,7 @@ function executionResponse(
     });
   return parseSearchResponse(result);
 }
+/** Handles session-bound search actions with validated requests and non-cacheable responses. */
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, 'Cache-Control', 'no-store');
   const request = searchRequestSchema.safeParse(await readBody(event));
@@ -46,6 +50,7 @@ export default defineEventHandler(async (event) => {
   if (request.data.action === 'reset')
     return parseSearchResponse({ status: 'reset', criteria: session.criteria });
 
+  /** Validates model configuration only for actions that require language interpretation. */
   const getLlm = () => {
     const config = LlmRuntimeConfigSchema.safeParse(useRuntimeConfig(event).llm);
     if (!config.success)

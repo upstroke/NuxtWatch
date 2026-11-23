@@ -1,3 +1,4 @@
+/** Maps validated movie and TV details to normalized application contracts. */
 import type {
   TmdbDetailBase,
   TmdbMovieDetail,
@@ -6,6 +7,7 @@ import type {
   TmdbTvDetailRaw,
 } from '@lib/schemas/tmdb-detail';
 
+/** Maps shared detail fields using the title names supplied for the specific media type. */
 function toDetailBase(
   raw: TmdbMovieDetailRaw | TmdbTvDetailRaw,
   title: string,

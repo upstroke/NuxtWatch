@@ -61,6 +61,7 @@ type SearchHttpClient = Pick<TmdbHttpClient, 'get'>;
 type IsCurrent = () => boolean;
 type CreateId = () => string;
 
+/** Determines whether the criteria cover a supported path or require clarification. */
 function decideSearch(criteria: SearchCriteria): SearchDecision {
   const evaluations = evaluateSearchPaths(criteria);
   const title = criteria.title?.trim();
@@ -115,6 +116,7 @@ async function interpretSearch(config: LlmConfig, input: ParserInput): Promise<S
   return { criteria, decision: decideSearch(criteria) };
 }
 
+/** Replaces the active request while preserving the session's accepted criteria. */
 function openSearchRequest(state: SearchState, requestId: string, userText: string): SearchRequest {
   const request: SearchRequest = {
     requestId,
@@ -127,10 +129,12 @@ function openSearchRequest(state: SearchState, requestId: string, userText: stri
   return request;
 }
 
+/** Returns the bound question text used in clarification history and model context. */
 function questionText(question: SearchQuestion): string {
   return question.message;
 }
 
+/** Binds a required clarification to this request and revision, or returns no question. */
 function bindQuestion(
   request: SearchRequest,
   decision: SearchOutcome['decision'],
@@ -162,6 +166,7 @@ function bindQuestion(
   };
 }
 
+/** Accepts only the current open question binding when no clarification is in progress. */
 function matchesQuestion(
   state: SearchState,
   input: SearchClarifyRequest,
@@ -183,6 +188,7 @@ function matchesQuestion(
   );
 }
 
+/** Stores an outcome, advances its revision, and clears context when no question remains. */
 function commitOutcome(
   state: SearchState,
   request: SearchRequest,
@@ -200,6 +206,7 @@ function commitOutcome(
   }
 }
 
+/** Describes the processed clarification without authorizing or starting execution. */
 function clarificationResponse(state: SearchState, request: SearchRequest) {
   return {
     status: 'clarified' as const,
@@ -278,6 +285,7 @@ export async function clarifySearchText(
   const revision = request.revision;
   const answer = input.answer.text;
 
+  /** Checks that asynchronous interpretation still belongs to the same open question. */
   const active = () =>
     isCurrent() &&
     state.currentRequest === request &&
@@ -334,6 +342,7 @@ async function executeCurrentRequest(
 ) {
   const revision = request.revision;
 
+  /** Checks that execution still belongs to the current session, request, and revision. */
   const active = () =>
     isSessionCurrent() && state.currentRequest === request && request.revision === revision;
 
@@ -447,6 +456,7 @@ export async function submitForSession(
 ) {
   const request = openSearchRequest(state, requestId, userText);
 
+  /** Prevents a superseded submission from accepting interpretation results. */
   const active = () => isSessionCurrent() && state.currentRequest === request;
 
   let outcome: SearchOutcome;

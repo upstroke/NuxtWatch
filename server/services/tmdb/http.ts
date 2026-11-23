@@ -1,3 +1,4 @@
+/** Provides authenticated TMDb transport with fixed destination and request validation. */
 import type { TmdbRuntimeConfig } from '@lib/schemas/runtime-config';
 import { createTmdbError } from './errors';
 
@@ -16,6 +17,7 @@ export type TmdbConfig = TmdbRuntimeConfig;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_TIMEOUT_MS = 10000;
 
+/** Rejects missing credentials or a base URL outside the fixed TMDb destination. */
 function assertConfiguration(config: TmdbConfig) {
   const token = config.apiReadAccessToken.trim();
   if (!token) throw createTmdbError('MISSING_TOKEN');
@@ -24,6 +26,7 @@ function assertConfiguration(config: TmdbConfig) {
   }
 }
 
+/** Rejects paths with embedded query/fragment delimiters, whitespace, or control characters. */
 function assertTmdbPath(path: string) {
   const hasControlCharacter = [...path].some((character) => {
     const code = character.charCodeAt(0);

@@ -52,7 +52,9 @@ export function getSearchSession(event: H3Event, reset = false) {
 
   return {
     session: current,
+    /** Checks that the captured session is still stored and has not expired. */
     isCurrent: () => sessions.get(sessionKey) === current && current.expiresAt > Date.now(),
+    /** Extends this session's inactivity deadline without replacing its search state. */
     touch: () => {
       current.expiresAt = Date.now() + lifetime;
     },
