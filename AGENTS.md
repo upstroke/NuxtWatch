@@ -35,7 +35,7 @@ NuxtWatch is a controlled search application. The LLM proposes structured filter
 - Follow Nuxt, Vue, and the chosen UI library's conventions at their integration points. Use their APIs and required structures as intended, including framework- or library-provided classes where appropriate. Do not add wrappers merely to avoid those APIs.
 - Pass dependencies explicitly. Use factory functions and closures when a component needs instance-specific configuration or private state. Expose only the operations callers need. Add adapters for concrete boundary needs and use memoization only when justified; document its scope, key, lifetime, and failure behavior.
 - Add a short English header comment to every hand-maintained source file whose format supports comments. State the file's purpose and, where useful, what belongs elsewhere. Keep the header current when responsibilities change.
-- Document each function and method with a short English comment explaining its purpose. Use TSDoc-compatible comments for exported functions and methods. Explain intent, constraints, or side effects rather than restating the implementation.
+- Document every function and method, including local helpers and arrow functions, with a short English JSDoc-style comment (`/** ... */`) immediately above it. Explain its purpose and relevant constraints or side effects rather than restating the implementation. Keep exported-function and method comments TSDoc-compatible. Add `@param`, `@returns`, or `@throws` only when they provide useful information beyond the signature and summary; do not repeat TypeScript types. Keep comments current when behavior changes.
 
 ## Testing and workflow
 
