@@ -74,3 +74,5 @@ The main effort is not building menus, but preserving existing state, binding, a
 - A full-screen TUI or publication as a standalone npm tool.
 
 These extensions may be described and approved separately when a concrete need arises. This idea document does not authorize implementation or additional product features.
+
+![nuxtwatch-cli-two-tone-preview.png](docs/images/nuxtwatch-cli-two-tone-preview.png)

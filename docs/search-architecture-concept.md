@@ -50,13 +50,13 @@ The shared criteria object describes the user's intent, not the endpoint. Curren
 
 “Confirmed criteria” means the current criteria state accepted by the application. It implies neither separate user approval of every value nor that the request is already executable.
 
-| Criteria | Behavior |
-| --- | --- |
-| Title missing | Clarify the title when title search is intended; do not reinterpret other intents |
-| Title, `all`, no year | Multi-search; no optional media-type/year question |
-| Title, `movie`, optional year | Movie search; year via `primary_release_year` |
-| Title, `tv`, optional year | TV search; year via `first_air_date_year` |
-| Title, year, `all` | Bound choice of `movie` or `tv`; no result search |
+| Criteria                      | Behavior                                                                          |
+| ----------------------------- | --------------------------------------------------------------------------------- |
+| Title missing                 | Clarify the title when title search is intended; do not reinterpret other intents |
+| Title, `all`, no year         | Multi-search; no optional media-type/year question                                |
+| Title, `movie`, optional year | Movie search; year via `primary_release_year`                                     |
+| Title, `tv`, optional year    | TV search; year via `first_air_date_year`                                         |
+| Title, year, `all`            | Bound choice of `movie` or `tv`; no result search                                 |
 
 An unspecified type and an explicit request for movies and TV both mean `all`, unless a different confirmed type still applies. Explicitly resetting the type to both media is allowed. With a year, `all` is an intermediate state requiring clarification: preserve title/year, select the type, then execute. Do not guess a medium, remove the year, merge lists, or implement custom year post-filtering. This is a product decision, not a fundamental API limitation.
 
@@ -108,14 +108,14 @@ Nuxt, a model server, and local configuration are required. No provider credenti
 
 As of November 22, 2026; do not carry evidence forward to subsequent behavioral changes.
 
-| Evidence | Scope and source |
-| --- | --- |
-| `8172f08` | Title-adapter tests: endpoints/year, cards, direct/multi totals, metadata, isolated person-count failure, and empty pages; test run confirmed by the user |
-| `0e0e002` | Real flow/matrix/proposal validation/adapter with controlled external boundaries: criteria preservation/changes, clarification, execute, bindings, reservations, and explicit retry after failure; tests confirmed by the user |
-| `e885a7c` | Real handler/session through isolated H3 HTTP: validation, cookies, session isolation, reset, conflicts, response contract, no-store; tests confirmed by the user |
-| `d6e071c` | Lint correction: provider-gate check before execution instead of throwing in finally |
-| Project checks | At 18:17 CET, the user confirmed tests, lint, and typecheck, followed by coverage above 80%; no exact percentage, metric, or test count supplied; no project commands run independently by the assistant |
-| Live HTTP | User run against localhost:3000, 18:23 CET: eight PASSED, zero FAILED, zero BLOCKED; console output and JSON report reviewed in the conversation |
+| Evidence       | Scope and source                                                                                                                                                                                                               |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `8172f08`      | Title-adapter tests: endpoints/year, cards, direct/multi totals, metadata, isolated person-count failure, and empty pages; test run confirmed by the user                                                                      |
+| `0e0e002`      | Real flow/matrix/proposal validation/adapter with controlled external boundaries: criteria preservation/changes, clarification, execute, bindings, reservations, and explicit retry after failure; tests confirmed by the user |
+| `e885a7c`      | Real handler/session through isolated H3 HTTP: validation, cookies, session isolation, reset, conflicts, response contract, no-store; tests confirmed by the user                                                              |
+| `d6e071c`      | Lint correction: provider-gate check before execution instead of throwing in finally                                                                                                                                           |
+| Project checks | At 18:17 CET, the user confirmed tests, lint, and typecheck, followed by coverage above 80%; no exact percentage, metric, or test count supplied; no project commands run independently by the assistant                       |
+| Live HTTP      | User run against localhost:3000, 18:23 CET: eight PASSED, zero FAILED, zero BLOCKED; console output and JSON report reviewed in the conversation                                                                               |
 
 Live cases: new request while a question is open; incorrect request/question ID and revision; duplicate answer; reset with old bindings and cookie; stale execute; repeat after success; two concurrently submitted execute requests; explicit movies-and-TV request with a year. Expected conflicts were observed, and the valid current state remained usable afterward. The parallel case produced one completed/200 and one 409, not proof of internal overlap or provider-call counts. All recorded responses were no-store.
 

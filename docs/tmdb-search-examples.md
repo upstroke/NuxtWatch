@@ -148,23 +148,23 @@ This is the intended reproduction target, not proof of the original request's ex
 
 ### User-supplied response summary
 
-| Evidence | Value |
-| --- | --- |
-| HTTP status | Not supplied |
-| Page | 1 |
-| Entries on supplied page | 20 |
-| Reported total pages | 7 |
-| Reported total results | 129 |
-| Pages 2–7 | Not inspected in this example |
+| Evidence                 | Value                         |
+| ------------------------ | ----------------------------- |
+| HTTP status              | Not supplied                  |
+| Page                     | 1                             |
+| Entries on supplied page | 20                            |
+| Reported total pages     | 7                             |
+| Reported total results   | 129                           |
+| Pages 2–7                | Not inspected in this example |
 
 Selected entries from the supplied first page, not the complete page or complete candidate list:
 
-| Keyword name | TMDb ID |
-| --- | ---: |
-| `dark` | 259094 |
-| `dark future` | 212516 |
-| `dark comedy` | 10123 |
-| `dark fantasy` | 177895 |
+| Keyword name   | TMDb ID |
+| -------------- | ------: |
+| `dark`         |  259094 |
+| `dark future`  |  212516 |
+| `dark comedy`  |   10123 |
+| `dark fantasy` |  177895 |
 
 Counts, names, IDs, and ordering are historical supplied evidence, not assertions about a fresh response. No complete raw response fixture is added by this documentation change, and no automated Zod validation was run against the original payload here.
 
