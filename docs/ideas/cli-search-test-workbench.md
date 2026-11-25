@@ -30,6 +30,8 @@ Proposed scope:
 - Add a launch command such as `pnpm search:cli` and document the separate backend requirement.
 - Add focused tests for changed client control behavior and run available project checks; explicitly record outcomes and any checks not run.
 
+Use consistent semantic colors for informational messages, successful outcomes, clarification requests, warnings, and errors. Keep secondary metadata visually subdued. Always retain explicit text labels so that meaning does not depend on color alone. Reuse Clack’s built-in styling where sufficient; add a separate color utility only if needed.
+
 `@clack/prompts` is the proposed library candidate, not an installed or finally approved dependency. A custom full-screen terminal interface is unnecessary.
 
 ## Architecture and Preserved Rules
