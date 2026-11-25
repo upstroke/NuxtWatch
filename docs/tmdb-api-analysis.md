@@ -1,6 +1,6 @@
 # TMDb API analysis
 
-Updated 21 November 2026. API research and candidate flows for NuxtWatch, not a claim that every endpoint is implemented or live-verified. [Observed title-search requests](tmdb-search-examples.md) are already available; the former statement that no requests had been verified is obsolete. The [search concept](search-architecture-concept.md) defines current product rules, implementation scope and verification limits.
+Updated 25 November 2026. API research and candidate flows for NuxtWatch, not a claim that every endpoint is implemented or live-verified. [Observed title-search requests and the user-supplied keyword example](tmdb-search-examples.md) are available; the former statement that no requests had been verified is obsolete. The [search concept](search-architecture-concept.md) defines current product rules, implementation scope and verification limits.
 
 ## Evidence and current title scope
 
@@ -28,6 +28,22 @@ All paths are GET requests relative to `https://api.themoviedb.org/3`. An invent
 | External IDs        | `/find/{external_id}`                                                                                                          | External identifier such as IMDb, not a title string.                                                                      |
 
 Official starting points: [finding data](https://developer.themoviedb.org/docs/finding-data), [Multi](https://developer.themoviedb.org/reference/search-multi), [Movie](https://developer.themoviedb.org/reference/search-movie), [TV](https://developer.themoviedb.org/reference/search-tv), [Discover Movie](https://developer.themoviedb.org/reference/discover-movie), [Discover TV](https://developer.themoviedb.org/reference/discover-tv). Dynamic reference pages may not expose their full parameter lists to a text fetch; do not mistake that for proof that parameters do not exist.
+
+## Keyword candidate resolution
+
+Added 25 November 2026. This is candidate resolution, not a title search or a verified mood filter. The [keyword experiment concept](keyword-resolution-concept.md) owns implementation proposals, tasks, test scope, and the detailed T1 evidence limitations. [Example 5](tmdb-search-examples.md#5-keyword-candidates-for-a-dark-atmosphere) records the user-supplied evidence without treating it as an independent live audit.
+
+The verification target is `GET /search/keyword` with text `query` and pagination `page`. Validate the provider response fields `page`, `results`, `total_pages`, and `total_results`, and each candidate's `id` and `name`, before using them. This contract summary still requires a readable official endpoint definition and/or a sanitized independent request observation before the application schema is finalized. The T1 reference extraction was incomplete; no fresh authenticated keyword request was executed by the assistant.
+
+The supplied `dark` response reported page 1, 20 entries, seven pages, and 129 results. It demonstrates that the supplied page was not the full reported candidate list. It does not establish current counts, complete pagination, semantic suitability, or an HTTP status that was not captured with the response.
+
+For the proposed experiment, collect the first validated response's expected page range, validate page identity and consistency, and deduplicate by keyword ID. Do not silently use partial data as a complete selection set. These are proposed application guarantees, not provider behavior already tested. Operational details remain in the concept rather than being duplicated here.
+
+Keep the complete user request and explicitly identified context separate from provider parameters. Movie, science-fiction, and release year 2025 contextualize the requested dark atmosphere; no mapping of those criteria to `/search/keyword` parameters has been established. A name containing `dark` is not proof of the requested mood: `dark comedy`, `dark fantasy`, or `dark future` can introduce unrequested genre, theme, or setting constraints. No candidate is accepted merely from lexical overlap.
+
+The application must validate model output against the supplied candidate IDs. A valid candidate ID proves neither user-intent fidelity nor film relevance. No suitable match, a clarification request, incomplete collection, and technical failure remain distinct. The experiment proposes keywords only; it does not mutate confirmed search criteria or execute Discover.
+
+Official verification references: [Keyword](https://developer.themoviedb.org/reference/search-keyword), [OpenAPI](https://developer.themoviedb.org/openapi/tmdb-api.json), [rate limiting](https://developer.themoviedb.org/docs/rate-limiting), and [errors](https://developer.themoviedb.org/docs/errors). General documentation describes HTTP 429 and a page range up to 500; keyword-specific boundary behavior remains unverified. A provider restriction must be reported, not hidden behind a completeness claim. Keyword combination semantics and actual Discover usefulness require a separate investigation.
 
 ## Candidate flows: verify one at a time
 
