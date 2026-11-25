@@ -1,182 +1,89 @@
 # Context-Aware Keyword Resolution
 
-Status: Proposed terminal experiment. Implementation and verification are open. Creating this document does not authorize implementation or integration into shared search.
+Status: Proposed experiment and conditional follow-up plan. All tasks remain open. This document does not authorize implementation, Discover execution, or integration into shared search.
 
-## Purpose and Architecture Relationship
+## Product Goal and Architecture
 
-Evaluate whether an LLM can select suitable TMDb keywords from verified candidates using the complete user request and relevant confirmed criteria. A valid keyword ID does not establish that its meaning matches the user's intent or that matching films have the requested mood.
+Enable requests such as "Zeige mir Sci-Fi-Filme mit düsterer Atmosphäre" through the shared natural-language search. Keyword resolution is a possible means of representing the atmospheric preference, not a standalone product goal or a proven mood filter. The optional release-year variant adds "aus 2025"; no year must be invented for the request without it.
 
-Follow the [shared search architecture](search-architecture-concept.md), [testing rules](testing.md), [typing rules](typing.md), and [development rules](../AGENTS.md). This document owns the experiment scope, tasks, and evidence. Do not duplicate or replace shared search rules here.
+Two questions need separate evidence:
+1. Can verified TMDb keyword candidates be selected faithfully in the context of the request?
+2. Does using those selections in an appropriate result-search path actually return relevant films without distorting the requested preference?
 
-The existing title-search behavior and instructions remain unchanged. This is a bounded resolution experiment, not a second search architecture or evidence of reliable mood filtering.
+Follow the [shared search architecture](search-architecture-concept.md), [development rules](../AGENTS.md), [typing rules](typing.md), and [testing rules](testing.md). Provider research belongs in the [API analysis](tmdb-api-analysis.md#keyword-candidate-resolution); concrete observations belong in [search example 5](tmdb-search-examples.md#5-keyword-candidates-for-a-dark-atmosphere). This concept owns experiment scope, task acceptance, proposals, and evidence limitations, not a duplicate set of shared search rules.
 
-## Example and Initial Scope
+Keyword selection is a criterion-specific resolver, not an alternative search-intent parser. Separate versioned instructions serve the bounded candidate-selection task; they must not interpret an independent full search object, introduce another readiness matrix, accept criteria, or authorize execution. Valid IDs and schema-valid output do not establish fidelity to user intent or film relevance.
 
-User request: "Ich suche einen Scifi-Movie aus dem Jahr 2025 mit dunkler Atmosphaere."
+## Responsibilities and Endpoint Applicability
 
-Supply the complete request, the preference being resolved, and any application-confirmed criteria. Movie, science-fiction, and 2025 provide context; only the mood is being mapped to keywords. Genre support is not assumed to exist in shared search. Experiment fixtures must distinguish supplied context from real confirmed application state.
+Distinguish looking up keywords from searching for films using keywords.
 
-Initially, the operator supplies the keyword query, for example `dark`. Automatic query generation is a separate future decision.
+| Responsibility | Owner |
+| --- | --- |
+| Interpret the user's requested criteria and explicit changes | Shared interpretation boundary; initially supplied explicitly for the experiment |
+| Retrieve and validate keyword names/IDs | TMDb keyword provider service |
+| Propose which supplied candidates represent a specified preference in context | Bounded keyword resolver using the shared model transport |
+| Validate candidate membership and resolution outcome | Application code outside the model |
+| Evaluate whether a result-search path covers all requested criteria and media scope | Shared matrix |
+| Accept current transitions, bind questions, and decide the next action | Shared flow during integration |
+| Map accepted criteria to verified provider parameters | Result-search adapter |
+| Handle HTTP contracts, ownership, and display | Transport/session/interface boundaries |
+
+The matrix must distinguish result-path support for keyword filters from missing resolution. It must not fetch keywords or interpret model prose. A preliminary matrix evaluation may identify a viable but unresolved path; execution must wait until the full request is supported and necessary resolution is complete. Do not prescribe a second orchestration engine or a rigid resolve-before-every-evaluation sequence.
+
+Observed on `feat/keyword-resolution`: `server/services/search/matrix.ts` currently evaluates only `multi`, `movie`, and `tv` title paths. It checks media scope, optional year support, and a required title for each known path. It has no keyword or Discover support. This is current application capability, not an inventory of every TMDb capability.
+
+A future Discover path must not inherit `title_required` merely because the first implemented paths are title searches. Conversely, Discover must not replace free-text title matching or silently discard a requested title. Verify the complete criterion combination and media scope, not just a `supportsKeywords` flag. Unsupported combinations must remain blocked or receive an explicitly agreed resolution; no implicit merging, local filtering, or criterion omission.
+
+The integration investigation must record endpoint-specific support and evidence for title search, Discover Movie, and Discover TV where relevant. Distinguish provider capability, application policy, and implemented support. Do not assume movie/TV parity. Genre/keyword combinations, date meaning, and multiple-keyword semantics need their own verification.
+
+## Phase A — Bounded Resolution Experiment
+
+The initial experiment ends with terminal proposals and diagnostics. It does not return film results. Its purpose is to test the resolver before commissioning a result-search comparison.
 
 Included:
-- Server-side TMDb keyword lookup with validated input and responses.
-- All pages reported by the first validated response for one keyword query.
-- An isolated temporary candidate set associated with the terminal experiment session.
-- Independently versioned keyword-selection instructions and validated model output.
-- Terminal presentation and controlled comparisons.
+- Server-side keyword lookup for an operator-supplied query such as `dark`.
+- Validated complete paging for the range reported by the first response, deduplication, and visible completeness diagnostics.
+- Temporary candidates isolated from confirmed search criteria.
+- Full request, specified preference, explicitly identified context, and complete candidate input for independently versioned selection instructions.
+- Validated proposals, repeated context comparisons, and distinct technical/no-match/clarification outcomes.
 
-Excluded:
-- UI, trending integration, Discover execution, and film/TV list merging.
-- Automatic acceptance into confirmed search criteria or automatic searches.
-- A complete local keyword catalog, vector database, or general session framework.
-- Automatic keyword-query generation and production approval.
+Excluded from Phase A:
+- Discover or title-result execution, automatic criteria acceptance, and changes to the existing title flow/matrix.
+- UI, trending integration, movie/TV result merging, and automatic keyword-query generation.
+- A general session/pending framework, full keyword catalog, vector database, or production approval.
 
-## Experimental Flow
+Example context may identify movie, science-fiction, and optionally release year 2025. Only the atmospheric preference is being resolved. Supplied experiment context must not be described as implemented or application-confirmed genre support. Context must not add unrequested settings, themes, periods, or plots. Release year is not story setting.
 
-1. Receive the user request, preference, explicit context, and operator-selected keyword query.
-2. Fetch and validate page 1 of `/search/keyword` server-side.
-3. Fetch the remaining pages up to the first response's `total_pages`.
-4. Validate each page, deduplicate keywords by ID, and finalize the candidate set.
-5. Explicitly invoke keyword selection with the current candidate set and full context.
-6. Validate the model response and its membership in the supplied candidate set.
-7. Display the proposal or resolution failure. Do not execute a film search.
+### Provider Collection
 
-## Provider Boundary and Pagination
+1. Validate operator input and fetch page 1 of `/search/keyword` server-side.
+2. Validate the response and freeze its expected page range.
+3. Fetch remaining expected pages with controlled scheduling; validate returned page identity and metadata.
+4. Deduplicate candidates by ID and finalize a complete set, or expose a failed/incomplete result.
+5. Explicitly invoke selection against that set and display the validated proposal. Never automatically execute a film search.
 
-Verify the exact TMDb request and response contract before implementation. Record synthetic or sanitized evidence without credentials.
+Use Zod contracts at external boundaries, derive types, and reuse existing credential/transport boundaries. Specify trimming, numeric bounds, unknown fields, empty-response rules, and consistency behavior after obtaining adequate provider evidence.
 
-Define Zod contracts for the query/page input, keyword ID/name, paginated provider response, selection input, and selection output. Specify trimming, empty results, numeric bounds, and unknown-field handling deliberately rather than assuming the provider's complete shape.
+No arbitrary fixed page cap is approved. Timeouts, rate limits, provider restrictions, and resource budgets may stop an operation but must produce visible incompleteness, not silent truncation or selection from a partial set. Empty results must terminate without nonexistent page requests. Expected-page collection does not prove a transactional provider snapshot or coverage of every synonym.
 
-Use the existing server-side credential and transport boundaries where applicable. A separate internal HTTP route is needed only if justified by the terminal transport; the provider endpoint does not itself require a new public application endpoint.
+Proposals still requiring agreement: sequential requests; treating changing totals or conflicting names for one ID as incomplete; deduplicating identical ID/name pairs; at most two additional per-page attempts for HTTP 429 with valid Retry-After or bounded backoff. Define wait bounds and overall budgets before implementation. No indefinite retries or automatic retry of an entire user action.
 
-Fetch each expected page once, except for bounded explicit retry handling. Validate that the returned page matches the requested page. Apply request timeouts, controlled request scheduling, and bounded retries with appropriate handling of rate-limit responses. Never retry indefinitely.
+### Temporary State and Minimal Experiment Harness
 
-Do not add an arbitrary fixed page cap for this experiment. Freeze the expected page range from the first response rather than following an expanding page count indefinitely. Empty results must terminate without requesting nonexistent pages.
+Track only what is needed: query, candidate-set identity, collection status, expected/loaded pages, reported totals, unique candidates, and diagnostics. Define ownership, cleanup, reset, expiry, and limits for the selected harness. New collection/reset/expiry invalidates previous bindings; late provider or model responses cannot overwrite newer state. Repeated selection may reuse a complete current set.
 
-If a page fails or metadata changes, report the condition. Do not silently treat a partial or inconsistent collection as a complete candidate set. Completion means the expected validated page range was collected; it is not proof of a transactional provider snapshot or coverage of all synonyms.
+The earlier T1 proposal used a separate HTTP terminal client, endpoint, dedicated cookie, and 30-minute process-local session. This is an option under reassessment, not the selected architecture. Isolation from confirmed criteria does not by itself justify a second session subsystem. T1 must choose the smallest viable server-side harness and explain why each transport/state mechanism is necessary. Keep credentials server-side; no generic store/framework or speculative files.
 
-## Temporary Candidate State
+If HTTP is selected, the provisional route is `POST /api/experiments/keyword-resolution` with `collect`, `select`, and `reset`. Bind select to the session's `candidateSetId`; define request/response limits, safe errors, no-store, ownership, lifetime, capacity, and stale-response checks. These are experiment operations, not replacements for shared submit/clarify/execute. If a simpler approved harness is selected, revise the file/test scope before writing code.
 
-Keep state isolated from the confirmed title-search state. Inspect existing lifecycle and ownership mechanisms before choosing the smallest suitable implementation; no new general-purpose store is approved by this concept.
+### Model Contract and Instructions
 
-Track the query, candidate-set identity, status, expected and loaded pages, reported totals, unique candidates, and relevant collection diagnostics. Define cleanup, reset, expiry, and failure behavior before implementation.
+Use dedicated versioned instructions, provisionally `src/lib/parser/keyword-selection-instructions.ts`, through suitable shared generation transport. Keep existing `src/lib/parser/instructions.ts` and title proposal behavior unchanged in Phase A. Static import does not imply sending instructions to the model; dynamic loading is not required for prompt isolation.
 
-A new collection invalidates selection bindings to the previous set. Late provider or model responses must not overwrite a newer set. Selection is available only for a finalized complete set. Do not silently reuse stale or expired state.
+Keep trusted instructions separate from untrusted request text, context, provider names, and model output. No credentials enter model input. JSON formatting and prompt wording are not security boundaries.
 
-The model receives an explicit copy of the relevant candidates; it cannot inspect server memory automatically. Never silently truncate the list to fit model input. If it does not fit, report that limitation and agree on a separate processing strategy.
-
-## Independent Instructions and Model Contract
-
-Add a dedicated keyword-selection instruction module with its own version, for example `src/lib/parser/keyword-selection-instructions.ts`. Send only the instructions required for this task. A static code import does not mean that its text is sent to the model; dynamic loading is optional, not a prerequisite for prompt isolation.
-
-Keep fixed trusted instructions separate from user text, context, and provider candidate names. Treat all supplied content as untrusted data. Prompt wording and JSON formatting are not security boundaries.
-
-The model must:
-- Use the full request and relevant confirmed context to interpret the specified preference.
-- Select only candidate IDs supplied for this invocation.
-- Avoid adding unrequested genres, settings, periods, themes, or plot requirements.
-- Distinguish release year from the time in which a story is set.
-- Allow `no_match` and `needs_clarification` instead of forcing a selection.
-- Produce a proposal only; never modify criteria, select endpoints, or execute searches.
-
-Choose the exact output schema during implementation planning. It must distinguish a selection, no suitable match, and a clarification question. Record concise reasons, not a request for private reasoning. Do not treat self-reported model confidence as acceptance evidence.
-
-After schema validation, application code checks ID membership, duplicates, allowed selection size, status consistency, and current candidate-set binding. Invalid model output is a resolution failure, not permission to drop the preference.
-
-## Terminal Experiment and Evaluation
-
-Show the operator query, collection completeness, unique candidate count, context supplied to the model, instruction version, selected keyword names/IDs, and concise outcome explanation. Distinguish transport failures, invalid output, no match, and clarification.
-
-Support repeated selection against the same finalized set without refetching it unnecessarily. Keep operational logs free of real conversations and credentials. Persist only agreed synthetic fixtures and sanitized evidence.
-
-Compare the same candidate set with and without relevant context. Include ambiguous mood words, misleading lexical matches, no-match cases, invalid IDs, stale responses, and repeated real-model trials. Examples such as `dark future` must not be accepted merely because science-fiction makes them plausible.
-
-Separate deterministic boundary tests from real-model semantic evaluation and adversarial input tests. A passing schema or example is not evidence of prompt-injection resistance or general semantic reliability. Film relevance and the effects of keyword filtering require a later Discover experiment.
-
-## Tasks and Acceptance
-
-All tasks are open. Implementation requires a separately agreed change scope and approval for each repository write.
-
-- [ ] T1: Inspect existing provider transport, schemas, LLM module, terminal client, and session handling. Record verified API behavior and propose a concrete file/test scope.
-- [ ] T2: Define Zod contracts and deterministic tests for valid, empty, malformed, and inconsistent inputs/responses.
-- [ ] T3: Implement complete paging and isolated temporary state. Test deduplication, failures, metadata changes, reset/expiry, and stale-response rejection.
-- [ ] T4: Add independent versioned instructions and keyword selection through suitable shared model transport. Test output validation and candidate membership without changing title-search behavior.
-- [ ] T5: Add explicit terminal experiment actions and diagnostics. Confirm that no film search or confirmed-criteria mutation occurs.
-- [ ] T6: Run synthetic contextual comparisons, repeated real-model trials, and agreed adversarial cases. Record outcomes and limitations, including model/provider and instruction version.
-- [ ] T7: Review evidence and decide whether to stop, revise, or commission query generation and/or a Discover comparison separately.
-
-## Evidence and Open Decisions
-
-No implementation checks or real-model trials have been completed for this concept.
-
-A user-supplied `dark` response contained page 1 with 20 candidates, `total_pages: 7`, and `total_results: 129`, including `dark` with ID `259094`. This is an illustrative user-provided response, not a current independent API audit or proof of keyword suitability. Do not hard-code its counts or ordering.
-
-Decide during T1: exact terminal/HTTP contract, temporary-state ownership and lifecycle, output schema and selection size, handling of changing pagination metadata, model-input feasibility, and evidence format.
-
-Decide only after evaluation: automatic query generation, multiple keyword combination semantics, user confirmation policy, mood as a hard filter versus ranking preference, and integration into shared search.
-
-## T1 Inspection Record — 25 November 2026
-
-Status: Repository inspection and implementation proposal recorded. T1 remains open. Recording proposals does not approve their implementation or establish live API behavior.
-
-### Inspected Basis and Findings
-
-The assistant read the relevant files on `feat/keyword-resolution`; the inspection followed the concept commit `c1134438cc22e4e2a4186806e8d3e50ca084c78e`. This is a targeted code review, not an exhaustive repository audit or execution-based verification.
-
-| Area | Observed code | Consequence |
-| --- | --- | --- |
-| Provider transport | `server/services/tmdb/http.ts` exposes `get(path, query)`, fixes the TMDb destination, adds Bearer authentication, uses a 10-second timeout, and disables automatic retries. | Reuse this transport rather than build another authenticated client. Redirect rejection remains the request adapter's responsibility; the search handler sets `redirect: 'error'`. |
-| Provider errors | The HTTP client catches request failures and replaces them with `UPSTREAM_FAILED`. `server/services/tmdb/errors.ts` provides sanitized application errors. | A caller cannot currently distinguish a 429 response or obtain `Retry-After`. Targeted retry handling needs sanitized transport metadata, not raw error/header propagation. |
-| Schemas | Separate title, detail, trending, runtime, and search contracts exist under `src/lib/schemas`; no keyword-specific schema was present in the inspected directory. | Add a dedicated provider contract rather than reuse a title response schema. |
-| Model boundary | `server/services/search/llm.ts` separates `generateLlmText()` from `parseSearchProposal()`. The latter validates the existing title/media/year proposal contract. | Reuse text generation; do not use or expand the title proposal parser for this isolated experiment. |
-| Model transport limits | `generateLlmText()` sets `maxOutputTokens: 256` and `maxRetries: 0`; the inspected SDK call does not set an explicit timeout. | Agree output and runtime limits for keyword selection while preserving existing title defaults. Input feasibility for the configured model is not demonstrated. |
-| Terminal | `scripts/search.mjs` calls `/api/search`, forwards its session cookie, validates displayed response fields, and imports no server modules. | Preserve the server-side credential boundary and keep experiment commands separate from title search. |
-| Session | `server/utils/search-session.ts` combines storage with `SearchState`: process-local Map, 30-minute inactivity lifetime, capacity 1,000, and cookie path `/api/search`. | Do not append experimental candidates to confirmed search state or assume this cookie reaches a separate experiment route. |
-
-The review also covered `server/api/search/index.post.ts`, `server/utils/tmdb.ts`, representative provider schemas, `tests/unit/services/llm.spec.ts`, `tests/unit/services/tmdb-layers.spec.ts`, and the shared architecture, typing, testing, and development rules. Existing LLM tests inject generation and protect proposal validation/input separation; they do not prove behavior of the live model transport.
-
-### API Evidence and Remaining Verification
-
-The T1 discussion recorded the following documentation-based contract for `GET /3/search/keyword`: required string `query`, integer `page` defaulting to 1, and a response containing `page`, `results`, `total_pages`, and `total_results`, with candidate `id` and `name` fields. Language, genre, media type, and release year were not identified as endpoint parameters; they belong to selection context, not invented provider query parameters.
-
-Documentation references for verification:
-- [Keyword reference](https://developer.themoviedb.org/reference/search-keyword)
-- [Official OpenAPI specification](https://developer.themoviedb.org/openapi/tmdb-api.json)
-- [Rate limiting](https://developer.themoviedb.org/docs/rate-limiting)
-- [Errors](https://developer.themoviedb.org/docs/errors)
-
-Evidence limitation: the keyword reference did not expose a usable response contract through page extraction, and its markdown fetch failed. The earlier OpenAPI search result was truncated; no complete endpoint excerpt or independent live request was captured during this inspection. Treat the summarized contract as a verification target, not a completed API audit. Capture a readable official endpoint definition and/or sanitized synthetic live response before finalizing the provider schema.
-
-The general TMDb error documentation reports page values from 1 to 500 and rate-limit failures with HTTP 429. Endpoint-specific behavior at that page boundary remains unverified. A provider-imposed limit is not an arbitrary application page cap: if the reported range cannot be collected, fail visibly rather than label a truncated set complete. Rate-limit guidance requires respecting 429 responses; no fixed request-rate allowance is assumed.
-
-No assistant-run live TMDb request, real-model trial, project test, lint, typecheck, coverage run, or runtime concurrency check was performed for T1. The previously supplied `dark` response retains its user-provided evidence status.
-
-### Proposed Transport and Lifecycle — Not Yet Approved
-
-Use a separate HTTP terminal experiment, justified by keeping Nuxt runtime configuration and credentials on the server:
-
-```text
-scripts/keyword-resolution.mjs
-  -> POST /api/experiments/keyword-resolution
-     -> isolated experiment session
-        -> TMDb keyword collection
-        -> keyword selection through shared model transport
-```
-
-Proposed actions:
-- `collect`: accept an operator-selected query, immediately invalidate previous candidate bindings, and collect the first response's expected page range.
-- `select`: accept `candidateSetId`, the complete user request, the preference being resolved, and explicitly identified context; select only from that session's finalized complete set. Repeated contextual comparisons need not refetch candidates.
-- `reset`: discard experiment state and invalidate outstanding operations.
-
-Propose a dedicated cookie scoped to the experiment route and a small process-local session implementation, initially with a 30-minute inactivity lifetime. Keep title sessions untouched; do not introduce a general session framework. Capacity, memory limits, cleanup details, request-size limits, and overall operation budgets still need explicit values before implementation. Check session and candidate identity again after asynchronous calls so superseded results cannot become current.
-
-For the first experiment, propose sequential page requests and strict consistency handling: check requested page numbers; reject changing total metadata as an incomplete collection; deduplicate identical ID/name pairs; report conflicting names for the same ID rather than silently choose one. Retain collection diagnostics without restoring a previous successful set as an implicit fallback.
-
-Propose at most two additional attempts per page for HTTP 429, honoring a valid `Retry-After` or using bounded backoff. If the required wait exceeds the agreed operation budget, stop visibly as incomplete. Other technical failures may fail immediately for the initial experiment. Exact wait bounds and the operation budget remain open. Do not automatically retry entire collect or select actions.
-
-### Proposed Selection Contract — Not Yet Approved
-
-Use three exclusive model-output variants:
+The model proposes only candidate IDs supplied for the current invocation and may report no match or clarification. Proposed exclusive output variants, not yet approved:
 
 ```ts
 { status: 'selected', keywordIds: number[], reason: string }
@@ -184,32 +91,103 @@ Use three exclusive model-output variants:
 { status: 'needs_clarification', question: string }
 ```
 
-Propose one to three unique candidate IDs for `selected`, with no IDs on the other variants and bounded explanation/question text. Application code resolves display names from validated candidates and checks membership and current candidate-set binding. Multiple selected IDs are suggestions for evaluation, not approved AND/OR Discover semantics. A clarification is display-only in this scope; no general pending-question framework is implied.
+Proposed selection size: one to three unique IDs. Agree exact bounds and strict status consistency; application code checks membership, duplicates, and current-set binding after structural validation. Resolve display names from validated candidates, not model text. Invalid output is a failure, not permission to drop the preference. Self-reported confidence is not acceptance evidence. Request concise explanations, not private reasoning.
 
-Keep fixed keyword instructions separate from all supplied context and candidate names. Pass the full candidate list or report input-size/model-capacity limitations; never silently truncate. Final string bounds, input-size policy, output-token allowance, timeout, and evidence format remain to be agreed and tested with the actual configured model.
+Multiple IDs do not define AND/OR filter semantics. A clarification in Phase A is display-only; it does not create a general pending flow. Later interactive clarification must use shared flow bindings rather than bypass them.
 
-### Proposed File Scope for T2–T5 — Not Implementation Approval
+Supply the complete candidate list or report input/model-capacity limitations. Never silently truncate. Agree input limits, output allowance, timeout, and evidence format. No model-capacity or semantic-reliability claim is established yet.
 
-| New file | Responsibility |
+### Terminal and Evaluation
+
+Display the query, completeness, candidate count, context supplied, instruction version, selected names/IDs, and outcome. Distinguish transport failures, invalid output, incomplete collection, no match, and clarification. Keep operational logs free of conversations, raw errors, cookies, and secrets; persist only agreed synthetic/sanitized evidence.
+
+Compare the same complete set with and without relevant context. Include misleading lexical matches, ambiguous preferences, no-match cases, invalid IDs, stale responses, and repeated real-model trials. `dark future`, `dark comedy`, or `dark fantasy` must not be accepted merely from lexical overlap or science-fiction context.
+
+Separate deterministic application-boundary tests, real-model semantic trials, and adversarial model tests. Success in one does not establish success in the others or production readiness.
+
+## Phase B — Conditional Search-Utility Investigation
+
+This follow-up requires separate scope and execution approval after Phase A review. It is necessary evidence for the product goal, not part of the currently approved terminal-only experiment.
+
+Verify appropriate Discover endpoint parameters and compare an agreed baseline, such as science-fiction films, against the same request with selected keyword constraints. Hold other options constant and record exact sanitized requests, date meaning, keyword combination semantics, HTTP status, result metadata, and representative films.
+
+Define relevance assessment before running the comparison. Evaluate whether the requested atmosphere is represented and whether keywords introduce unwanted genre/setting restrictions or remove relevant films. Counts alone do not measure quality. A plausible keyword selection does not establish a useful filter. Decide whether the preference can be a hard filter, requires another agreed treatment, or cannot be supported faithfully; never silently ignore it or broaden the request.
+
+## Phase C — Conditional Shared-Search Integration
+
+Only commission integration if evidence justifies it. Extend shared interpretation/criteria, resolver contracts, matrix, flow, and adapters as a concrete vertical slice; do not turn the experiment route into a second permanent search system.
+
+The integration design must address:
+- One shared intent/criteria state, distinguishing requested preferences, resolution status, and accepted IDs without a second search object owned by the resolver.
+- Verified endpoint coverage of all requested criteria and media scope, including optional year meaning and unsupported combinations.
+- Appropriate clarification/rejection instead of unchecked reuse of the current media-type fallback.
+- Current request/revision/question bindings, stale-result rejection, and execution reservation in the shared flow.
+- Unambiguous propagation of the evaluated path to the matching adapter; the architecture currently documents this as an open boundary.
+- Criterion preservation and atomicity/partial-acceptance decisions where changes are coupled; do not assume general partial acceptance is already implemented.
+- Regression tests protecting existing title behavior and the absence of search execution while required resolution or clarification remains open.
+- Removal, retention, or explicit isolation of experiment-only infrastructure after integration.
+
+## Tasks and Acceptance
+
+All tasks are open. T1 has inspection evidence but is not complete. Existing identifiers T1–T7 are retained and refined; T8–T9 describe conditional follow-up, not authorization. Agree scope before implementation and obtain approval for each repository write.
+
+- [ ] T1 — Complete evidence and choose the minimal experiment. Preserve the inspection findings below; resolve or explicitly defer the keyword contract evidence gap. Record current matrix limits and the resolver/matrix/flow boundaries. Choose the smallest justified harness, operational limits, output contract, and concrete file/test scope. Do not assume an endpoint or cookie store is mandatory. Acceptance: evidence/proposals/decisions are distinguished, no implementation status is overstated, and Phase A scope is agreed.
+- [ ] T2 — Define Phase A boundary contracts. Add only needed Zod contracts and derived types. Test meaningful valid/empty/malformed/inconsistent cases at consuming boundaries, not Zod primitives. Acceptance: keyword proposals cannot become criteria acceptance, endpoint selection, or execution permission.
+- [ ] T3 — Implement verified paging and temporary state in the chosen harness. Acceptance: all expected pages or visible incompleteness, deterministic deduplication/conflict behavior, bounded retry/resource outcomes, cleanup/reset/expiry where applicable, and stale-result rejection. No silent reuse or truncation.
+- [ ] T4 — Implement bounded keyword selection with independent instructions and shared generation transport. Acceptance: full request/context/candidates, validated IDs and status consistency, distinct failures/no-match/clarification, no title-parser changes or model-driven execution. Add shared-boundary regression coverage where transport changes are necessary.
+- [ ] T5 — Expose explicit terminal actions and diagnostics using only justified infrastructure. Acceptance: repeated comparisons can reuse current candidates; no film-result call or confirmed-criteria mutation; selected HTTP boundaries, if any, have ownership/validation/no-store tests.
+- [ ] T6 — Evaluate resolution quality and controlled boundaries. Record synthetic contextual comparisons, repeated actual-model trials, and separately scoped adversarial attempts with observed outcomes, model/provider, instruction version, and code reference. Acceptance: no conflation of structural validity, semantic quality, and security evidence.
+- [ ] T7 — Review Phase A and gate follow-up. Acceptance: explicitly stop, revise, or propose T8; record semantic failures, harness cost, and remaining limitations. Resolution success alone is not acceptance of the product goal. Automatic query generation is separately commissioned if needed.
+- [ ] T8 — Conditionally verify result-search applicability and utility. Requires separate approval. Record endpoint-by-endpoint capability evidence and run the agreed Phase B comparison, including complete criterion combinations and representative film relevance. Acceptance: supported/unsupported cases, combination semantics, and hard-filter limitations are explicit; no shared-search integration is implied.
+- [ ] T9 — Conditionally design and implement the shared vertical slice. Requires separate approval and adequate T8 evidence. Acceptance: shared criteria/interpretation, resolver, matrix blockers, flow bindings/reservation, adapter mapping, and targeted regressions work together; title-only requirements do not block valid non-title paths, and no requested criterion is silently dropped. Address documented architecture boundaries and experiment cleanup; no second parser/router/session architecture by default.
+
+## T1 Inspection and Evidence Record — 25 November 2026
+
+The assistant performed targeted read-only inspection on `feat/keyword-resolution` after concept commit `c1134438cc22e4e2a4186806e8d3e50ca084c78e`; findings were recorded in `7faacb3`. This is not an exhaustive repository audit or runtime verification. The subsequent architecture/matrix review refines the proposals above; it does not complete T1.
+
+| Inspected area | Observed behavior and implication |
 | --- | --- |
-| `src/lib/schemas/tmdb-keyword.ts` | Provider query/page and response contracts with derived types |
-| `src/lib/schemas/keyword-resolution.ts` | Experiment HTTP and model input/output contracts |
-| `src/lib/parser/keyword-selection-instructions.ts` | Independent versioned keyword instructions |
-| `server/services/tmdb/keyword-search.ts` | Page collection, validation, consistency, and deduplication |
-| `server/services/search/keyword-resolution.ts` | Selection context, model call, and candidate membership checks |
-| `server/utils/keyword-experiment-session.ts` | Isolated ownership/lifetime and stale-result protection |
-| `server/api/experiments/keyword-resolution.post.ts` | Thin HTTP/configuration/error boundary |
-| `scripts/keyword-resolution.mjs` | Explicit terminal actions and presentation |
+| `server/services/tmdb/http.ts` | Fixed TMDb destination, Bearer authentication, `get(path, query)`, 10-second timeout, automatic retries disabled. Reuse transport. Redirect rejection is the adapter's duty; the search handler sets `redirect: 'error'`. |
+| Provider errors | Transport replaces failures with `UPSTREAM_FAILED`; current caller cannot distinguish 429 or obtain Retry-After. Targeted retries require sanitized metadata, not raw headers/errors. `server/services/tmdb/errors.ts` owns safe error mapping. |
+| Provider schemas | Separate title/detail/trending/runtime/search contracts exist; no keyword-specific schema was present in the inspected directory. Add a verified contract, not a reused title payload. |
+| `server/services/search/llm.ts` | `generateLlmText()` is separate from title-specific `parseSearchProposal()`. Generation uses 256 output tokens, zero retries, and no explicit timeout in the inspected SDK call. Preserve title defaults when introducing necessary keyword limits. |
+| `scripts/search.mjs` | HTTP client for `/api/search`, explicit session-cookie forwarding, response validation, no server imports. Keep credentials server-side and avoid adding a second rule matrix in presentation. |
+| `server/utils/search-session.ts` | SearchState-coupled process-local Map, 30-minute inactivity lifetime, capacity 1,000, cookie path `/api/search`. Not a generic experiment store; isolation alone does not justify duplicating it. |
+| `server/services/search/matrix.ts` | Only title paths `multi`, `movie`, `tv`; title required for each, exact media scope, optional-year support. Keyword/genre/Discover coverage and non-title path rules are not implemented. |
 
-Potential existing-file changes are limited to `server/services/tmdb/http.ts` and `errors.ts` for sanitized retry metadata, `server/services/search/llm.ts` for necessary generation limits while preserving title defaults, and this concept for evidence. Inspect and update the relevant regression tests with each shared-boundary change.
+Also inspected: `server/api/search/index.post.ts`, `server/utils/tmdb.ts`, representative provider schemas, `tests/unit/services/llm.spec.ts`, `tests/unit/services/tmdb-layers.spec.ts`, and the architecture/development/typing/testing documents. Existing proposal tests inject generation; they do not prove live model transport behavior.
 
-Keep `src/lib/parser/instructions.ts`, existing title-search contracts, matrix, flow, `server/utils/search-session.ts`, and `scripts/search.mjs` unchanged. Do not add Discover execution, UI, automatic query generation, or automatic confirmed-criteria mutation.
+### Provider Evidence Limits
 
-### Proposed Test Scope and T1 Exit Conditions
+Verification target: `GET /3/search/keyword`, text query and pagination, response fields `page`, `results`, `total_pages`, `total_results`, and candidate `id`/`name`. Contextual genre/media/year are not established keyword-endpoint parameters. The earlier reference extraction did not expose a usable contract, markdown fetch failed, and the OpenAPI search excerpt was truncated. No complete endpoint excerpt or independent live request was captured in T1; obtain adequate evidence before finalizing schemas.
 
-- `tests/unit/services/keyword-search.spec.ts`: expected page range, requested/returned page mismatch, empty results, invalid/changing metadata, duplicate/conflicting candidates, partial failures, and bounded retry outcomes with injected transport/time dependencies.
-- `tests/unit/services/keyword-resolution.spec.ts`: context/instruction separation, full supplied candidates, invalid JSON, foreign/duplicate IDs, selection/status consistency, and input preservation using controlled model output.
-- `tests/integration/keyword-resolution/keyword-http.spec.ts`: real isolated H3 HTTP with controlled outbound boundaries; independent clients, lifecycle, reset/expiry, stale asynchronous responses, complete-set gating, sanitized errors, and no-store. This is not a live Nuxt or browser test.
-- Extend existing transport/LLM boundary tests where shared behavior changes; retain the title regression suite. Reuse fixtures/mocks only where there is concrete overlap. Do not duplicate a full schema matrix at every level.
+Official references: [Keyword](https://developer.themoviedb.org/reference/search-keyword), [OpenAPI](https://developer.themoviedb.org/openapi/tmdb-api.json), [rate limiting](https://developer.themoviedb.org/docs/rate-limiting), [errors](https://developer.themoviedb.org/docs/errors), [Discover Movie](https://developer.themoviedb.org/reference/discover-movie), and [Discover TV](https://developer.themoviedb.org/reference/discover-tv). General documentation reports HTTP 429 and page values up to 500; keyword-specific boundary behavior remains unverified. No fixed request-rate allowance is assumed.
 
-T1 remains unchecked until the API evidence gap is resolved or explicitly accepted as a documented deferral, the experiment contracts and operational bounds are agreed, and the implementation/test scope is approved. This documentation change records findings and proposals only. It neither executes T2–T5 nor grants approval for later repository writes.
+The user-supplied `dark` first page contained 20 entries and reported seven pages/129 results, including `dark` ID `259094`. HTTP status, exact original request options, remaining pages, current counts, and suitability are not independently established. See the linked example instead of treating this as a complete fixture or hard-coding its counts.
+
+No assistant-run live TMDb request, real-model trial, project test, lint, typecheck, coverage run, or runtime concurrency check has been completed for this concept. No production or security approval is implied.
+
+### Provisional Phase A File and Test Scope
+
+These are candidate locations, not mandatory files or approved writes. Finalize after the T1 harness decision; omit unnecessary modules.
+
+| Candidate location | Purpose |
+| --- | --- |
+| `src/lib/schemas/tmdb-keyword.ts` | Verified provider input/response contracts |
+| `src/lib/schemas/keyword-resolution.ts` | Necessary selection and, only if selected, HTTP contracts |
+| `src/lib/parser/keyword-selection-instructions.ts` | Independent resolver instructions/version |
+| `server/services/tmdb/keyword-search.ts` | Collection, validation, consistency, deduplication |
+| `server/services/search/keyword-resolution.ts` | Bounded selection, context, and membership validation |
+| `server/utils/keyword-experiment-session.ts` | Only if justified by the chosen harness |
+| `server/api/experiments/keyword-resolution.post.ts` | Only if HTTP transport is selected |
+| `scripts/keyword-resolution.mjs` | Terminal experiment entry, exact transport to be agreed |
+
+Potential shared changes: sanitized retry metadata in TMDb transport/errors and necessary generation limits in the LLM module, with focused regressions and preserved title defaults. Phase A leaves existing title instructions/contracts/matrix/flow/session/client unchanged. Phase C will need its own agreed file scope; this temporary preservation rule is not a permanent prohibition on shared integration.
+
+Proposed tests:
+- `tests/unit/services/keyword-search.spec.ts`: page identity/range, empty and invalid responses, metadata changes, duplicate/conflicting IDs, partial failures, and bounded retries using injected transport/time dependencies.
+- `tests/unit/services/keyword-resolution.spec.ts`: fixed-instruction/data separation, complete candidates, invalid JSON/IDs/status, and input preservation using controlled model output.
+- If HTTP is chosen, `tests/integration/keyword-resolution/keyword-http.spec.ts`: real isolated H3 HTTP with controlled outbound boundaries, ownership, lifecycle, stale results, complete-set gating, safe errors, and no-store. Not a live Nuxt or browser test.
+- Extend existing shared transport/LLM tests for changed guarantees. Do not duplicate entire schema matrices or invent generic infrastructure. Add concrete matrix/flow/adapter regressions only with the approved integration slice.
+
+T1 exit: adequate API evidence or explicitly accepted deferral, agreed minimal harness/contracts/operational bounds, and approved Phase A implementation/test scope. All later phases retain their separate gates.
