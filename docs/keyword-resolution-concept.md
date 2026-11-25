@@ -114,3 +114,102 @@ A user-supplied `dark` response contained page 1 with 20 candidates, `total_page
 Decide during T1: exact terminal/HTTP contract, temporary-state ownership and lifecycle, output schema and selection size, handling of changing pagination metadata, model-input feasibility, and evidence format.
 
 Decide only after evaluation: automatic query generation, multiple keyword combination semantics, user confirmation policy, mood as a hard filter versus ranking preference, and integration into shared search.
+
+## T1 Inspection Record — 25 November 2026
+
+Status: Repository inspection and implementation proposal recorded. T1 remains open. Recording proposals does not approve their implementation or establish live API behavior.
+
+### Inspected Basis and Findings
+
+The assistant read the relevant files on `feat/keyword-resolution`; the inspection followed the concept commit `c1134438cc22e4e2a4186806e8d3e50ca084c78e`. This is a targeted code review, not an exhaustive repository audit or execution-based verification.
+
+| Area | Observed code | Consequence |
+| --- | --- | --- |
+| Provider transport | `server/services/tmdb/http.ts` exposes `get(path, query)`, fixes the TMDb destination, adds Bearer authentication, uses a 10-second timeout, and disables automatic retries. | Reuse this transport rather than build another authenticated client. Redirect rejection remains the request adapter's responsibility; the search handler sets `redirect: 'error'`. |
+| Provider errors | The HTTP client catches request failures and replaces them with `UPSTREAM_FAILED`. `server/services/tmdb/errors.ts` provides sanitized application errors. | A caller cannot currently distinguish a 429 response or obtain `Retry-After`. Targeted retry handling needs sanitized transport metadata, not raw error/header propagation. |
+| Schemas | Separate title, detail, trending, runtime, and search contracts exist under `src/lib/schemas`; no keyword-specific schema was present in the inspected directory. | Add a dedicated provider contract rather than reuse a title response schema. |
+| Model boundary | `server/services/search/llm.ts` separates `generateLlmText()` from `parseSearchProposal()`. The latter validates the existing title/media/year proposal contract. | Reuse text generation; do not use or expand the title proposal parser for this isolated experiment. |
+| Model transport limits | `generateLlmText()` sets `maxOutputTokens: 256` and `maxRetries: 0`; the inspected SDK call does not set an explicit timeout. | Agree output and runtime limits for keyword selection while preserving existing title defaults. Input feasibility for the configured model is not demonstrated. |
+| Terminal | `scripts/search.mjs` calls `/api/search`, forwards its session cookie, validates displayed response fields, and imports no server modules. | Preserve the server-side credential boundary and keep experiment commands separate from title search. |
+| Session | `server/utils/search-session.ts` combines storage with `SearchState`: process-local Map, 30-minute inactivity lifetime, capacity 1,000, and cookie path `/api/search`. | Do not append experimental candidates to confirmed search state or assume this cookie reaches a separate experiment route. |
+
+The review also covered `server/api/search/index.post.ts`, `server/utils/tmdb.ts`, representative provider schemas, `tests/unit/services/llm.spec.ts`, `tests/unit/services/tmdb-layers.spec.ts`, and the shared architecture, typing, testing, and development rules. Existing LLM tests inject generation and protect proposal validation/input separation; they do not prove behavior of the live model transport.
+
+### API Evidence and Remaining Verification
+
+The T1 discussion recorded the following documentation-based contract for `GET /3/search/keyword`: required string `query`, integer `page` defaulting to 1, and a response containing `page`, `results`, `total_pages`, and `total_results`, with candidate `id` and `name` fields. Language, genre, media type, and release year were not identified as endpoint parameters; they belong to selection context, not invented provider query parameters.
+
+Documentation references for verification:
+- [Keyword reference](https://developer.themoviedb.org/reference/search-keyword)
+- [Official OpenAPI specification](https://developer.themoviedb.org/openapi/tmdb-api.json)
+- [Rate limiting](https://developer.themoviedb.org/docs/rate-limiting)
+- [Errors](https://developer.themoviedb.org/docs/errors)
+
+Evidence limitation: the keyword reference did not expose a usable response contract through page extraction, and its markdown fetch failed. The earlier OpenAPI search result was truncated; no complete endpoint excerpt or independent live request was captured during this inspection. Treat the summarized contract as a verification target, not a completed API audit. Capture a readable official endpoint definition and/or sanitized synthetic live response before finalizing the provider schema.
+
+The general TMDb error documentation reports page values from 1 to 500 and rate-limit failures with HTTP 429. Endpoint-specific behavior at that page boundary remains unverified. A provider-imposed limit is not an arbitrary application page cap: if the reported range cannot be collected, fail visibly rather than label a truncated set complete. Rate-limit guidance requires respecting 429 responses; no fixed request-rate allowance is assumed.
+
+No assistant-run live TMDb request, real-model trial, project test, lint, typecheck, coverage run, or runtime concurrency check was performed for T1. The previously supplied `dark` response retains its user-provided evidence status.
+
+### Proposed Transport and Lifecycle — Not Yet Approved
+
+Use a separate HTTP terminal experiment, justified by keeping Nuxt runtime configuration and credentials on the server:
+
+```text
+scripts/keyword-resolution.mjs
+  -> POST /api/experiments/keyword-resolution
+     -> isolated experiment session
+        -> TMDb keyword collection
+        -> keyword selection through shared model transport
+```
+
+Proposed actions:
+- `collect`: accept an operator-selected query, immediately invalidate previous candidate bindings, and collect the first response's expected page range.
+- `select`: accept `candidateSetId`, the complete user request, the preference being resolved, and explicitly identified context; select only from that session's finalized complete set. Repeated contextual comparisons need not refetch candidates.
+- `reset`: discard experiment state and invalidate outstanding operations.
+
+Propose a dedicated cookie scoped to the experiment route and a small process-local session implementation, initially with a 30-minute inactivity lifetime. Keep title sessions untouched; do not introduce a general session framework. Capacity, memory limits, cleanup details, request-size limits, and overall operation budgets still need explicit values before implementation. Check session and candidate identity again after asynchronous calls so superseded results cannot become current.
+
+For the first experiment, propose sequential page requests and strict consistency handling: check requested page numbers; reject changing total metadata as an incomplete collection; deduplicate identical ID/name pairs; report conflicting names for the same ID rather than silently choose one. Retain collection diagnostics without restoring a previous successful set as an implicit fallback.
+
+Propose at most two additional attempts per page for HTTP 429, honoring a valid `Retry-After` or using bounded backoff. If the required wait exceeds the agreed operation budget, stop visibly as incomplete. Other technical failures may fail immediately for the initial experiment. Exact wait bounds and the operation budget remain open. Do not automatically retry entire collect or select actions.
+
+### Proposed Selection Contract — Not Yet Approved
+
+Use three exclusive model-output variants:
+
+```ts
+{ status: 'selected', keywordIds: number[], reason: string }
+{ status: 'no_match', reason: string }
+{ status: 'needs_clarification', question: string }
+```
+
+Propose one to three unique candidate IDs for `selected`, with no IDs on the other variants and bounded explanation/question text. Application code resolves display names from validated candidates and checks membership and current candidate-set binding. Multiple selected IDs are suggestions for evaluation, not approved AND/OR Discover semantics. A clarification is display-only in this scope; no general pending-question framework is implied.
+
+Keep fixed keyword instructions separate from all supplied context and candidate names. Pass the full candidate list or report input-size/model-capacity limitations; never silently truncate. Final string bounds, input-size policy, output-token allowance, timeout, and evidence format remain to be agreed and tested with the actual configured model.
+
+### Proposed File Scope for T2–T5 — Not Implementation Approval
+
+| New file | Responsibility |
+| --- | --- |
+| `src/lib/schemas/tmdb-keyword.ts` | Provider query/page and response contracts with derived types |
+| `src/lib/schemas/keyword-resolution.ts` | Experiment HTTP and model input/output contracts |
+| `src/lib/parser/keyword-selection-instructions.ts` | Independent versioned keyword instructions |
+| `server/services/tmdb/keyword-search.ts` | Page collection, validation, consistency, and deduplication |
+| `server/services/search/keyword-resolution.ts` | Selection context, model call, and candidate membership checks |
+| `server/utils/keyword-experiment-session.ts` | Isolated ownership/lifetime and stale-result protection |
+| `server/api/experiments/keyword-resolution.post.ts` | Thin HTTP/configuration/error boundary |
+| `scripts/keyword-resolution.mjs` | Explicit terminal actions and presentation |
+
+Potential existing-file changes are limited to `server/services/tmdb/http.ts` and `errors.ts` for sanitized retry metadata, `server/services/search/llm.ts` for necessary generation limits while preserving title defaults, and this concept for evidence. Inspect and update the relevant regression tests with each shared-boundary change.
+
+Keep `src/lib/parser/instructions.ts`, existing title-search contracts, matrix, flow, `server/utils/search-session.ts`, and `scripts/search.mjs` unchanged. Do not add Discover execution, UI, automatic query generation, or automatic confirmed-criteria mutation.
+
+### Proposed Test Scope and T1 Exit Conditions
+
+- `tests/unit/services/keyword-search.spec.ts`: expected page range, requested/returned page mismatch, empty results, invalid/changing metadata, duplicate/conflicting candidates, partial failures, and bounded retry outcomes with injected transport/time dependencies.
+- `tests/unit/services/keyword-resolution.spec.ts`: context/instruction separation, full supplied candidates, invalid JSON, foreign/duplicate IDs, selection/status consistency, and input preservation using controlled model output.
+- `tests/integration/keyword-resolution/keyword-http.spec.ts`: real isolated H3 HTTP with controlled outbound boundaries; independent clients, lifecycle, reset/expiry, stale asynchronous responses, complete-set gating, sanitized errors, and no-store. This is not a live Nuxt or browser test.
+- Extend existing transport/LLM boundary tests where shared behavior changes; retain the title regression suite. Reuse fixtures/mocks only where there is concrete overlap. Do not duplicate a full schema matrix at every level.
+
+T1 remains unchecked until the API evidence gap is resolved or explicitly accepted as a documented deferral, the experiment contracts and operational bounds are agreed, and the implementation/test scope is approved. This documentation change records findings and proposals only. It neither executes T2–T5 nor grants approval for later repository writes.
