@@ -1,6 +1,6 @@
 # Übersetzbare Anwendungstexte
 
-Stand: 21. November 2026. Verbindliches Architekturziel, noch keine implementierte Mehrsprachigkeitsinfrastruktur. [Konzept](../sucharchitektur-konzept.md), [Zielstruktur](../tasks/search-architecture/zielstruktur.md), [Wizard](clarificaton-wizzard-flow.md).
+Stand: 21. November 2026. Verbindliches Architekturziel, noch keine implementierte Mehrsprachigkeitsinfrastruktur. [Konzept](../search-architecture-concept.md), [Wizard](clarificaton-wizzard-flow.md).
 
 ## Jetzt: eine zentrale Datei
 

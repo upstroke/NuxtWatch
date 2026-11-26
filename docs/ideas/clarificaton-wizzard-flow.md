@@ -1,31 +1,31 @@
-# Klärungs-Wizard – Terminal und spätere Web-UI
+# Clarification Wizard – Terminal and Future Web UI
 
-Stand: 21. November 2026. Aktualisierte Referenz für NuxtWatch; gemeinsames Verhalten nach [Konzept](../sucharchitektur-konzept.md), Umsetzung nach [Arbeitsstand](../tasks/search-architecture/README.md). Kein vollständiger Implementierungsnachweis. Der bestehende Dateiname bleibt bis zu einer gesonderten Umbenennung erhalten.
+As of 21 November 2026. Updated reference for NuxtWatch; shared behavior follows the [concept](../search-architecture-concept.md). This is not comprehensive evidence of implementation. The existing filename is retained until a separate rename.
 
-## Gemeinsamer Ablauf
+## Shared Flow
 
-- Ohne Klärungsbedarf darf ein ausdrücklicher Submit direkt suchen; keine vorgeschaltete Bestätigung allein wegen mehrerer erwarteter Treffer.
-- Bei Klärungsbedarf zeigt die Oberfläche die gebundene Frage und bestätigte Kriterien. Angeboten werden nur serverseitig zulässige Optionen; eine allgemeine LLM-Frage hat zunächst nur Freitext, keine aus ihrem Wortlaut abgeleiteten Optionen.
-- Auswahl wird ohne LLM gegen die konkrete Frage geprüft. Freitext bei offener Frage ist eine gebundene Antwort und wird mit ursprünglichem Suchwunsch, bestätigten Kriterien und Frageverlauf interpretiert.
-- Nach Übernahme werden bestätigte Kriterien und nächste notwendige Frage beziehungsweise Ausführbarkeit angezeigt. Keine Treffersuche allein durch Antworten oder Anzeigen einer Übersicht.
-- Erst ausdrückliches Execute startet nach Klärung die Suche mit dem gebundenen Serverstand. Clientseitige Ersatzkriterien umgehen die Bindung nicht.
-- Ein ausdrücklich neuer Submit oder Reset bleibt möglich und löst den bisherigen Auftrag ab. Eine offene Pflichtfrage darf weder übersprungen noch mit ungeklärten Kriterien ausgeführt werden; sie sperrt den Nutzer aber nicht in einem unkündbaren Dialog ein.
-- Ist kein Weg ausführbar und keine sinnvolle Rückfrage möglich, Grund erklären und Präzisierung/neuen Auftrag ermöglichen. Unabhängige Teilbestätigung ist Ziel, noch nicht vollständig umgesetzt.
+- When no clarification is needed, an explicit submit may search directly; do not require prior confirmation merely because multiple results are expected.
+- When clarification is needed, the interface displays the bound question and confirmed criteria. Offer only options permitted by the server; a general LLM question initially supports free text only, with no options inferred from its wording.
+- Validate a selection against the specific question without using the LLM. Free text entered while a question is open is a bound answer and is interpreted together with the original search request, confirmed criteria, and question history.
+- After applying an answer, display the confirmed criteria and the next required question or execution readiness. Answering a question or displaying a summary must not itself trigger a result search.
+- Only an explicit execute starts the search after clarification, using the bound server state. Client-side replacement criteria do not bypass the binding.
+- An explicitly new submit or reset remains possible and supersedes the previous request. A required open question must neither be skipped nor allow execution with unresolved criteria; however, it must not lock the user into a dialog they cannot leave.
+- If no path is executable and no useful clarification question is possible, explain the reason and allow the user to refine the request or start a new one. Independent partial confirmation is a goal, not yet fully implemented.
 
-## Terminal zuerst, bedarfsgerecht
+## Terminal First, Extended as Needed
 
-Das Terminal ist eine alternative Oberfläche derselben HTTP-Aktionen, kein separater Parser-Testpfad. Fragen, Kriterien und einfache Auswahllisten genügen zunächst. `/submit TEXT`, `/reset` und ausdrückliches Execute bleiben unterscheidbar. Nicht den gesamten grafischen Wizard vorab nachbauen; pro Durchstich nur benötigte Interaktion ergänzen.
+The terminal is an alternative interface for the same HTTP actions, not a separate parser-testing path. Questions, criteria, and simple selection lists are sufficient initially. Keep `/submit TEXT`, `/reset`, and explicit execute distinct. Do not recreate the entire graphical wizard in advance; add only the interaction needed for each vertical slice.
 
-Treffer kompakt als Tabelle, Textkarte oder reduziertes Objekt darstellen, beispielsweise Titel, Typ und Jahr. ID plus Medientyp intern zur Identifikation erhalten. Keine vollständigen Providerobjekte in der Normalansicht. Fehler, leere Trefferliste und Treffer unterscheiden; frühere Ergebnisse nicht als Ergebnis einer neuen blockierten Revision ausgeben.
+Present results compactly as a table, text card, or reduced object, for example with title, type, and year. Retain ID plus media type internally for identification. Do not display complete provider objects in the normal view. Distinguish errors, empty result lists, and results; do not present earlier results as the outcome of a new blocked revision.
 
-## Spätere grafische Darstellung
+## Future Graphical Presentation
 
-Overlay mit einer Frage je Seite, eindeutig erkennbarer Auswahl und „Übernehmen“ als Bestätigung. Nach Übernahme kann eine Kriterienübersicht als Pills folgen; geänderte Werte hervorheben. „Weiter“ führt zur nächsten Frage, „Suche starten“ ist nur auf ausführbarem Stand verfügbar. Neuer Auftrag/Reset bleiben explizite Auswege; grafische Abbruchdetails gesondert konkretisieren. Keine widersprüchliche Pflicht, einen ungeklärten Dialog zwingend bis zum Ende zu führen.
+Use an overlay with one question per page, clearly identifiable selection, and “Apply” for confirmation. After applying an answer, a criteria summary may follow as pills; highlight changed values. “Next” leads to the next question, while “Start search” is available only when the state is executable. A new request and reset remain explicit exits; specify graphical cancellation details separately. Do not introduce a contradictory requirement to finish an unresolved dialog at all costs.
 
-Die Web-UI importiert keine Servermatrix. Veraltete Antworten öffnen kein altes Overlay und überschreiben keine Kriterien. Lokalisierbare Texte, Tastaturbedienung und nachvollziehbarer Fokus bleiben Zielanforderungen. Detailseiten benötigen eine explizite Trefferauswahl, auch bei nur einem Treffer.
+The web UI does not import a server matrix. Stale responses must not reopen an old overlay or overwrite criteria. Localizable text, keyboard operation, and predictable focus remain target requirements. Detail pages require an explicit result selection, even when there is only one result.
 
-## Abnahme
+## Acceptance
 
-Direkter Submit ohne unnötige Frage; ein-/mehrstufige gebundene Klärung; Auswahl/Freitext; Korrektur ohne Kriterienverlust; ausdrückliches Execute; Ablösung durch Submit/Reset; veraltete Aktionen abweisen; technische Fehler von leeren Ergebnissen unterscheiden. Grafische Fokus-/Pill-Details erst bei Umsetzung der Web-UI abnehmen.
+Direct submit without unnecessary questions; single- and multi-step bound clarification; selection and free text; correction without losing criteria; explicit execute; supersession through submit or reset; rejection of stale actions; distinction between technical errors and empty results. Assess graphical focus and pill details only when implementing the web UI.
 
-![Historischer grafischer Wizard-Entwurf](../images/clarification-wizzard_dark_desktop.png)
+![Historical graphical wizard design](../images/clarification-wizzard_dark_desktop.png)

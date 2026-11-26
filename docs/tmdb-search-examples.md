@@ -127,3 +127,53 @@ The TV response returned the US series _The Office_ (ID `2316`, first aired `200
 Keep all four movie results and the TV result eligible for display. Exact display-title matching is not an exclusion criterion, and do not filter returned results by `adult`. This example does not decide whether to combine the lists, how to rank results across endpoints, or whether to select a result automatically.
 
 Status: Both API requests verified. Parser and schemas are unchanged.
+
+## 5. Keyword candidates for a dark atmosphere
+
+Added 25 November 2026. Evidence source: a keyword response supplied by the user in the project discussion. This entry is not an assistant-run live API test. The exact original URL, request options, execution time, and HTTP status were not captured in the available evidence.
+
+### User request and lookup purpose
+
+“Scifi-Movie aus 2025 mit dunkler Atmosphäre.” The operator supplies `dark` as the keyword lookup term for the initial experiment; automatic query generation is not implemented. Movie, science-fiction, and 2025 are contextual criteria, not a title and not verified query parameters for the keyword endpoint. Do not invent additional themes or settings from them.
+
+The lookup resolves candidate keyword IDs only. It neither returns film cards nor demonstrates that any keyword encodes the requested atmosphere. The [keyword experiment concept](keyword-resolution-concept.md) owns the proposed collection, LLM selection, lifecycle, and testing behavior; the [API analysis](tmdb-api-analysis.md#keyword-candidate-resolution) records the provider boundary and verification gaps.
+
+### Request to reproduce — not an observed request log
+
+```http
+GET https://api.themoviedb.org/3/search/keyword?query=dark&page=1
+```
+
+This is the intended reproduction target, not proof of the original request's exact parameters. Keep credentials server-side and out of recorded evidence. Do not copy title-search options such as `include_adult`, language, year, or media type onto this endpoint without verifying support.
+
+### User-supplied response summary
+
+| Evidence                 | Value                         |
+| ------------------------ | ----------------------------- |
+| HTTP status              | Not supplied                  |
+| Page                     | 1                             |
+| Entries on supplied page | 20                            |
+| Reported total pages     | 7                             |
+| Reported total results   | 129                           |
+| Pages 2–7                | Not inspected in this example |
+
+Selected entries from the supplied first page, not the complete page or complete candidate list:
+
+| Keyword name   | TMDb ID |
+| -------------- | ------: |
+| `dark`         |  259094 |
+| `dark future`  |  212516 |
+| `dark comedy`  |   10123 |
+| `dark fantasy` |  177895 |
+
+Counts, names, IDs, and ordering are historical supplied evidence, not assertions about a fresh response. No complete raw response fixture is added by this documentation change, and no automated Zod validation was run against the original payload here.
+
+### Interpretation and remaining verification
+
+The metadata reports more than one page; the first 20 entries must not be labelled a complete collection of 129 candidates. The proposed experiment must validate and collect the reported page range before model selection, while exposing failures or inconsistent metadata. Completion of a paginated query would still not prove coverage of every relevant synonym or a transactional provider snapshot.
+
+No keyword in the table is accepted as the correct mood mapping. `dark future` can add a future setting, while `dark comedy` and `dark fantasy` can add genre implications not requested by the user. A lexically matching name or valid candidate ID is not semantic acceptance evidence. The planned model comparison uses the full request and supplied context, permits no match or clarification, and validates selected IDs against the complete supplied set.
+
+Still required: readable official contract evidence and/or an independently observed authenticated response; empty-result behavior; remaining-page collection and consistency; controlled failure/rate-limit handling; and contextual model evaluation. No Discover request, film relevance comparison, AND/OR keyword semantics, or shared-search integration was executed or verified by this example.
+
+Status: User-supplied first-page evidence recorded; independent API verification and implementation remain open. Existing title-search observations above are unchanged.

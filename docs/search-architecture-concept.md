@@ -1,6 +1,6 @@
 # NuxtWatch – Search Architecture
 
-As of November 22, 2026. Permanent reference for the rules, structure, and extension boundaries of shared search. The initial search/title vertical slice is complete within the agreed scope. Reviewed code reference: `d6e071c`, branch `feat/shared-search-architecture`; subsequent documentation changes do not constitute new functional verification. This is not comprehensive production, race-condition, browser, or model validation.
+Permanent reference for the rules, structure and extension boundaries of shared search. Implemented today: the title search slice (title, media type, optional single year). Limits and open points are listed at the end.
 
 ## Foundations and Working Approach
 
@@ -42,7 +42,7 @@ src/lib/
 scripts/search.mjs               # HTTP terminal client, local presentation catalog
 ```
 
-This covers the search area, not the complete project tree. Additional TMDb transport/mapping modules and runtime/provider/card contracts remain separate. Legacy workflow/coordinator/submission/parser-execution modules were removed from the reviewed search core; legacy chat contracts/export and the spike error alias were cleaned up selectively. No project-wide exhaustive scan is claimed.
+This covers the search area, not the complete project tree. Additional TMDb transport/mapping modules and runtime/provider/card contracts remain separate.
 
 ## Criteria and Paths
 
@@ -50,13 +50,13 @@ The shared criteria object describes the user's intent, not the endpoint. Curren
 
 “Confirmed criteria” means the current criteria state accepted by the application. It implies neither separate user approval of every value nor that the request is already executable.
 
-| Criteria | Behavior |
-| --- | --- |
-| Title missing | Clarify the title when title search is intended; do not reinterpret other intents |
-| Title, `all`, no year | Multi-search; no optional media-type/year question |
-| Title, `movie`, optional year | Movie search; year via `primary_release_year` |
-| Title, `tv`, optional year | TV search; year via `first_air_date_year` |
-| Title, year, `all` | Bound choice of `movie` or `tv`; no result search |
+| Criteria                      | Behavior                                                                          |
+| ----------------------------- | --------------------------------------------------------------------------------- |
+| Title missing                 | Clarify the title when title search is intended; do not reinterpret other intents |
+| Title, `all`, no year         | Multi-search; no optional media-type/year question                                |
+| Title, `movie`, optional year | Movie search; year via `primary_release_year`                                     |
+| Title, `tv`, optional year    | TV search; year via `first_air_date_year`                                         |
+| Title, year, `all`            | Bound choice of `movie` or `tv`; no result search                                 |
 
 An unspecified type and an explicit request for movies and TV both mean `all`, unless a different confirmed type still applies. Explicitly resetting the type to both media is allowed. With a year, `all` is an intermediate state requiring clarification: preserve title/year, select the type, then execute. Do not guess a medium, remove the year, merge lists, or implement custom year post-filtering. This is a product decision, not a fundamental API limitation.
 
@@ -102,28 +102,11 @@ node scripts/search.mjs
 node scripts/search.mjs http://localhost:3001
 ```
 
-Nuxt, a model server, and local configuration are required. No provider credentials in the terminal client. Since `0e7c642`, TMDb error texts have been grouped under three stable English keys in `server/services/tmdb/errors.ts`; wording, codes, and HTTP mapping are unchanged. No additional i18n infrastructure or language selection. Free-form model messages remain separate. Web/wizard integration has not been accepted.
+Nuxt, a model server, and local configuration are required. No provider credentials in the terminal client. TMDb error texts are grouped under three stable English keys in `server/services/tmdb/errors.ts`. There is no i18n infrastructure or language selection yet. Free-form model messages remain separate. There is no web interface or wizard yet.
 
-## Verification Status of the Completed Title Vertical Slice
+## Verification
 
-As of November 22, 2026; do not carry evidence forward to subsequent behavioral changes.
-
-| Evidence | Scope and source |
-| --- | --- |
-| `8172f08` | Title-adapter tests: endpoints/year, cards, direct/multi totals, metadata, isolated person-count failure, and empty pages; test run confirmed by the user |
-| `0e0e002` | Real flow/matrix/proposal validation/adapter with controlled external boundaries: criteria preservation/changes, clarification, execute, bindings, reservations, and explicit retry after failure; tests confirmed by the user |
-| `e885a7c` | Real handler/session through isolated H3 HTTP: validation, cookies, session isolation, reset, conflicts, response contract, no-store; tests confirmed by the user |
-| `d6e071c` | Lint correction: provider-gate check before execution instead of throwing in finally |
-| Project checks | At 18:17 CET, the user confirmed tests, lint, and typecheck, followed by coverage above 80%; no exact percentage, metric, or test count supplied; no project commands run independently by the assistant |
-| Live HTTP | User run against localhost:3000, 18:23 CET: eight PASSED, zero FAILED, zero BLOCKED; console output and JSON report reviewed in the conversation |
-
-Live cases: new request while a question is open; incorrect request/question ID and revision; duplicate answer; reset with old bindings and cookie; stale execute; repeat after success; two concurrently submitted execute requests; explicit movies-and-TV request with a year. Expected conflicts were observed, and the valid current state remained usable afterward. The parallel case produced one completed/200 and one 409, not proof of internal overlap or provider-call counts. All recorded responses were no-store.
-
-Live report `search-flow-audit-report.json`: 17:23:14.748Z to 17:23:31.397Z; commit value `d6e071ca8e5a2f28ccf14831c1d7e5f547f46e69` supplied by the caller, not verified against the server. The audit script was provided locally only and checked with node --check; the script and raw reports were not committed. The audit checks required fields, not the full shared schema.
-
-The reviewed production search paths had no blocking structure/import/text-assignment findings; a project-wide exhaustive scan was explicitly excluded from the completion scope and was not performed. No comprehensive project-wide test-inventory audit is claimed. The earlier deferral of tests was supplemented by separately agreed targeted blocks; the [testing rules](testing.md) and [development rules](../AGENTS.md) continue to apply.
-
-The detailed [historical completion record for Task 01](https://github.com/upstroke/NuxtWatch/blob/5ac52968b8f68acfd2db0f838ac012c127c7357c/docs/tasks/search-architecture/01-shared-search-matrix.md) remains accessible through the fixed commit. It also contains earlier B/R/D evidence and its limitations. R04 free-text select 1 remains a historical failure outside the agreed terminal scope; no implicit fix is claimed. D01/D02 remain historical with their original evidence limitations, not a new full acceptance.
+The title slice was completed and verified on 22 November 2026 at `d6e071c`. Evidence, live audit cases and their limits are recorded in the [verification log](verification/2026-11-22-title-slice.md). Record evidence for later changes as a new log in `docs/verification/`.
 
 ## Open Architecture and Security Boundaries
 

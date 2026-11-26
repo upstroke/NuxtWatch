@@ -2,32 +2,43 @@
 
 NuxtWatch helps people find movies and TV shows by describing what they want in their own words. The LLM proposes structured criteria changes; the application validates them, decides whether clarification is required, and executes verified TMDb requests server-side.
 
-## Implemented search scope
+The project is also an exploration of working with AI agents: the documentation is written so that an agent can join at any time and continue from the current state. Agents start with [AGENTS.md](AGENTS.md).
 
-The shared title-search flow supports a title, movie/TV scope, and an optional single year through `POST /api/search`.
+## Current status
 
-- Title with `all` and no year uses Multi search. Explicit movie or TV scope uses the corresponding endpoint.
-- Title with a year and `all`, including explicitly requested movies and series, requires a bound movie/TV selection. Title and year are preserved. Lists are not merged and the year is not silently removed.
-- Confirmed criteria remain unless explicitly changed. Validated criteria may already be stored while clarification is pending; clarification itself never starts a title search.
-- `submit` opens a new request and may search immediately when executable. `clarify` only resolves the bound question. After clarification, `execute` runs the confirmed revision without another LLM interpretation. `reset` starts a new session context.
+Version 0.1.0. Implemented: the shared title search through `POST /api/search` and the terminal client. There is no web page yet; the terminal client is the interface for clarifying contracts and flows.
+
+- Criteria: title, media type (`all`, `movie`, `tv`) and an optional single year.
+- Title with `all` and no year uses Multi search; explicit movie or TV scope uses the corresponding endpoint.
+- Title plus year with `all` requires a movie/TV selection before searching. Title and year are preserved; lists are not merged and the year is not dropped.
+- Actions: `submit` (new request, may search immediately), `clarify` (answers a bound question, never searches), `execute` (runs the confirmed state after clarification without another LLM call), `reset` (new session).
 - Search cards exclude people. Page results and total counts are separate; an unavailable total is `null`, not zero.
 
-The terminal client is an alternative interface to the same HTTP contract:
+Last verified state: 22 November 2026 at `d6e071c` (tests, lint, typecheck, coverage above 80 %, live HTTP audit). Details and limits: [verification log](docs/verification/2026-11-22-title-slice.md).
 
-```bash
-node scripts/search.mjs http://localhost:3000
-```
+## Known issues
+
+- `NUXT_LLM_API_KEY` is not read: it is missing from `runtimeConfig.llm`, the runtime schema and the LLM client. Only model servers without authentication work.
+- `NUXT_APP_DEFAULT_LOCALE` is not read by the application.
+- The model answer is parsed with `JSON.parse` on free text. Output wrapped in Markdown fences or truncated by the 256-token limit causes a 502; there is no structured output mode and no retry.
+
+## Next steps
+
+- Keyword resolution experiment, Phase A: resolver only, no result search. See the [keyword resolution concept](docs/keyword-resolution-concept.md); all tasks are open.
+- Open architecture points: see the end of the [search concept](docs/search-architecture-concept.md).
+- Web interface with Nuxt UI: not scheduled yet. Design references from the NextWatch spike are below.
 
 ## Getting started
 
-Copy `.env.example` to `.env` and configure TMDb and the local model integration. Provider credentials remain server-side.
+Copy `.env.example` to `.env` and configure TMDb and a local OpenAI-compatible model server (for example LM Studio). Provider credentials stay server-side.
 
 ```bash
 pnpm install
 pnpm dev
+node scripts/search.mjs http://localhost:3000   # terminal client
 ```
 
-## Checks and current status
+Checks:
 
 ```bash
 pnpm test
@@ -36,13 +47,25 @@ pnpm lint
 pnpm typecheck
 ```
 
-On 22 November 2026, the user confirmed passing tests, lint and typecheck, plus coverage above 80%, on the working state including `d6e071c`. The local live HTTP audit reported eight passed, zero failed and zero blocked cases. This closes the agreed shared-search/title slice, not production readiness, exhaustive model reliability, or all race/failure scenarios. Evidence, attribution, structure and limits are recorded in the [search concept](docs/search-architecture-concept.md). The locally supplied audit script and raw reports are not committed.
+## Documentation
 
-## Documentation and origin
+| Document                                                         | Content                                              |
+| ---------------------------------------------------------------- | ---------------------------------------------------- |
+| [AGENTS.md](AGENTS.md)                                           | Development rules and entry point for agents         |
+| [Search concept](docs/search-architecture-concept.md)            | Current search architecture, rules and open points   |
+| [Keyword resolution concept](docs/keyword-resolution-concept.md) | Planned experiment for keyword-based preferences     |
+| [TMDb API analysis](docs/tmdb-api-analysis.md)                   | Endpoint research and candidate flows                |
+| [TMDb search examples](docs/tmdb-search-examples.md)             | Observed requests and responses                      |
+| [Home screen](docs/home.md)                                      | Goal for the trending home screen (not implemented)  |
+| [Typing](docs/typing.md), [Testing](docs/testing.md)             | Type and test rules                                  |
+| [Verification logs](docs/verification/)                          | Time-bound evidence per completed slice              |
+| [Ideas](docs/ideas/)                                             | References from the NextWatch spike, not the roadmap |
 
-See [AGENTS.md](AGENTS.md), the [search concept](docs/search-architecture-concept.md), and [verified TMDb requests](docs/tmdb-search-examples.md). The concept is the permanent reference for search architecture and its verification status; historical task details remain accessible through its fixed Git link.
+## Origin
 
-The repository originated from the NextWatch `v0.0.1` Spike source snapshot (`e835d5a7813859ef708c1826963ede62601874a4`), without its original Git history. Broader search criteria and the web wizard remain separate future work.
+The repository originated from the NextWatch `v0.0.1` spike source snapshot (`e835d5a7813859ef708c1826963ede62601874a4`), without its original Git history.
 
-![discover_dark-desktop.png](docs/images/discover_dark-desktop.png)
-![details_dark-deskotp.png](docs/images/details_dark-deskotp.png)
+The following screenshots are design references from that spike. They do not show the current NuxtWatch implementation.
+
+![Discover design reference](docs/images/discover_dark-desktop.png)
+![Details design reference](docs/images/details_dark-deskotp.png)
