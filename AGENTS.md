@@ -48,7 +48,7 @@ NuxtWatch is a controlled search application. The LLM proposes structured filter
 ## Documentation
 
 - Reference documents (README, concepts, API analysis) describe the current state in plain statements. Do not add dates, commit hashes or disclaimers such as "not evidence of" to them; state limits once, in the section for open points.
-- Time-bound evidence (which checks ran, by whom, on which commit) goes into a new log under `docs/verification/`, named `YYYY-MM-DD-<slice>.md`. Logs are not updated later; a new verification gets a new log.
+- Time-bound evidence (which checks ran, by whom, on which commit) goes into a new log under `docs/verification/`, named `YYYY-MM-DD-<slice>.md` and based on [the template](docs/verification/TEMPLATE.md). Logs are not updated later; a new verification gets a new log.
 - Task working notes live in `docs/tasks/<task>/` while a task is open. When it is closed, move lasting rules into the reference documents, write a verification log, and delete the task folder (it stays reachable through Git history).
 - Keep the README sections "Current status", "Known issues" and "Next steps" current at the end of each task, so the next agent can start from there.
 
@@ -58,3 +58,13 @@ NuxtWatch is a controlled search application. The LLM proposes structured filter
 - Verify the target repository and ref, then inspect relevant code and tests. Agree on scope before implementing. Report what changed, which checks actually ran and what remains unverified. Attribute user-run checks separately from assistant-run checks.
 - Obtain explicit approval for each GitHub write, including the exact target and content. Approval for one action does not authorize another.
 - Treat documents under `docs/ideas` as references from the imported NextWatch Spike, not as the NuxtWatch roadmap. Review any applicable guidance against the current code and agreed scope before carrying it forward. Keep the README current and shared rules in one place.
+
+## Completing a slice
+
+A slice is complete only when every step below is done. Documentation-only changes do not need a verification log.
+
+1. The checks in [Testing](docs/testing.md) have run; the user has confirmed the results of checks they ran.
+2. A verification log exists in `docs/verification/`, created from [the template](docs/verification/TEMPLATE.md), naming the commit it covers.
+3. Lasting rules are in the reference documents; the task folder, if any, is deleted.
+4. The README sections "Current status", "Known issues" and "Next steps" are updated and link to the new log.
+5. The final report names the log and lists what remains unverified.
