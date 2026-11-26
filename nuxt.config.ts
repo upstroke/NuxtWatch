@@ -20,6 +20,7 @@ export default defineNuxtConfig({
       provider: '', // NUXT_LLM_PROVIDER from .env file
       baseUrl: '', // NUXT_LLM_BASE_URL from .env file
       model: '', // NUXT_LLM_MODEL from .env file
+      reasoning: '', // NUXT_LLM_REASONING from .env file; empty sends no reasoning option
     },
   },
   typescript: {

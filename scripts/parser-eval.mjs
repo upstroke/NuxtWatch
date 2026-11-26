@@ -132,6 +132,7 @@ function readLlmConfig() {
     provider: process.env.NUXT_LLM_PROVIDER ?? '',
     baseUrl: process.env.NUXT_LLM_BASE_URL ?? '',
     model: process.env.NUXT_LLM_MODEL ?? '',
+    reasoning: process.env.NUXT_LLM_REASONING ?? '',
   });
   return result.success ? result.data : null;
 }
@@ -281,12 +282,13 @@ async function main() {
     clarificationInstructionsVersion: CLARIFICATION_INSTRUCTIONS_VERSION,
     provider: config?.provider ?? null,
     model: config?.model ?? null,
+    reasoning: config ? config.reasoning || null : null,
     repeat: options.repeat,
     cases: [],
     totals: { passed: 0, failed: 0, blocked: 0 },
     limitations: [
       'Measures the configured model with synthetic cases only; not a general reliability claim.',
-      'Generation settings are the application defaults (no temperature, no timeout before F4).',
+      'Generation settings are those of the application (temperature 0, 60 s timeout); provider-side settings are not recorded.',
       'Messages of needs_clarification and unsupported proposals are not evaluated.',
       'Changes that restate a confirmed value are ignored when comparing proposals.',
     ],

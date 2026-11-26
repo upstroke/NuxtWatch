@@ -38,7 +38,9 @@ Existing coverage: `tests/unit/services/llm.spec.ts` (proposal parsing with cont
 
 ### F4 — Generation settings
 
-Structured output with the proposal JSON schema where the provider supports it; otherwise strip a surrounding Markdown code fence before parsing. `temperature: 0`. Explicit timeout.
+Strip a Markdown code fence that encloses the whole model text before parsing. `temperature: 0`. Explicit timeout (60 s). Optional `NUXT_LLM_REASONING` sent as `reasoning_effort`; unset sends nothing. F4 runs before the F2 baseline: with LM Studio's default, Gemma 4 spends the 256 output tokens on reasoning and returns no proposal.
+
+Structured output (proposal JSON schema as response format) is deferred: the observed failures are covered by reasoning control and fence stripping, constrained decoding would change model behavior before the baseline, and F7 changes the proposal schema. Measure it later with the parser evaluation.
 
 Acceptance: fenced output is accepted; malformed or schema-invalid output remains an error with the existing HTTP mapping. Focused regression tests in `llm.spec.ts`.
 

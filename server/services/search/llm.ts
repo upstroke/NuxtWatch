@@ -9,6 +9,9 @@ import type { LlmRuntimeConfig } from '@lib/schemas/runtime-config';
 
 export type LlmConfig = LlmRuntimeConfig;
 
+/** Upper bound for one model call; a timeout fails like any other generation error. */
+const LLM_TIMEOUT_MS = 60_000;
+
 type LlmInput = {
   system: string;
   userContent: string;
@@ -42,12 +45,17 @@ export async function generateLlmText(
     baseURL: baseUrl,
   });
 
+  // Reasoning is sent only when configured: some providers reject reasoning_effort, and
+  // reasoning models otherwise spend the small output budget before producing the proposal.
   const { text } = await generateText({
     model: provider.chatModel(modelId),
     system,
     messages: [{ role: 'user', content: userContent }],
     maxOutputTokens: 256,
+    temperature: 0,
+    timeout: LLM_TIMEOUT_MS,
     maxRetries: 0,
+    ...(config.reasoning ? { reasoning: config.reasoning } : {}),
   });
 
   const result = text.trim();
@@ -88,5 +96,14 @@ export async function parseSearchProposal(
       : PARSER_INSTRUCTIONS,
     userContent,
   });
-  return searchProposalSchema.parse(JSON.parse(text));
+  return searchProposalSchema.parse(JSON.parse(stripEnclosingCodeFence(text)));
+}
+
+/**
+ * Removes one Markdown code fence (optionally tagged json) that encloses the entire model text.
+ * Text before or after the fence is left unchanged, so it still fails JSON parsing.
+ */
+function stripEnclosingCodeFence(text: string): string {
+  const match = /^```(?:json)?[ \t]*\r?\n([\s\S]*?)\r?\n?```$/i.exec(text.trim());
+  return match?.[1] ?? text;
 }

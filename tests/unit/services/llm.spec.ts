@@ -1,7 +1,11 @@
-/** Tests search proposals at the LLM boundary with an injected text generator. */
-import { describe, expect, it, vi } from 'vitest';
-import { parseSearchProposal } from '@server/services/search/llm';
-import type { generateLlmText, ParserInput } from '@server/services/search/llm';
+/**
+ * Tests search proposals at the LLM boundary with an injected text generator, and the
+ * generation request settings against an isolated loopback OpenAI-compatible server.
+ */
+import { createServer } from 'node:http';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { generateLlmText, parseSearchProposal } from '@server/services/search/llm';
+import type { ParserInput } from '@server/services/search/llm';
 
 const config = { provider: 'test', baseUrl: 'http://localhost:1234/v1', model: 'test' };
 const input: ParserInput = {
@@ -101,6 +105,29 @@ describe('Search LLM boundary', () => {
     },
   );
 
+  // Branch coverage: accepts a proposal enclosed in one Markdown code fence, with or without a tag.
+  it.each([
+    '```json\n{"status":"ready","changes":[]}\n```',
+    '```\n{"status":"ready","changes":[]}\n```',
+    '  ```JSON\r\n{"status":"ready","changes":[]}\r\n```  ',
+  ])('accepts fenced output %#', async (text) => {
+    const generate = vi.fn<typeof generateLlmText>().mockResolvedValue(text);
+    await expect(parseSearchProposal(config, input, generate)).resolves.toEqual({
+      status: 'ready',
+      changes: [],
+    });
+  });
+
+  // Branch coverage: keeps fenced output an error when text surrounds the fence or the JSON is malformed.
+  it.each([
+    { label: 'text before the fence', text: 'Result:\n```json\n{"status":"ready"}\n```' },
+    { label: 'text after the fence', text: '```json\n{"status":"ready"}\n```\nDone.' },
+    { label: 'malformed JSON inside the fence', text: '```json\n{"status":"ready",}\n```' },
+  ])('rejects fenced output with $label', async ({ text }) => {
+    const generate = vi.fn<typeof generateLlmText>().mockResolvedValue(text);
+    await expect(parseSearchProposal(config, input, generate)).rejects.toThrow(SyntaxError);
+  });
+
   // Branch coverage: rejects non-JSON output at the actual parser boundary.
   it('rejects non-JSON model output', async () => {
     const generate = vi.fn<typeof generateLlmText>().mockResolvedValue('not json');
@@ -154,4 +181,77 @@ describe('Search LLM boundary', () => {
     const generate = vi.fn<typeof generateLlmText>().mockRejectedValue(failure);
     await expect(parseSearchProposal(config, input, generate)).rejects.toBe(failure);
   });
+});
+
+describe('LLM generation request', () => {
+  const requests: Record<string, unknown>[] = [];
+  const server = createServer((request, response) => {
+    let body = '';
+    request.on('data', (chunk) => (body += chunk));
+    request.on('end', () => {
+      requests.push(JSON.parse(body));
+      response.setHeader('Content-Type', 'application/json');
+      response.end(
+        JSON.stringify({
+          id: 'synthetic',
+          object: 'chat.completion',
+          created: 0,
+          model: 'synthetic-model',
+          choices: [
+            {
+              index: 0,
+              message: { role: 'assistant', content: '{"status":"ready"}' },
+              finish_reason: 'stop',
+            },
+          ],
+          usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+        }),
+      );
+    });
+  });
+  let baseUrl = '';
+
+  beforeAll(async () => {
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('Expected a TCP address');
+    baseUrl = `http://127.0.0.1:${address.port}/v1`;
+  });
+  afterAll(async () => {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  });
+  beforeEach(() => {
+    requests.length = 0;
+  });
+
+  /** Sends one synthetic generation request and returns the body the server received. */
+  async function receivedBody(reasoning?: '' | 'none') {
+    const text = await generateLlmText(
+      { provider: 'synthetic', baseUrl, model: 'synthetic-model', reasoning },
+      { system: 'SYSTEM_SENTINEL', userContent: 'USER_SENTINEL' },
+    );
+    expect(text).toBe('{"status":"ready"}');
+    expect(requests).toHaveLength(1);
+    return requests[0];
+  }
+
+  // Statement coverage: sends deterministic sampling and the configured reasoning effort.
+  it('sends temperature 0 and the configured reasoning effort', async () => {
+    expect(await receivedBody('none')).toMatchObject({
+      model: 'synthetic-model',
+      temperature: 0,
+      max_tokens: 256,
+      reasoning_effort: 'none',
+    });
+  });
+
+  // Branch coverage: omits reasoning_effort when reasoning is empty or not configured.
+  it.each<{ reasoning?: '' }>([{ reasoning: '' }, { reasoning: undefined }])(
+    'omits reasoning_effort for reasoning $reasoning',
+    async ({ reasoning }) => {
+      const body = await receivedBody(reasoning);
+      expect(body).toMatchObject({ temperature: 0 });
+      expect(body).not.toHaveProperty('reasoning_effort');
+    },
+  );
 });
