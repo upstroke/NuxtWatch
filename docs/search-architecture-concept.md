@@ -62,6 +62,19 @@ An unspecified type and an explicit request for movies and TV both mean `all`, u
 
 Multiple results alone do not require clarification. Year ranges are not implemented; do not reduce exact dates without being asked. Movie year means primary release year; TV year means first-air year. Discover does not replace free-form title matching. Add further criteria only with their specific API evidence and vertical slice.
 
+### Descriptive Search (planned)
+
+Title search keeps the search endpoints (`/search/multi`, `/search/movie`, `/search/tv`). Discover has no free-text parameter and does not replace them. Descriptive criteria (genre, keyword) use Discover.
+
+| Criteria                                 | Behavior                                                                        |
+| ---------------------------------------- | ------------------------------------------------------------------------------- |
+| Genre and/or keyword, `movie`, opt. year | Discover Movie; `with_genres`, `with_keywords`, year via `primary_release_year` |
+| Genre and/or keyword, `tv`, opt. year    | Discover TV; `with_genres`, `with_keywords`, year via `first_air_date_year`     |
+| Genre and/or keyword, `all`              | Bound choice of `movie` or `tv`; no result search                               |
+| Title plus genre or keyword              | No single endpoint covers both; reject or clarify                               |
+
+There is no Discover endpoint for both media types. Do not merge movie and TV lists into one ranked list; a later interface may show them as separate sections. Movie and TV genre lists differ (science fiction exists for TV only as the combined "Sci-Fi & Fantasy" genre), so a genre identifier maps to a provider ID per media type. Keyword IDs come from a local keyword catalog through a bounded resolver; see the [keyword concept](keyword-resolution-concept.md). How multiple keyword IDs combine (comma = AND, pipe = OR) is an application decision, not a model decision.
+
 ## Actions, State, and Bindings
 
 - `submit`: a new explicit request based on confirmed server-side criteria. It receives a new `requestId` and replaces the previous request before the model call. Existing criteria are initially preserved; previous question and execute bindings are no longer current. If interpretation fails, the previous request is not automatically restored. If no clarification remains necessary, the new request may search directly. No client-side substitute state.
@@ -102,7 +115,26 @@ node scripts/search.mjs
 node scripts/search.mjs http://localhost:3001
 ```
 
-Nuxt, a model server, and local configuration are required. No provider credentials in the terminal client. TMDb error texts are grouped under three stable English keys in `server/services/tmdb/errors.ts`. There is no i18n infrastructure or language selection yet. Free-form model messages remain separate. There is no web interface or wizard yet.
+Nuxt, a model server, and local configuration are required. No provider credentials in the terminal client. TMDb error texts are grouped under three stable English keys in `server/services/tmdb/errors.ts`. Language rules are described under [Language and Locale](#language-and-locale). There is no web interface or wizard yet.
+
+## Language and Locale
+
+The configured locale (`NUXT_PUBLIC_DEFAULT_LOCALE`, default `en`) selects the language of application texts and of TMDb result data. Language is not the provider region.
+
+| Value                                                          | Language                                                         |
+| -------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Application texts (`searchTexts`, terminal texts)              | Configured locale                                                |
+| Domain values (`movie`, `tv`, genre identifiers, `questionId`) | Language-independent                                             |
+| TMDb result data (titles, overviews, genre names)              | Locale mapped to the TMDb `language` parameter (`en` → `en-US`)  |
+| TMDb keyword names                                             | English only; TMDb does not translate them                       |
+| `keywordQuery` (internal lookup term)                          | Always English, regardless of locale and input language          |
+| User input                                                     | Any language; interpreted regardless of locale                   |
+| Model clarification messages                                   | The user's language; not catalog entries                         |
+| Unsupported requests                                           | The model returns a reason code; the text comes from the catalog |
+
+The application evaluates and supplies the reason, affected criteria and parameters; the text catalog supplies the wording. Interfaces do not invent domain questions. Options are never extracted from model prose.
+
+There is one catalog in the configured default language. When further languages are added, every configured language provides the same keys and placeholders; a missing language file or key is an error that no fallback hides. A structural check covers keys and placeholders, not translation quality.
 
 ## Verification
 
@@ -117,4 +149,4 @@ The title slice was completed and verified on 22 November 2026 at `d6e071c`. Evi
 
 Not fully demonstrated: sustained LLM semantic reliability, instrumented live provider-call counts, guaranteed internal execute overlap, deliberately delayed TMDb responses, controlled real provider/person-count failures, browser cookie races, session expiry/capacity limits, and multi-instance/restart behavior. Controlled service failures/retries do not replace real failure simulations.
 
-This is not evidence of production readiness. Commission further search paths, the web wizard, optional result refinement, full i18n, and operational/security work separately. No next search path is predetermined; keyword search is an option, not an agreed next implementation.
+This is not evidence of production readiness. Commission further search paths, the web wizard, optional result refinement, full i18n, and operational/security work separately. The next agreed path is Discover with genre, followed by keyword resolution on top of that path.

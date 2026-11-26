@@ -11,3 +11,7 @@ playwright-report
 test-results
 *.log
 .DS_Store
+
+# Local live-audit scripts and reports (not versioned)
+search-flow-audit.mjs
+search-flow-audit-report.json

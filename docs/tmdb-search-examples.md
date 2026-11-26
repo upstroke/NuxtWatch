@@ -170,10 +170,10 @@ Counts, names, IDs, and ordering are historical supplied evidence, not assertion
 
 ### Interpretation and remaining verification
 
-The metadata reports more than one page; the first 20 entries must not be labelled a complete collection of 129 candidates. The proposed experiment must validate and collect the reported page range before model selection, while exposing failures or inconsistent metadata. Completion of a paginated query would still not prove coverage of every relevant synonym or a transactional provider snapshot.
+The metadata reports more than one page; the first 20 entries must not be labelled a complete collection of 129 candidates. NuxtWatch draws keyword candidates from a local catalog built from the daily keyword export instead of paging this endpoint at request time; see the [keyword concept](keyword-resolution-concept.md). This response remains useful as a comparison for candidate retrieval.
 
 No keyword in the table is accepted as the correct mood mapping. `dark future` can add a future setting, while `dark comedy` and `dark fantasy` can add genre implications not requested by the user. A lexically matching name or valid candidate ID is not semantic acceptance evidence. The planned model comparison uses the full request and supplied context, permits no match or clarification, and validates selected IDs against the complete supplied set.
 
-Still required: readable official contract evidence and/or an independently observed authenticated response; empty-result behavior; remaining-page collection and consistency; controlled failure/rate-limit handling; and contextual model evaluation. No Discover request, film relevance comparison, AND/OR keyword semantics, or shared-search integration was executed or verified by this example.
+Still required: readable official contract evidence and/or an independently observed authenticated response; empty-result behavior; and contextual model evaluation. No Discover request, film relevance comparison, AND/OR keyword semantics, or shared-search integration was executed or verified by this example.
 
 Status: User-supplied first-page evidence recorded; independent API verification and implementation remain open. Existing title-search observations above are unchanged.
