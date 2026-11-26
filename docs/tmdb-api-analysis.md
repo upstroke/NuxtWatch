@@ -1,6 +1,6 @@
 # TMDb API analysis
 
-Updated 25 November 2026. API research and candidate flows for NuxtWatch, not a claim that every endpoint is implemented or live-verified. [Observed title-search requests and the user-supplied keyword example](tmdb-search-examples.md) are available; the former statement that no requests had been verified is obsolete. The [search concept](search-architecture-concept.md) defines current product rules, implementation scope and verification limits.
+API research and candidate flows for NuxtWatch. Listing an endpoint here does not mean it is implemented. Observed requests, including the keyword example, are recorded in the [search examples](tmdb-search-examples.md); the [search concept](search-architecture-concept.md) defines current product rules, implementation scope and verification limits.
 
 ## Evidence and current title scope
 
@@ -64,7 +64,7 @@ Weekly home cards are separately described in [Home](home.md); explicit daily-tr
 
 One search object describes intent and accepted criteria, not endpoints. A similarity reference has a different role from the title being sought; model it only when needed. The common coordinator applies validated transitions, evaluates blockers, invokes adapters and processes outcomes. Conceptual decision/search/endpoint tables are not three separate runtime engines. Runtime `matrix.ts` implements one shared evaluation, not a second copy of these tables.
 
-Submit opens a new request using confirmed criteria; reset starts a fresh context. A bound reply updates its question's request. Explicit criterion removal differs from discarding an unresolved lookup. Starting a request must not silently discard filters. The previous generic draft-reset rule is superseded by the agreed concept.
+Submit opens a new request using confirmed criteria; reset starts a fresh context. A bound reply updates its question's request. Explicit criterion removal differs from discarding an unresolved lookup. Starting a request must not silently discard filters.
 
 Independent resolved criteria may be accepted while another request is unresolved; coupled changes stay atomic. Example: accepting Brad Pitt does not resolve a pending Tom. Partial acceptance is a target, not fully implemented. Keep unresolved requests separate from accepted filters. Preserve an accepted value until an unresolved replacement is ready. No match, ambiguity and technical failure are distinct lookup outcomes; no automatic retry loop during replanning. Missing pagination data is not proof that a single mapped candidate is unique.
 

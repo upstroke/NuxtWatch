@@ -1,6 +1,6 @@
 # Clarification Wizard – Terminal and Future Web UI
 
-As of 21 November 2026. Updated reference for NuxtWatch; shared behavior follows the [concept](../sucharchitektur-konzept.md), implementation follows the [work status](../tasks/search-architecture/README.md). This is not comprehensive evidence of implementation. The existing filename is retained until a separate rename.
+As of 21 November 2026. Updated reference for NuxtWatch; shared behavior follows the [concept](../search-architecture-concept.md). This is not comprehensive evidence of implementation. The existing filename is retained until a separate rename.
 
 ## Shared Flow
 

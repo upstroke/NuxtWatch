@@ -1,16 +1,24 @@
 # NuxtWatch — Development rules
 
+## Start here
+
+1. Read the [README](README.md): current status, known issues and next steps.
+2. Read the [search concept](docs/search-architecture-concept.md) before changing search behavior.
+3. Read [Typing](docs/typing.md) and [Testing](docs/testing.md) before writing code or tests.
+4. Check the current branch and `git log` for work in progress. Open experiments have their own concept documents (for example the [keyword resolution concept](docs/keyword-resolution-concept.md)).
+
 ## Purpose
 
 NuxtWatch is a controlled search application. The LLM proposes structured filter changes or indicates that clarification is needed. The application validates the proposal, resolves criteria as needed, queries TMDb, and generates feedback from translatable templates. The LLM does not construct or execute provider requests.
 
 ## Search design
 
-- Follow the [search concept](docs/search-architecture-concept.md), which contains the permanent structure, implementation scope, verification summary and architecture limits. Keep shared rules there rather than duplicating them in completed task folders or progress reports here. Record evidence for future work in its explicitly agreed task documentation.
+- Follow the [search concept](docs/search-architecture-concept.md), which contains the permanent structure, implementation scope and architecture limits. Keep shared rules there rather than duplicating them in task folders or progress reports.
 - Verify each intended search against TMDb before designing the shared search object: record the endpoint, parameters, relevant response fields, and any filtering the application must perform. Never record credentials.
 - Derive one shared search object from verified use cases. Keep criterion-specific resolution and provider request mapping separate. Do not guess provider IDs or silently drop unsupported criteria.
 - Keep responsibilities distinct: the LLM interprets and proposes; the matrix evaluates full criteria/scope coverage; the flow applies validated changes, binds questions and reserves execution; adapters map provider requests; HTTP and sessions handle transport and ownership. Interfaces must not introduce a second search-rule matrix.
 - Preserve confirmed criteria unless explicitly changed. Clarification never starts a title search; after clarification, explicit execute uses the confirmed revision without another LLM interpretation. A new executable submit may search immediately.
+- Before adding protection against a race, retry or failure case, name the concrete scenario and its effect on the user. Prefer the simplest mechanism that covers it.
 - Add clarification and pending transitions only for concrete flows that need them. Do not introduce a store or a general pending framework without explicit agreement. Revisit documented architecture limits when adding criteria rather than assuming the current fallback question covers them.
 
 ## Boundaries and validation
@@ -36,6 +44,13 @@ NuxtWatch is a controlled search application. The LLM proposes structured filter
 - Pass dependencies explicitly. Use factory functions and closures when a component needs instance-specific configuration or private state. Expose only the operations callers need. Add adapters for concrete boundary needs and use memoization only when justified; document its scope, key, lifetime, and failure behavior.
 - Add a short English header comment to every hand-maintained source file whose format supports comments. State the file's purpose and, where useful, what belongs elsewhere. Keep the header current when responsibilities change.
 - Document every function and method, including local helpers and arrow functions, with a short English JSDoc-style comment (`/** ... */`) immediately above it. Explain its purpose and relevant constraints or side effects rather than restating the implementation. Keep exported-function and method comments TSDoc-compatible. Add `@param`, `@returns`, or `@throws` only when they provide useful information beyond the signature and summary; do not repeat TypeScript types. Keep comments current when behavior changes.
+
+## Documentation
+
+- Reference documents (README, concepts, API analysis) describe the current state in plain statements. Do not add dates, commit hashes or disclaimers such as "not evidence of" to them; state limits once, in the section for open points.
+- Time-bound evidence (which checks ran, by whom, on which commit) goes into a new log under `docs/verification/`, named `YYYY-MM-DD-<slice>.md`. Logs are not updated later; a new verification gets a new log.
+- Task working notes live in `docs/tasks/<task>/` while a task is open. When it is closed, move lasting rules into the reference documents, write a verification log, and delete the task folder (it stays reachable through Git history).
+- Keep the README sections "Current status", "Known issues" and "Next steps" current at the end of each task, so the next agent can start from there.
 
 ## Testing and workflow
 

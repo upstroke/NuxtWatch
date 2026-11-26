@@ -75,4 +75,4 @@ The main effort is not building menus, but preserving existing state, binding, a
 
 These extensions may be described and approved separately when a concrete need arises. This idea document does not authorize implementation or additional product features.
 
-![nuxtwatch-cli-two-tone-preview.png](docs/images/nuxtwatch-cli-two-tone-preview.png)
+![nuxtwatch-cli-two-tone-preview.png](../images/nuxtwatch-cli-two-tone-preview.png)
