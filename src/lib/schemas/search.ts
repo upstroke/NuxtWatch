@@ -15,6 +15,15 @@ export type SearchCriteria = z.infer<typeof searchCriteriaSchema>;
 
 const message = z.string().trim().min(1);
 
+/** Why a request cannot be searched; the application renders the text from its catalog. */
+export const unsupportedReasonSchema = z.enum([
+  'year_range',
+  'people',
+  'unsupported_criterion',
+  'other',
+]);
+export type UnsupportedReason = z.infer<typeof unsupportedReasonSchema>;
+
 const searchChangeSchema = z.discriminatedUnion('field', [
   z.strictObject({
     field: z.literal('title'),
@@ -42,7 +51,7 @@ const searchChangesSchema = z
 export const searchProposalSchema = z.discriminatedUnion('status', [
   z.strictObject({ status: z.literal('ready'), changes: searchChangesSchema.optional() }),
   z.strictObject({ status: z.literal('needs_clarification'), message }),
-  z.strictObject({ status: z.literal('unsupported'), message }),
+  z.strictObject({ status: z.literal('unsupported'), reason: unsupportedReasonSchema }),
 ]);
 export type SearchProposal = z.infer<typeof searchProposalSchema>;
 
@@ -100,14 +109,21 @@ export type SearchClarifyRequest = z.infer<typeof searchClarifyRequestSchema>;
 export type SearchExecuteRequest = z.infer<typeof searchExecuteRequestSchema>;
 
 const requestBinding = questionBindingSchema.pick({ requestId: true, revision: true });
+// Every decision message names its source: catalog text of the application or model text.
 const decision = z.union([
   z.strictObject({
     status: z.literal('unsupported'),
-    reason: z.enum(['missing_title', 'unsupported_title_criteria']),
+    reason: unsupportedReasonSchema,
+    message,
+    source: z.literal('application'),
   }),
-  z.strictObject({ status: z.literal('unsupported'), message }),
-  z.strictObject({ status: z.literal('needs_clarification'), message }),
-  z.strictObject({ status: z.literal('needs_clarification'), field: z.literal('title'), message }),
+  z.strictObject({ status: z.literal('needs_clarification'), message, source: z.literal('llm') }),
+  z.strictObject({
+    status: z.literal('needs_clarification'),
+    field: z.literal('title'),
+    message,
+    source: z.literal('application'),
+  }),
   z.strictObject({
     status: z.literal('needs_clarification'),
     field: mediaTypeQuestionSchema.shape.field,

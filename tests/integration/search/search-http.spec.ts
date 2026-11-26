@@ -11,6 +11,7 @@ import {
 } from 'h3';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { searchResponseSchema } from '@lib/schemas/search';
+import { searchTexts } from '@server/services/search/texts';
 import type {
   MediaTypeQuestion,
   SearchClarifyRequest,
@@ -255,6 +256,26 @@ describe('Search HTTP and session boundary', () => {
       decision: { status: 'needs_clarification', field: 'title' },
     });
     expect(model.generate).toHaveBeenCalledTimes(2);
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
+  // Branch coverage: an unsupported reason is answered with catalog text marked as application text.
+  it('SEARCH-HTTP-007: serializes unsupported reasons with application text and no question', async () => {
+    const c = client();
+    propose({ status: 'unsupported', reason: 'people' });
+    const result = await success(await c.post({ action: 'submit', userText: 'Synthetic people' }));
+    expect(result).toEqual({
+      status: 'not_executed',
+      requestId: expect.any(String),
+      revision: 1,
+      criteria: { mediaType: 'all' },
+      decision: {
+        status: 'unsupported',
+        reason: 'people',
+        message: searchTexts.unsupported.people,
+        source: 'application',
+      },
+    });
     expect(upstream).not.toHaveBeenCalled();
   });
 

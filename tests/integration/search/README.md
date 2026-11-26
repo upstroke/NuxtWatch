@@ -8,4 +8,4 @@ The cookie clients preserve the `Set-Cookie` session value independently and res
 
 This is a handler/session integration test, not a complete Nitro/Nuxt routing or browser end-to-end test. The separate live HTTP audit remains necessary for the running deployment. The suite does not cover expiration, capacity, TLS, process restarts, or deliberately delayed provider responses.
 
-Stable case identifiers are `SEARCH-HTTP-001` through `SEARCH-HTTP-006`; the validation group uses descriptive parameterized variants. Do not reuse these identifiers for unrelated scenarios. Production code, runner configuration, and coverage thresholds are unchanged.
+Stable case identifiers are `SEARCH-HTTP-001` through `SEARCH-HTTP-007`; the validation group uses descriptive parameterized variants. Do not reuse these identifiers for unrelated scenarios. Production code, runner configuration, and coverage thresholds are unchanged.

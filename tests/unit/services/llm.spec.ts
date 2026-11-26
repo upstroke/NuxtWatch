@@ -116,11 +116,19 @@ describe('Search LLM boundary', () => {
     expect(input).toEqual(before);
   });
 
-  // Branch coverage: accepts non-ready model decisions without manufacturing partial edits.
-  it.each(['needs_clarification', 'unsupported'])(
-    'preserves a valid %s decision',
-    async (status) => {
-      const proposal = { status, message: 'Synthetic explanation' };
+  // Branch coverage: accepts a model question without manufacturing partial edits.
+  it('preserves a valid needs_clarification decision', async () => {
+    const proposal = { status: 'needs_clarification', message: 'Synthetic question' };
+    await expect(parseSearchProposal(config, input, proposalGenerator(proposal))).resolves.toEqual(
+      proposal,
+    );
+  });
+
+  // Branch coverage: accepts every unsupported reason code without free model text.
+  it.each(['year_range', 'people', 'unsupported_criterion', 'other'])(
+    'preserves an unsupported decision with reason %s',
+    async (reason) => {
+      const proposal = { status: 'unsupported', reason };
       await expect(
         parseSearchProposal(config, input, proposalGenerator(proposal)),
       ).resolves.toEqual(proposal);
@@ -175,6 +183,18 @@ describe('Search LLM boundary', () => {
         status: 'ready',
         changes: [{ field: 'title', operation: 'add', value: 'Synthetic Film' }],
       },
+    },
+    {
+      label: 'unsupported with free text instead of a reason',
+      value: { status: 'unsupported', message: 'Synthetic explanation' },
+    },
+    {
+      label: 'unsupported with an unknown reason',
+      value: { status: 'unsupported', reason: 'genre' },
+    },
+    {
+      label: 'unsupported with a reason and free text',
+      value: { status: 'unsupported', reason: 'people', message: 'Synthetic explanation' },
     },
     {
       label: 'invalid media scope',

@@ -71,7 +71,7 @@ Prompt-injection testing remains a separate security concern, not an outcome of 
 ## Identifiers and coverage
 
 - Begin each unit test case with a coverage-intent comment: `// Statement coverage:` for an execution path or `// Branch coverage:` for a conditional/error/fallback/boundary. Vitest controlled integrations use the same convention; HTTP Playwright tests do not require these comments.
-- Use stable scenario identifiers for integrations. Existing TMDb cases use `TMDB-INT-…`; the search HTTP suite uses `SEARCH-HTTP-001` through `SEARCH-HTTP-006`, with descriptive parameterized variants in its validation group. Keep variant titles distinct and never reuse retired identifiers for unrelated scenarios.
+- Use stable scenario identifiers for integrations. Existing TMDb cases use `TMDB-INT-…`; the search HTTP suite uses `SEARCH-HTTP-001` through `SEARCH-HTTP-007`, with descriptive parameterized variants in its validation group. Keep variant titles distinct and never reuse retired identifiers for unrelated scenarios.
 - Browser journeys use identifiers such as `SEARCH-001` linked to acceptance criteria, for example `SEARCH-001-AC1`. Do not relabel handler-only checks as browser journeys.
 - V8 coverage applies to `src/lib/**` and `server/**`. The global statement threshold is 80%; `vitest.config.ts` is authoritative. Thresholds are minimums, not per-file goals. Do not change thresholds or exclusions to conceal missing coverage. A broad user report of coverage above 80% does not identify an exact metric or percentage.
 

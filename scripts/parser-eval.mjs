@@ -53,19 +53,19 @@ const { PARSER_INSTRUCTIONS_VERSION } = await importProjectModule('src/lib/parse
 const { CLARIFICATION_INSTRUCTIONS_VERSION } = await importProjectModule(
   'src/lib/parser/clarification-instructions.ts',
 );
-const { searchCriteriaSchema, searchProposalSchema } = await importProjectModule(
-  'src/lib/schemas/search.ts',
-);
+const { searchCriteriaSchema, searchProposalSchema, unsupportedReasonSchema } =
+  await importProjectModule('src/lib/schemas/search.ts');
 const { LlmRuntimeConfigSchema } = await importProjectModule('src/lib/schemas/runtime-config.ts');
 
-// Expected proposals compare status and, for ready, the changes; messages are never compared.
+// Expected proposals compare status, the changes for ready and the reason for unsupported;
+// clarification messages are never compared.
 const expectedSchema = z.discriminatedUnion('status', [
   z.strictObject({
     status: z.literal('ready'),
     changes: z.array(z.unknown()).optional(),
   }),
   z.strictObject({ status: z.literal('needs_clarification') }),
-  z.strictObject({ status: z.literal('unsupported') }),
+  z.strictObject({ status: z.literal('unsupported'), reason: unsupportedReasonSchema.optional() }),
 ]);
 const caseSchema = z.strictObject({
   id: z.string().regex(/^PARSER-EVAL-\d{3}$/),
@@ -179,6 +179,8 @@ function effectiveChanges(changes, currentFilters) {
 /** Checks whether an actual proposal matches one accepted proposal for the case input. */
 function matchesExpected(actual, expected, currentFilters) {
   if (actual.status !== expected.status) return false;
+  if (expected.status === 'unsupported')
+    return !expected.reason || actual.reason === expected.reason;
   if (expected.status !== 'ready') return true;
   const actualChanges = effectiveChanges(actual.changes, currentFilters);
   const expectedChanges = effectiveChanges(expected.changes, currentFilters);
@@ -289,7 +291,7 @@ async function main() {
     limitations: [
       'Measures the configured model with synthetic cases only; not a general reliability claim.',
       'Generation settings are those of the application (temperature 0, 60 s timeout); provider-side settings are not recorded.',
-      'Messages of needs_clarification and unsupported proposals are not evaluated.',
+      'Messages of needs_clarification proposals are not evaluated.',
       'Changes that restate a confirmed value are ignored when comparing proposals.',
     ],
   };

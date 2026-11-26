@@ -4,6 +4,7 @@ import type {
   SearchQuestion,
   SearchClarifyRequest,
   SearchExecuteRequest,
+  UnsupportedReason,
 } from '@lib/schemas/search';
 import type { TmdbHttpClient } from '../tmdb/http';
 import { searchTitles } from '../tmdb/title-search';
@@ -17,6 +18,18 @@ type SearchDecision =
       status: 'needs_clarification';
       field: 'title';
       message: string;
+      source: 'application';
+    }
+  | {
+      status: 'needs_clarification';
+      message: string;
+      source: 'llm';
+    }
+  | {
+      status: 'unsupported';
+      reason: UnsupportedReason;
+      message: string;
+      source: 'application';
     }
   | {
       status: 'needs_clarification';
@@ -29,11 +42,9 @@ type SearchDecision =
       criteria: SearchCriteria & { title: string };
     };
 
-type Proposal = Awaited<ReturnType<typeof parseSearchProposal>>;
-
 type SearchOutcome = {
   criteria: SearchCriteria;
-  decision: SearchDecision | Exclude<Proposal, { status: 'ready' }>;
+  decision: SearchDecision;
 };
 
 type SearchExecution = {
@@ -71,6 +82,7 @@ function decideSearch(criteria: SearchCriteria): SearchDecision {
       status: 'needs_clarification',
       field: 'title',
       message: searchTexts.clarification.titleRequired,
+      source: 'application',
     };
   }
 
@@ -94,8 +106,23 @@ async function interpretSearch(config: LlmConfig, input: ParserInput): Promise<S
   const proposal = await parseSearchProposal(config, input);
   const criteria = { ...input.currentFilters };
 
-  if (proposal.status !== 'ready') {
-    return { criteria, decision: proposal };
+  // Model text is kept only for its own questions; refusals are rendered from the catalog.
+  if (proposal.status === 'unsupported') {
+    return {
+      criteria,
+      decision: {
+        status: 'unsupported',
+        reason: proposal.reason,
+        message: searchTexts.unsupported[proposal.reason],
+        source: 'application',
+      },
+    };
+  }
+  if (proposal.status === 'needs_clarification') {
+    return {
+      criteria,
+      decision: { status: 'needs_clarification', message: proposal.message, source: 'llm' },
+    };
   }
 
   for (const change of proposal.changes ?? []) {
@@ -161,7 +188,7 @@ function bindQuestion(
   return {
     ...binding,
     kind: 'free_text',
-    source: 'field' in decision ? 'application' : 'llm',
+    source: decision.source,
     message: decision.message,
   };
 }

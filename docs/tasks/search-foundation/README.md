@@ -58,9 +58,9 @@ Acceptance: adapter tests assert the `language` parameter; clarification texts c
 
 ### F7 — Unsupported reason codes
 
-Proposal schema: `unsupported` carries `reason` instead of `message`. Instructions, flow, texts, HTTP response and terminal client updated.
+Proposal schema: `unsupported` carries `reason` (`year_range`, `people`, `unsupported_criterion`, `other`) instead of `message`. Instructions 3.0.0 define the codes; example messages are described (`"..."` plus a Message line) instead of spelled out, because the model copied English example sentences into answers to German input. The flow renders the reason from `searchTexts.unsupported`; every decision and question with a `message` carries `source` (`application` or `llm`). HTTP response schema, terminal client (`Hinweis (application)`) and parser evaluation (reason compared) updated.
 
-Acceptance: no free model text is shown for unsupported requests; a flow test per code; HTTP contract test updated.
+Acceptance: no free model text is shown for unsupported requests; a flow test per code; HTTP contract test `SEARCH-HTTP-007`.
 
 ### F8 — Completion
 

@@ -107,7 +107,7 @@ Optional result refinement is separate from mandatory clarification before execu
 
 ## Texts and Interfaces
 
-`searchTexts` provides application, HTTP, and session texts. The flow binds the media question as the required `message` field; HTTP validates it and the CLI displays it. The same bound text is used in the free-text context alongside the original request, confirmed criteria, request-specific answers, and current question. Do not maintain general chat history speculatively; do not derive options from model prose.
+`searchTexts` provides application, HTTP, and session texts, including one text per unsupported reason code. Every decision or question that carries a `message` names its `source`: `application` for catalog text, `llm` for a model question. Model text appears only in `needs_clarification`; unsupported requests always show catalog text, and the CLI prints them as `Hinweis (application)`. The flow binds the media question as the required `message` field; HTTP validates it and the CLI displays it. The same bound text is used in the free-text context alongside the original request, confirmed criteria, request-specific answers, and current question. Do not maintain general chat history speculatively; do not derive options from model prose.
 
 Terminal-only help, labels, and templates remain in `terminalTexts`. Ordinary text is a submit when no question is open; otherwise, it is a bound answer. `/submit TEXT`, `/select NUMBER`, `/execute`, `/reset`, and `/exit` are explicit commands; `/select` clarifies media and does not select results. A compact table shows title, type, date, and ID; page counts and total counts are separate.
 
@@ -122,16 +122,16 @@ Nuxt, a model server, and local configuration are required. No provider credenti
 
 The configured locale (`NUXT_PUBLIC_DEFAULT_LOCALE`, default `en`) selects the language of application texts and of TMDb result data. Language is not the provider region.
 
-| Value                                                          | Language                                                         |
-| -------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Application texts (`searchTexts`, terminal texts)              | Configured locale                                                |
-| Domain values (`movie`, `tv`, genre identifiers, `questionId`) | Language-independent                                             |
-| TMDb result data (titles, overviews, genre names)              | Locale mapped to the TMDb `language` parameter (`en` → `en-US`)  |
-| TMDb keyword names                                             | English only; TMDb does not translate them                       |
-| `keywordQuery` (internal lookup term)                          | Always English, regardless of locale and input language          |
-| User input                                                     | Any language; interpreted regardless of locale                   |
-| Model clarification messages                                   | The user's language; not catalog entries                         |
-| Unsupported requests                                           | The model returns a reason code; the text comes from the catalog |
+| Value                                                          | Language                                                                                                                    |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Application texts (`searchTexts`, terminal texts)              | Configured locale                                                                                                           |
+| Domain values (`movie`, `tv`, genre identifiers, `questionId`) | Language-independent                                                                                                        |
+| TMDb result data (titles, overviews, genre names)              | Locale mapped to the TMDb `language` parameter (`en` → `en-US`)                                                             |
+| TMDb keyword names                                             | English only; TMDb does not translate them                                                                                  |
+| `keywordQuery` (internal lookup term)                          | Always English, regardless of locale and input language                                                                     |
+| User input                                                     | Any language; interpreted regardless of locale                                                                              |
+| Model clarification messages                                   | The user's language; not catalog entries                                                                                    |
+| Unsupported requests                                           | The model returns a reason code (`year_range`, `people`, `unsupported_criterion`, `other`); the text comes from the catalog |
 
 The application evaluates and supplies the reason, affected criteria and parameters; the text catalog supplies the wording. Interfaces do not invent domain questions. Options are never extracted from model prose.
 

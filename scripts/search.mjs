@@ -24,6 +24,7 @@ const terminalTexts = {
   selection: (number, label) => `${number}: ${label} (/select ${number})`,
   freeTextHelp: 'Freier Antworttext wird vom LLM interpretiert.',
   question: (source, message) => `Frage (${source}): ${message}`,
+  notice: (source, message) => `Hinweis (${source}): ${message}`,
   executeHelp: 'Kriterien bestätigt. Mit /execute ausdrücklich suchen.',
   noFollowUp: 'Kein automatischer Folgeaufruf.',
   requestFailure:
@@ -225,6 +226,14 @@ async function main() {
             console.log(terminalTexts.freeTextHelp);
           } else if (question)
             console.log(terminalTexts.question(question.source, question.message));
+          else if (
+            result.data.decision.status === 'unsupported' &&
+            typeof result.data.decision.source === 'string' &&
+            typeof result.data.decision.message === 'string'
+          )
+            console.log(
+              terminalTexts.notice(result.data.decision.source, result.data.decision.message),
+            );
           else if (result.data.status === 'clarified' && result.data.decision.status === 'ready')
             console.log(terminalTexts.executeHelp);
           console.log(terminalTexts.noFollowUp);

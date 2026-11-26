@@ -7,7 +7,13 @@ import {
   submitForSession,
 } from '@server/services/search/flow';
 import type { SearchState } from '@server/services/search/flow';
-import type { SearchClarifyRequest, SearchCriteria, SearchProposal } from '@lib/schemas/search';
+import { searchTexts } from '@server/services/search/texts';
+import type {
+  SearchClarifyRequest,
+  SearchCriteria,
+  SearchProposal,
+  UnsupportedReason,
+} from '@lib/schemas/search';
 
 const model = vi.hoisted(() => ({
   generate: vi.fn<(...args: unknown[]) => Promise<{ text: string }>>(),
@@ -169,21 +175,43 @@ describe('Shared search criteria and decisions', () => {
     expect(h.http.get).not.toHaveBeenCalled();
   });
 
-  // Branch coverage: model clarification or refusal cannot silently apply a supported subset.
-  it.each(['needs_clarification', 'unsupported'] satisfies (
-    'needs_clarification' | 'unsupported'
-  )[])('keeps criteria unchanged for model decision %s', async (status) => {
+  // Branch coverage: a model question keeps criteria unchanged and is marked as model text.
+  it('binds a model question as llm text without applying criteria', async () => {
     const original: SearchCriteria = { title: 'Original Film', mediaType: 'movie', year: 2021 };
     const h = setup(original);
-    const result = await h.submit({ status, message: 'Synthetic explanation' });
+    const result = await h.submit({ status: 'needs_clarification', message: 'Synthetic question' });
     expect(result).toMatchObject({
       status: 'not_executed',
-      decision: { status, message: 'Synthetic explanation' },
+      decision: { status: 'needs_clarification', message: 'Synthetic question', source: 'llm' },
+      question: { kind: 'free_text', source: 'llm', message: 'Synthetic question' },
       criteria: original,
     });
     expect(h.state.criteria).toEqual(original);
     expect(h.http.get).not.toHaveBeenCalled();
   });
+
+  // Branch coverage: each unsupported reason is rendered from the catalog as application text.
+  it.each(['year_range', 'people', 'unsupported_criterion', 'other'] satisfies UnsupportedReason[])(
+    'renders unsupported reason %s from the catalog without applying criteria',
+    async (reason) => {
+      const original: SearchCriteria = { title: 'Original Film', mediaType: 'movie', year: 2021 };
+      const h = setup(original);
+      const result = await h.submit({ status: 'unsupported', reason });
+      expect(result).toMatchObject({
+        status: 'not_executed',
+        decision: {
+          status: 'unsupported',
+          reason,
+          message: searchTexts.unsupported[reason],
+          source: 'application',
+        },
+        criteria: original,
+      });
+      expect(result).not.toHaveProperty('question');
+      expect(h.state.criteria).toEqual(original);
+      expect(h.http.get).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe('Bound clarification and execution', () => {
