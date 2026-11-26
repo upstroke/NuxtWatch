@@ -1,8 +1,7 @@
 /** Generates and validates search proposals without applying criteria or executing. */
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { generateText } from 'ai';
-import { PARSER_INSTRUCTIONS } from '@lib/parser/instructions';
-import { CLARIFICATION_INSTRUCTIONS } from '@lib/parser/clarification-instructions';
+import { composeParserInstructions } from '@lib/parser/instructions';
 import { searchMediaTypeSchema as mediaType, searchProposalSchema } from '@lib/schemas/search';
 import type { SearchCriteria, SearchProposal } from '@lib/schemas/search';
 import type { LlmRuntimeConfig } from '@lib/schemas/runtime-config';
@@ -91,9 +90,7 @@ export async function parseSearchProposal(
   };
   const userContent = JSON.stringify({ context, userText: input.userText });
   const text = await generate(config, {
-    system: clarification
-      ? PARSER_INSTRUCTIONS + '\n\n' + CLARIFICATION_INSTRUCTIONS
-      : PARSER_INSTRUCTIONS,
+    system: composeParserInstructions({ clarification: !!clarification }),
     userContent,
   });
   return searchProposalSchema.parse(JSON.parse(stripEnclosingCodeFence(text)));

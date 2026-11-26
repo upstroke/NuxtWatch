@@ -6,6 +6,7 @@ import { createServer } from 'node:http';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { generateLlmText, parseSearchProposal } from '@server/services/search/llm';
 import type { ParserInput } from '@server/services/search/llm';
+import { composeParserInstructions } from '@lib/parser/instructions';
 
 const config = { provider: 'test', baseUrl: 'http://localhost:1234/v1', model: 'test' };
 const input: ParserInput = {
@@ -72,6 +73,27 @@ describe('Search LLM boundary', () => {
       ...clarification.turns.flatMap((turn) => [turn.question, turn.answer]),
     ])
       expect(request.system).not.toContain(value);
+  });
+
+  // Branch coverage: selects the composed modules by call kind and only names supplied context fields.
+  it('uses the composed modules and references only context fields that are supplied', async () => {
+    const clarification = { originalUserText: 'Original', turns: [], question: 'Question' };
+    for (const withClarification of [false, true]) {
+      const generate = proposalGenerator({ status: 'ready' });
+      await parseSearchProposal(
+        config,
+        withClarification ? { ...input, clarification } : input,
+        generate,
+      );
+      const call = generate.mock.calls[0];
+      if (!call) throw new Error('Expected one generator call');
+      const { system, userContent } = call[1];
+      expect(system).toBe(composeParserInstructions({ clarification: withClarification }));
+      if (!withClarification) continue;
+      const supplied = Object.keys(JSON.parse(userContent).context);
+      const referenced = new Set([...system.matchAll(/context\.([A-Za-z]+)/g)].map((m) => m[1]));
+      for (const field of referenced) expect(supplied).toContain(field);
+    }
   });
 
   // Statement coverage: validates requested edits without applying them to confirmed input.

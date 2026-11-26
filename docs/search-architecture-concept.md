@@ -37,7 +37,8 @@ server/
 src/lib/
 ├── schemas/search.ts             # Criteria, proposals, questions, actions, responses
 └── parser/
-    ├── instructions.ts           # Versioned system instructions
+    ├── README.md                 # Reasons for each instruction rule
+    ├── instructions.ts           # Base and title modules, composition
     └── clarification-instructions.ts
 scripts/search.mjs               # HTTP terminal client, local presentation catalog
 ```
@@ -46,7 +47,7 @@ This covers the search area, not the complete project tree. Additional TMDb tran
 
 ## Criteria and Paths
 
-The shared criteria object describes the user's intent, not the endpoint. Currently supported: title, media type, and an optional single year. Confirmed criteria are preserved unless explicitly changed. Prompt 1.5.3 clarifies this preservation rule; model compliance must be evaluated separately.
+The shared criteria object describes the user's intent, not the endpoint. Currently supported: title, media type, and an optional single year. Confirmed criteria are preserved unless explicitly changed. The parser instructions state this rule; their modules and the reasons for each rule are described in the [parser README](../src/lib/parser/README.md). Model compliance is measured with the parser evaluation, not assumed.
 
 “Confirmed criteria” means the current criteria state accepted by the application. It implies neither separate user approval of every value nor that the request is already executable.
 
