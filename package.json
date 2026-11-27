@@ -29,7 +29,8 @@
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "nuxt typecheck"
+    "typecheck:tests": "vue-tsc -p tests/tsconfig.json --noEmit",
+    "typecheck": "nuxt typecheck && pnpm typecheck:tests"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.93",
